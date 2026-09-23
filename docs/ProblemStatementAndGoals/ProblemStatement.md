@@ -47,6 +47,7 @@ Existing song maps may also be downloaded and opened in the app.
 ## Stakeholders
 
 - Language learners.
+- Language Teachers.
 - The Capstone development team.
 - The supervising professor.
 - Copyright holders for songs and lyrics.

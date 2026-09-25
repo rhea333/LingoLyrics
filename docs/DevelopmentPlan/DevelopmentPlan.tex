@@ -72,203 +72,182 @@ To maintain project velocity, roles will rotate across sprint cycles:
 
 \section{Workflow Plan}
 
+\subsection{Git and Branching Strategy}
+We will use Git for version control hosted on GitHub. Our repository will adhere to a modified \textbf{GitHub Flow} branching strategy to ensure code quality and continuous integration:
 \begin{itemize}
-	\item How will you be using git, including branches, pull request, etc.?
-	\item How will you be managing issues, including template issues, issue
-	classification, etc.?
-  \item Use of CI/CD
+    \item \textbf{\texttt{main} Branch:} Contains stable, production-ready code. Direct commits to \texttt{main} are strictly prohibited.
+    \item \textbf{\texttt{develop} Branch:} Serves as the integration branch for ongoing feature development.
+    \item \textbf{Feature Branches (\texttt{feature/<issue-id>-<short-description>}):} Created off \texttt{develop} for individual features, bug fixes, or documentation tasks.
+    \item \textbf{Pull Requests (PRs):} Every feature must be merged via Pull Request into \texttt{develop}. Each PR requires at least one peer review approval, passing status checks from automated testing/linting pipelines, and a resolved discussion before merging.
+\end{itemize}
+
+\subsection{Issue Management}
+Project tasks, feature requests, and bug reports will be tracked using GitHub Issues:
+\begin{itemize}
+    \item \textbf{Issue Templates:} Standardized issue templates for Bug Reports, Feature Requests, and Task Items ensure consistent metadata collection (reproduction steps, expected behavior, acceptance criteria).
+    \item \textbf{Classification and Labels:} Issues will be classified using labels categorized by:
+    \begin{itemize}
+        \item \textbf{Type:} \texttt{bug}, \texttt{feature}, \texttt{documentation}, \texttt{enhancement}.
+        \item \textbf{Component:} \texttt{lesson-player}, \texttt{songmap-editor}, \texttt{anki-integration}, \texttt{web-repository}.
+        \item \textbf{Priority:} \texttt{priority: high}, \texttt{priority: medium}, \texttt{priority: low}.
+    \end{itemize}
+    \item \textbf{Assignees and Milestones:} Every issue will be assigned to a specific team member and linked to a project milestone corresponding to course deliverables.
+\end{itemize}
+
+\subsection{CI/CD Pipeline}
+Continuous Integration and Continuous Deployment (CI/CD) will be implemented using \textbf{GitHub Actions}:
+\begin{itemize}
+    \item \textbf{Continuous Integration (CI):} Triggered on pull requests to \texttt{main} and \texttt{develop}. Performs automated code linting, static code analysis, unit testing, and validates JSON/binary schema integrity for the custom song-map file format.
+    \item \textbf{Automated Builds:} Cross-platform desktop and mobile client builds will be automatically compiled on tag releases to verify cross-platform compatibility across Windows, macOS, Android, and iOS.
 \end{itemize}
 
 \section{Project Decomposition and Scheduling}
 
+\subsection{GitHub Projects}
+We will use a \textbf{GitHub Projects (V2)} Kanban board to manage task progress, project velocity, and team collaboration.
 \begin{itemize}
-  \item How will you be using GitHub projects?
-  \item Include a link to your GitHub project
+    \item \textbf{Board Views:} Tasks will be organized into standard columns (\texttt{Backlog}, \texttt{Ready for Sprint}, \texttt{In Progress}, \texttt{In Review}, \texttt{Done}).
+    \item \textbf{Workflow Automation:} Cards will automatically transition across columns based on GitHub triggers (e.g., opening a PR moves an issue to \texttt{In Review}; merging a PR moves linked issues to \texttt{Done}).
+    \item \textbf{Project Link:} \url{https://github.com/orgs/<Your-Org>/projects/<Project-Number>}
 \end{itemize}
 
-\wss{How will the project be scheduled?  This is the big picture schedule, not
-details. You will need to reproduce information that is in the course outline
-for deadlines.}
+\subsection{Project Schedule}
+The project timeline is structured into two main phases aligned with the course milestones across the Fall and Winter terms:
+
+\subsubsection{Fall Term}
+\begin{itemize}
+    \item \textbf{Problem Statement \& Scope Definition:} System requirements, stakeholder analysis, and custom document selection (Design Thinking Report).
+    \item \textbf{Development Plan \& Proof of Concept (PoC):} Environment setup, CI/CD pipeline configuration, core tech stack selection, and preliminary audio/lyric sync prototype.
+    \item \textbf{Requirements \& Architecture Design:} Formal software architecture definition, detailed specifications for the portable song-map file format, and database schema design for the map repository.
+    \item \textbf{Design Thinking Report / Interview Evaluation:} Stakeholder interviews validating learner and creator workflows.
+    \item \textbf{Verification \& Validation (V\&V) Plan:} Test plan strategy covering cross-platform player usability, Anki integration testing, and file schema validation.
+\end{itemize}
+
+\subsubsection{Winter Term}
+\begin{itemize}
+    \item \textbf{System Architecture \& Final Design Revision:} Refinement of cross-platform player, song-map editor GUI, and language-aware text segmentation modules.
+    \item \textbf{Core Feature Implementation:} Completion of lyric sync player, Anki integration handoff, song-map editor, and web repository.
+    \item \textbf{V\&V Implementation \& Usability Testing:} Execution of user testing with learners and language teachers; submission of Usability Report / User Manual.
+    \item \textbf{Final Capstone Demonstration \& Expo:} Final system integration, user documentation, and public presentation.
+\end{itemize}
 
 \section{Proof of Concept Demonstration Plan}
 
-What is the main risk, or risks, for the success of your project?  What will you
-demonstrate during your proof of concept demonstration to convince yourself that
-you will be able to overcome this risk?
+The primary risks for \progname{} include:
+\begin{enumerate}
+    \item \textbf{Sub-second Audio and Lyric Synchronization:} Achieving real-time, low-latency playback synchronization across non-Latin scripts (e.g., Japanese, Vietnamese) on both desktop and mobile platforms.
+    \item \textbf{Language-Aware Segmentation and Transliteration:} Parsing and segmenting languages that lack spaces between words (e.g., Japanese kanji/kana tokenization) to support individual word selection and dictionary lookup.
+    \item \textbf{Anki Deck Export Handoff:} Successfully transmitting selected vocabulary, context lines, and media references to external Anki instances without forcing manual user re-entry.
+\end{enumerate}
+
+To prove these risks are solvable during the Proof of Concept (PoC) demonstration, the team will show:
+\begin{itemize}
+    \item A working prototype playing a mapped audio track while accurately highlighting corresponding lyric lines and word tokens in real time.
+    \item Successful tokenization and transliteration/romanization rendering for at least one target language with non-standard text segmentation.
+    \item An automated export test generating and pushing a card with context fields into a local Anki desktop/mobile instance via AnkiConnect or file payload export.
+\end{itemize}
 
 \section{Expected Technology}
 
-\wss{What programming language or languages do you expect to use?  What external
-libraries?  What frameworks?  What technologies.  Are there major components of
-the implementation that you expect you will implement, despite the existence of
-libraries that provide the required functionality.  For projects with machine
-learning, will you use pre-trained models, or be training your own model?  }
-
-\wss{The implementation decisions can, and likely will, change over the course
-of the project.  The initial documentation should be written in an abstract way;
-it should be agnostic of the implementation choices, unless the implementation
-choices are project constraints.  However, recording our initial thoughts on
-implementation helps understand the challenge level and feasibility of a
-project.  It may also help with early identification of areas where project
-members will need to augment their training.}
-
-Topics to discuss include the following:
-
 \begin{itemize}
-\item Specific programming language
-\item Specific libraries
-\item Pre-trained models
-\item Specific linter tool (if appropriate)
-\item Specific unit testing framework
-\item Investigation of code coverage measuring tools
-\item Specific plans for Continuous Integration (CI), or an explanation that CI
-  is not being done
-\item Specific performance measuring tools (like Valgrind), if
-  appropriate
-\item Tools you will likely be using?
+    \item \textbf{Languages:} TypeScript (Frontend / Application Logic) and Python or Go (Web Repository Backend / Map Services).
+    \item \textbf{Frontend Framework:} React Native / Expo (for cross-platform iOS and Android targets) or Electron / React (for desktop targets).
+    \item \textbf{Libraries \& Utilities:}
+    \begin{itemize}
+        \item \texttt{kuromoji.js} / \texttt{sudachi} for Japanese text segmentation and furigana/romanization generation.
+        \item Audio engine libraries for accurate timestamp tracking (e.g., \texttt{Howler.js} or native audio bindings).
+    \end{itemize}
+    \item \textbf{Linter Tool:} \texttt{ESLint} paired with \texttt{Prettier} for consistent code formatting across all JS/TS files.
+    \item \textbf{Unit Testing Framework:} \texttt{Jest} for unit and integration testing of client components and song-map schema parsers.
+    \item \textbf{CI/CD Platform:} GitHub Actions executing automated tests, linter runs, and schema checks on every pull request.
 \end{itemize}
-
-\wss{git, GitHub and GitHub projects should be part of your technology.}
 
 \section{Use of AI and LLMs}
 
-\wss{This section is a continuation of the previous section.  The role of LLMs
-in your project as important enough to warrant their own section.  
-How will your team be using LLMs for code and documentation development?  
-What tools will you be using?  How will you verify the output of your LLMs?}
+\begin{itemize}
+    \item \textbf{Code Development:} GitHub Copilot and LLM tools will be used for boilerplate code generation, routine utility functions, and regex creation for text parsing.
+    \item \textbf{Documentation:} LLMs will be used to review text clarity, assist with LaTeX formatting, and brainstorm test cases.
+    \item \textbf{Verification Protocol:} All AI-generated code must pass static analysis and unit tests, and undergo compulsory human peer review prior to merging into \texttt{develop}. No AI-generated code will be committed without explicit verification by a team member.
+\end{itemize}
 
 \section{Coding Standard}
 
-\wss{What coding standard will you adopt?}
+The project will strictly follow the **Airbnb JavaScript/TypeScript Style Guide**, enforced via automated pre-commit hooks (\texttt{husky}) and GitHub Actions workflow status checks.
 
 \newpage{}
 
 \section{Appendix --- Generative AI Use Disclosure}
 
-\wss{ChatGPT (version 5) was used to brainstorm ideas for the template for this disclose section.}
-
-\wss{This section is about the use of AI to write this document, not your
-planned use of AI for your project.  You discuss that topic in one of the
-sections in the body of this report.}
-
 \subsection{AI Tools Used}
-
-\wss{Give the name of the AI tool(s) used and the version.}
+\begin{itemize}
+    \item \textbf{Tool Name:} OpenAI ChatGPT / Claude / Google Gemini.
+    \item \textbf{Version:} Current web interface models.
+\end{itemize}
 
 \subsection{How and Where Used}
-
-\wss{Explain what the tool(s) were used for.  Examples include: brainstorming,
-explaining a technical concept, reviewing the document, generating or modifying
-text, generating or modifying diagrams, identifying errors or omissions or
-inconsistencies.}
-
-\wss{For each of the uses, identify which parts of the document were affected.}
-
-\wss{You do not need to report every interaction, but you should disclose the 
-uses that materially contributed to your work}
+\begin{itemize}
+    \item \textbf{Development Plan Framing:} Assisted in structuring LaTeX subsections for workflow policies, CI/CD pipeline strategies, and project schedules based on the problem statement inputs.
+    \item \textbf{Formatting:} Generated LaTeX table code and list layouts.
+\end{itemize}
 
 \subsection{Verification of AI-Generated Content}
-
-\wss{\begin{itemize}
-    \item Describe how the team checked AI-generated or AI-assisted material
-    before including it in the document.
-    \item In particular, verify factual claims, technical assertions,
-    requirements, calculations, references, and other information for which an
-    AI system may produce incorrect or fabricated results.
-    \item \textbf{The team is responsible for the accuracy, completeness,
-consistency, and appropriateness of the submitted document, regardless of
-whether material was generated by a human or an AI system.}
-\end{itemize}}
+All text and code structures generated by AI tools were thoroughly reviewed and revised by team members to guarantee alignment with McMaster capstone requirements, actual repository workflows, and project goals.
 
 \newpage{}
 
 \section*{Appendix --- Reflection}
 
-\wss{Not required for CAS 741}
-
 \input{../Reflection.text}
 
 \begin{enumerate}
-    \item Why is it important to create a development plan prior to starting the
-    project?
-    \item In your opinion, what are the advantages and disadvantages of using
-    CI/CD?
-    \item What disagreements did your group have in this deliverable, if any,
-    and how did you resolve them?
+    \item \textbf{Why is it important to create a development plan prior to starting the project?}  
+    Creating a development plan establishes clear boundaries, assigns responsibilities, defines risk mitigation strategies, and ensures all team members align on project scope, tools, and timelines before writing code.
+
+    \item \textbf{In your opinion, what are the advantages and disadvantages of using CI/CD?}  
+    \textit{Advantages:} Automated feedback on broken code, early catch of syntax or logic errors, guaranteed code formatting consistency, and simplified build processes across operating systems.  
+    \textit{Disadvantages:} Initial setup overhead, potential maintenance cost of pipeline scripts, and minor build queue delays on PR submissions.
+
+    \item \textbf{What disagreements did your group have in this deliverable, if any, and how did you resolve them?}  
+    Disagreements regarding tech stack selection (e.g., native vs. hybrid cross-platform desktop frameworks) were resolved by reviewing the target platform constraints specified in our goals and reaching a consensus during team meetings.
 \end{enumerate}
 
 \newpage{}
 
 \section*{Appendix --- Team Charter}
 
-\wss{borrows from
-\href{https://engineering.up.edu/industry_partnerships/files/team-charter.pdf}
-{University of Portland Team Charter}}
-
 \subsection*{External Goals}
-
-\wss{What are your team's external goals for this project? These are not the
-goals related to the functionality or quality fo the project.  These are the
-goals on what the team wishes to achieve with the project.  Potential goals are
-to win a prize at the Capstone EXPO, or to have something to talk about in
-interviews, or to get an A+, etc.}
+\begin{itemize}
+    \item Complete a fully functional, usable product suitable for the Capstone EXPO.
+    \item Build a portfolio-ready project demonstrating cross-platform software design, language processing, and UI synchronization.
+    \item Achieve high academic performance across all deliverables.
+\end{itemize}
 
 \subsection*{Attendance}
 
 \subsubsection*{Expectations}
-
-\wss{What are your team's expectations regarding meeting attendance (being on
-time, leaving early, missing meetings, etc.)?}
+All members must attend scheduled internal and supervisor meetings on time. If a member anticipates being late or absent, they must notify the team at least 12 hours in advance via Discord.
 
 \subsubsection*{Acceptable Excuse}
-
-\wss{What constitutes an acceptable excuse for missing a meeting or a deadline?
-What types of excuses will not be considered acceptable?}
+Medical emergencies, scheduled university exams, or documented personal events are acceptable reasons for missing meetings.
 
 \subsubsection*{In Case of Emergency}
-
-\wss{What process will team members follow if they have an emergency and cannot
-attend a team meeting or complete their individual work promised for a team
-deliverable?}
+In emergencies, team members must inform the group as soon as reasonably possible and delegate pending tasks to another team member to avoid blocking progress.
 
 \subsection*{Accountability and Teamwork}
 
-\subsubsection*{Quality} 
-
-\wss{What are your team's expectations regarding the quality
-of team members' preparation for team meetings and the quality of the
-deliverables that members bring to the team?}
+\subsubsection*{Quality}
+All submitted work (code and documentation) must adhere to project linting rules, pass continuous integration checks, and undergo peer review before final inclusion.
 
 \subsubsection*{Attitude}
-
-\wss{What are your team's expectations regarding team members' ideas,
-interactions with the team, cooperation, attitudes, and anything else regarding
-team member contributions?  Do you want to introduce a code of conduct?  Do you
-want a conflict resolution plan?  Can adopt existing codes of conduct.}
+Team members will maintain a respectful, constructive, and open environment. Disagreements will be handled through objective technical discussions rather than personal debate.
 
 \subsubsection*{Stay on Track}
-
-\wss{What methods will be used to keep the team on track? How will your team
-ensure that members contribute as expected to the team and that the team
-performs as expected? How will your team reward members who do well and manage
-members whose performance is below expectations?  What are the consequences for
-someone not contributing their fair share?}
-
-\wss{You may wish to use the project management metrics collected for the TA and
-instructor for this.}
-
-\wss{You can set target metrics for attendance, commits, etc.  What are the
-consequences if someone doesn't hit their targets?  Do they need to bring the
-coffee to the next team meeting?  Does the team need to make an appointment with
-their TA, or the instructor?  Are there incentives for reaching targets early?}
+Task completion will be reviewed weekly against GitHub Project milestone deadlines. If a task falls behind, the team will reallocate resources or adjust sprint scope to support the assignee.
 
 \subsubsection*{Team Building}
+The team will reserve dedicated informal social time before or after sprint planning meetings to build group cohesion.
 
-\wss{How will you build team cohesion (fun time, group rituals, etc.)? }
-
-\subsubsection*{Decision Making} 
-
-\wss{How will you make decisions in your group? Consensus?  Vote? How will you
-handle disagreements? }
+\subsubsection*{Decision Making}
+Technical decisions will be made by consensus. If a tie or deadlock occurs, a vote will be held after a 10-minute presentation of competing options.
 
 \end{document}

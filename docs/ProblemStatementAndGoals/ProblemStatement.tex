@@ -9,8 +9,13 @@
 
 \date{}
 
-\input{../Comments.text}
 \input{../Common.text}
+\renewcommand{\progname}{LingoLyrics}
+\renewcommand{\authname}{Team LingoLyrics
+\\ Rhea Gokhale
+\\ Omar Bakr
+\\ Raymond Ma
+\\ Aansh Kotian}
 
 \begin{document}
 
@@ -22,78 +27,181 @@
 \toprule
 \textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
 \midrule
-Date1 & Name(s) & Description of changes\\
-Date2 & Name(s) & Description of changes\\
-... & ... & ...\\
+September 22, 2026 & Team LingoLyrics & Initial Revision 0 draft\\
+September 28, 2026 & Team LingoLyrics & Filled out the template; implemented supervisor feedback; reworded documentation with Codex.\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \section{Problem Statement}
-
-\wss{You should check your problem statement with the
-\href{https://smiths.github.io/capTemplate/Checklists/ProbState-Checklist.pdf}
-{problem statement checklist}}. 
-
-\wss{You can change the section headings, as long as you include the required
-information.}
+This section describes the learning and content-authoring problem addressed by
+LingoLyrics, its high-level inputs and outputs, intended stakeholders, and
+operating environment.
 
 \subsection{Problem}
+Self-directed language learners at an early-intermediate to intermediate level
+often use songs to encounter authentic vocabulary, idioms, and cultural
+context. However, conventional music players and lyric websites do not help
+learners turn those moments into focused, in-context study. When a learner
+encounters an unfamiliar word or phrase, they must pause, search elsewhere for
+meaning, and manually transfer useful vocabulary into a study system. This
+interrupts the learning experience and separates vocabulary from the lyrical
+context needed to understand its intended meaning.
 
-\wss{What problem are you trying to solve?  Why is it important? Do not talk
-about how you will solve the problem, only what the problem is.  AI is rarely
-part of the problem.  The problem is ``what'' you want to do, not ``how'' you
-want to do it.  The problem statement should be written in a way that is
-understandable to a non-technical audience.}
+The challenge is greater for languages with non-Latin scripts, different word
+boundaries, or different sentence structures. Learners may require
+language-appropriate segmentation, transliteration, and contextual explanations
+in addition to direct translation. Creators also lack a consistent, reusable way
+to prepare synchronized lyric lessons with timing, translations, and
+annotations.
+
+LingoLyrics will deliver a mobile song-based learning experience and a companion
+content-authoring workflow. Together, they will allow learners to study
+synchronized, annotated lyrics and retain selected vocabulary through Anki.
+
+\subsection{Key Terms}
+\begin{itemize}
+  \item \textbf{Song map:} a structured lesson file that connects an audio
+        track with timed lyrics, translations, transliterations, annotations,
+        and language metadata.
+  \item \textbf{Contextual annotation:} an explanation of a word, phrase, or
+        lyric line that captures its intended meaning in the song.
+  \item \textbf{Anki:} a spaced-repetition flashcard application used for
+        vocabulary review.
+\end{itemize}
 
 \subsection{Inputs and Outputs}
+\textbf{Inputs:}
+\begin{itemize}
+  \item Audio tracks, lyric text, timed word and line boundaries, translations,
+        transliterations, and contextual annotations.
+  \item Learner interactions, display preferences, and selected vocabulary.
+\end{itemize}
 
-\wss{Characterize the problem in terms of ``high level'' inputs and outputs.  
-Use abstraction so that you can avoid details.}
+\textbf{Outputs:}
+\begin{itemize}
+  \item A validated, reusable song map containing synchronized lyric and
+        annotation layers.
+  \item A synchronized lesson view with contextual support for selected words
+        or lines.
+  \item An optional vocabulary item, including its selected context, sent to
+        the learner's Anki workflow.
+\end{itemize}
 
 \subsection{Stakeholders}
+The primary stakeholders are self-directed early-intermediate to intermediate
+language learners, who need an engaging way to study authentic language in
+context, and song-map creators, who need a practical workflow for accurately
+synchronizing and annotating lessons.
+
+Secondary stakeholders include:
+\begin{itemize}
+  \item Anki users, who benefit from reliable vocabulary handoff;
+  \item the project supervisor and development team;
+  \item copyright holders and content providers, whose rights constrain what
+        material may be used or distributed.
+\end{itemize}
 
 \subsection{Environment}
+The learner-facing application is designed for short, self-directed study
+moments on a smartphone, including while listening to music with headphones.
+The creator workflow will be delivered through a desktop or web-based editor.
+Both workflows must use a shared song-map representation.
 
-\wss{Hardware and Software Environment for the users.  The developer environment
-is summarized as part of the developer plan.}
+The initial release will use team-created, public-domain, or appropriately
+licensed content. It does not promise streaming-service integration, a
+production music catalogue, universal language support, or distribution rights
+for copyrighted lyrics or recordings.
 
 \section{Goals}
+The table below contains the goals that LingoLyrics must achieve to be
+considered acceptable and complete.
+
+LingoLyrics is valuable because it reduces the friction between encountering
+authentic language in music and retaining it through repeatable vocabulary
+study. Its shared song-map approach also allows creator effort to produce
+consistent lessons that can be reused by learners, rather than requiring each
+learner to reconstruct the same context independently.
+
+\begin{table}[hp]
+\caption{Minimum Viable Product Goals}
+\begin{tabularx}{\textwidth}{lXX} \\[-8pt]
+\toprule
+\textbf{Goal} & \textbf{Explanation} & \textbf{Reasoning}\\
+\midrule
+Synchronized Lesson Playback & Across every lyric-line transition in a fixed two-song acceptance suite, at least 95\% occur within 0.5 seconds of their mapped timestamps. & Timing keeps the lesson connected to the music.\\
+In-Context Vocabulary Support & Every annotated target in the fixed two-song acceptance suite displays its translation and contextual annotation when selected. & Meaning is clearer when vocabulary is preserved in context.\\
+Creator-to-Learner Interoperability & A song map created by the editor validates against one shared format and is opened by the learner application without manual file modification. & Learners receive consistent lessons, while creators avoid duplicate content preparation.\\
+Practical Lesson Creation & At least two of three test creators can produce a complete map for a pre-defined short test track within 45 minutes, without manually editing the underlying map file; each resulting map must validate and play in the learner application. & A lesson system is only useful if content can be prepared consistently.\\
+Language-Aware Support & Demonstrate two languages with different text-handling needs; at least one must require non-Latin rendering, language-specific segmentation, or transliteration. & This validates that the product is not limited to one writing system.\\
+Vocabulary Retention Handoff & Sending a selected vocabulary item creates a note in the named \emph{LingoLyrics Test} Anki deck with correctly populated \emph{Term}, \emph{Translation}, and \emph{Context} fields. & This connects song learning to spaced-repetition study.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+For goal evaluation, the \textbf{fixed two-song acceptance suite} contains one
+map for each demonstrated language and is defined before implementation testing
+begins. An \textbf{annotated target} is a word or line with a translation and
+contextual annotation. A \textbf{complete map} contains all required audio,
+timing, lyric, and annotation data. A \textbf{test creator} is a participant
+given the same supplied audio, lyric, and annotation material; the
+\textbf{pre-defined short test track} contains no more than 12 lyric lines.
+
+\newpage
 
 \section{Stretch Goals}
+The table below shows goals that are not required for the product to be viable,
+but would provide additional value if achieved.
 
-\wss{Goals you hope to get to, but not necessary.  They are also helpful if the
-scope of the original project needs to be expanded.}
+\begin{table}[hp]
+\caption{Stretch Goals}
+\begin{tabularx}{\textwidth}{lXX} \\[-8pt]
+\toprule
+\textbf{Goal} & \textbf{Explanation} & \textbf{Reasoning}\\
+\midrule
+Third-Language Support & Add another language and a pluggable language-processing approach. & Demonstrates that the format can scale.\\
+Song-Map Import and Export & Add migration and interchange tooling for song maps. & Helps maps remain reusable over time.\\
+Collaborative Review & Support sharing or review of song maps. & Encourages higher-quality learning content.\\
+Learner Progress and Accessibility & Add progress tracking, in-app review, or accessibility enhancements. & Extends learning value beyond playback.\\
+Timing and Annotation Assistance & Evaluate automatic assistance while preserving creator verification. & May reduce authoring effort without sacrificing accuracy.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\newpage
 
 \section{Custom Documents (CDs)}
+\begin{itemize}
+  \item Fall: Design Thinking Report or User/Stakeholder/Client Interview Report
+  \item Winter: User Manual or Usability Report
+\end{itemize}
 
-\wss{For CAS 741: State whether the project is a research project. This
-designation, with the approval (or request) of the instructor, can be modified
-over the course of the term.}
-
-\wss{For SE Capstone: List your custom documents (CDs).  Potential CDs include
-usability testing, code walkthroughs, user documentation, formal proof,
-GenderMag personas, Design Thinking, etc.  (The full list is on the course
-outline and in Lecture 02.) Normally the number of CDs will be two (one per
-term).  Approval of the CDs will be part of the discussion with the instructor
-for approving the project. The CDs, with the approval (or request) of the
-instructor, can be modified over the course of the term.}
+The fall custom document will validate learner and creator workflows. The
+winter custom document will document and evaluate the editor and mobile lesson
+flows.
 
 \newpage{}
 
 \section*{Appendix --- Reflection}
-
-\wss{Not required for CAS 741}
-
-\input{../Reflection.text}
-
 \begin{enumerate}
-    \item What went well while writing this deliverable? 
-    \item What pain points did you experience during this deliverable, and how
-    did you resolve them?
-    \item How did you and your team adjust the scope of your goals to ensure
-    they are suitable for a Capstone project (not overly ambitious but also of
-    appropriate complexity for a senior design project)?
-\end{enumerate}  
+  \item \textbf{What went well while writing this deliverable?}\\
+  The team quickly aligned on the project direction and maintained open,
+  consistent communication while preparing the document. This made it easier to
+  discuss decisions, divide work, and keep the problem statement and goals
+  consistent.
+
+  \item \textbf{What pain points did you experience during this deliverable,
+  and how did you resolve them?}\\
+  A few meetings needed to be rescheduled, which made coordination more
+  difficult. The team established recurring meeting times to provide a more
+  reliable schedule for future deliverables.
+
+  \item \textbf{How did you and your team adjust the scope of your goals to
+  ensure they are suitable for a Capstone project?}\\
+  Professor feedback identified ``language learners'' as too broad a target
+  group. The team narrowed the intended users to self-directed,
+  early-intermediate to intermediate learners who use songs to study a target
+  language, allowing the project goals to remain focused and feasible.
+\end{enumerate}
 
 \end{document}

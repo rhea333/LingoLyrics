@@ -34,33 +34,84 @@ September 28, 2026 & Team LingoLyrics & Filled out the template; implemented sup
 \end{table}
 
 \section{Problem Statement}
-
-\wss{You should check your problem statement with the
-\href{https://smiths.github.io/capTemplate/Checklists/ProbState-Checklist.pdf}
-{problem statement checklist}}. 
-
-\wss{You can change the section headings, as long as you include the required
-information.}
+This section describes the learning and content-authoring problem addressed by
+LingoLyrics, its high-level inputs and outputs, intended stakeholders, and
+operating environment.
 
 \subsection{Problem}
+Self-directed language learners at an early-intermediate to intermediate level
+often use songs to encounter authentic vocabulary, idioms, and cultural
+context. However, conventional music players and lyric websites do not help
+learners turn those moments into focused, in-context study. When a learner
+encounters an unfamiliar word or phrase, they must pause, search elsewhere for
+meaning, and manually transfer useful vocabulary into a study system. This
+interrupts the learning experience and separates vocabulary from the lyrical
+context needed to understand its intended meaning.
 
-\wss{What problem are you trying to solve?  Why is it important? Do not talk
-about how you will solve the problem, only what the problem is.  AI is rarely
-part of the problem.  The problem is ``what'' you want to do, not ``how'' you
-want to do it.  The problem statement should be written in a way that is
-understandable to a non-technical audience.}
+The challenge is greater for languages with non-Latin scripts, different word
+boundaries, or different sentence structures. Learners may require
+language-appropriate segmentation, transliteration, and contextual explanations
+in addition to direct translation. Creators also lack a consistent, reusable way
+to prepare synchronized lyric lessons with timing, translations, and
+annotations.
+
+LingoLyrics will deliver a mobile song-based learning experience and a companion
+content-authoring workflow. Together, they will allow learners to study
+synchronized, annotated lyrics and retain selected vocabulary through Anki.
+
+\subsection{Key Terms}
+\begin{itemize}
+  \item \textbf{Song map:} a structured lesson file that connects an audio
+        track with timed lyrics, translations, transliterations, annotations,
+        and language metadata.
+  \item \textbf{Contextual annotation:} an explanation of a word, phrase, or
+        lyric line that captures its intended meaning in the song.
+  \item \textbf{Anki:} a spaced-repetition flashcard application used for
+        vocabulary review.
+\end{itemize}
 
 \subsection{Inputs and Outputs}
+\textbf{Inputs:}
+\begin{itemize}
+  \item Audio tracks, lyric text, timed word and line boundaries, translations,
+        transliterations, and contextual annotations.
+  \item Learner interactions, display preferences, and selected vocabulary.
+\end{itemize}
 
-\wss{Characterize the problem in terms of ``high level'' inputs and outputs.  
-Use abstraction so that you can avoid details.}
+\textbf{Outputs:}
+\begin{itemize}
+  \item A validated, reusable song map containing synchronized lyric and
+        annotation layers.
+  \item A synchronized lesson view with contextual support for selected words
+        or lines.
+  \item An optional vocabulary item, including its selected context, sent to
+        the learner's Anki workflow.
+\end{itemize}
 
 \subsection{Stakeholders}
+The primary stakeholders are self-directed early-intermediate to intermediate
+language learners, who need an engaging way to study authentic language in
+context, and song-map creators, who need a practical workflow for accurately
+synchronizing and annotating lessons.
+
+Secondary stakeholders include:
+\begin{itemize}
+  \item Anki users, who benefit from reliable vocabulary handoff;
+  \item the project supervisor and development team;
+  \item copyright holders and content providers, whose rights constrain what
+        material may be used or distributed.
+\end{itemize}
 
 \subsection{Environment}
+The learner-facing application is designed for short, self-directed study
+moments on a smartphone, including while listening to music with headphones.
+The creator workflow will be delivered through a desktop or web-based editor.
+Both workflows must use a shared song-map representation.
 
-\wss{Hardware and Software Environment for the users.  The developer environment
-is summarized as part of the developer plan.}
+The initial release will use team-created, public-domain, or appropriately
+licensed content. It does not promise streaming-service integration, a
+production music catalogue, universal language support, or distribution rights
+for copyrighted lyrics or recordings.
 
 \section{Goals}
 

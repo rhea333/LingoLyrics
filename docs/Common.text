@@ -1,9 +1,9 @@
 %% Common Parts
 
-\newcommand{\progname}{ProgName} % PUT YOUR PROGRAM NAME HERE
-\newcommand{\authname}{Team \#, Team Name
+\newcommand{\progname}{Software Engineering} % PUT YOUR PROGRAM NAME HERE
+\newcommand{\authname}{Team \#21, LingoLyrics
 \\ Student 1 name
-\\ Student 2 name
+\\ Aansh Kotian
 \\ Student 3 name
 \\ Student 4 name} % AUTHOR NAMES                  
 

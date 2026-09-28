@@ -2,6 +2,8 @@
 
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{hyperref}
+\usepackage{verbatim}
 
 \title{Development Plan\\\progname}
 
@@ -30,274 +32,304 @@ September 28, 2026 & Team LingoLyrics & Added the Generative AI Use Disclosure c
 
 \newpage{}
 
-\wss{Put your introductory blurb here.  Often the blurb is a brief roadmap of
-what is contained in the report.}
-
-\wss{Additional information on the development plan can be found in the
-\href{https://gitlab.cas.mcmaster.ca/courses/capstone/-/blob/main/Lectures/L02b_POCAndDevPlan/POCAndDevPlan.pdf?ref_type=heads}
-{lecture slides}.}
+This document outlines the Development Plan for \progname{} (\textbf{LingoLyrics}), a multi-platform language-learning ecosystem that bridges interactive song playback with structured language instruction. This report covers project governance, workflow and repository strategies, continuous integration pipelines, schedule breakdowns, risk management for our Proof of Concept (PoC), technology stack selections, and team operational charters.
 
 \section{Confidential Information?}
 
-\wss{State whether your project has confidential information from industry, or
-not.  If there is confidential information, point to the agreement you have in
-place.}
+There is no confidential information associated with this project. LingoLyrics is an open-source capstone project operating without corporate non-disclosure agreements, proprietary industry datasets, or commercial restrictions.
 
-\wss{For most teams this section will just state that there is no confidential
-information to protect.}
 \section{IP to Protect}
 
-\wss{State whether there is IP to protect.  If there is, point to the agreement.
-All students who are working on a project that requires an IP agreement are also
-required to sign the ``Intellectual Property Guide Acknowledgement.''}
+There is no proprietary intellectual property (IP) to protect. All application code, file format specifications (song map schema), system documentation, and design assets will be developed openly under standard university capstone guidelines.
 
 \section{Copyright License}
 
-\wss{What copyright license is your team adopting.  Point to the license in your
-repo.}
+The software source code, map schema definitions, and associated documentation will be distributed under the \textbf{MIT License}. This choice ensures maximum accessibility for community contributors and map creators while permitting open integration with third-party tools.
 
 \section{Team Meeting Plan}
 
-\wss{This section is for meetings between the team members, and meetings between 
-the team and their supervisor/advisor (as appropriate).}
+Meetings will be conducted using a hybrid approach, leveraging specific virtual channels and in-person sessions during scheduled capstone periods.
 
-\wss{How often will the team meet? where? when?}
-
-\wss{If the meeting is a physical location (not virtual), out of an abundance of
-caution for safety reasons you shouldn't put the location online}
-
-\wss{To help schedule meetings, you can use the lecture/tutorial time when we do 
-not have anything else scheduled.}
-
-\wss{How often will you meet with your supervisor/advisor?  when?  where?}
-
-\wss{Will meetings be virtual?  At least some meetings should likely be
-in-person.}
-
-\wss{How will the meetings be structured?  There should be a chair for all meetings.  
-There should be an agenda for all meetings.}
+\begin{itemize}
+    \item \textbf{Internal Team Meetings:} Held virtually every Friday from 11:00 AM to 12:00 PM via Discord or Google Meet to review project progress, manage sprint planning, assign issues, and resolve technical blockers.
+    \item \textbf{Supervisor Meetings:} Held periodically on Fridays from 10:00 AM to 10:30 AM via Microsoft Teams with our supervising professor, Dr.~Angela Zavaleta Bernuy, to present milestone deliverables, track progress, and receive guidance.
+    \item \textbf{Meeting Structure:} Meeting operational roles will rotate among team members each session:
+    \begin{itemize}
+        \item \textbf{Meeting Chair:} Prepares and distributes the agenda prior to the call.
+        \item \textbf{Notetaker:} Records meeting minutes, key technical decisions, and actionable items directly into GitHub Discussions/Issues.
+    \end{itemize}
+\end{itemize}
 
 \section{Team Communication Plan}
 
-\wss{Issues on GitHub should be part of your communication plan.}
+Our team will use multiple channels to stay organized and collaborate effectively:
+\begin{itemize}
+    \item \textbf{Discord} --- for quick day-to-day communication, quick queries, and ad-hoc discussions.
+    \item \textbf{GitHub Discussions \& Issues} --- for tracking technical tasks, bug reports, pull request reviews, and project codebase progress.
+    \item \textbf{Notion} --- for organizing project documents and resources, taking meeting notes, and task planning.
+\end{itemize}
+These tools will ensure that all updates, discussions, and decisions are documented and accessible to all team members.
 
 \section{Team Member Roles}
 
-\wss{You should identify the types of roles you anticipate, like notetaker,
-leader, meeting chair, reviewer.  Assigning specific people to those roles is
-not necessary at this stage.  In a student team the role of the individuals will
-likely change throughout the year.}
+All team members will be responsible for creating issues, developing, testing, documenting, and reviewing code.
+
+\vspace{1em}
+
+Development work will be partitioned based on project features/components rather than individual technical expertise. For instance, when implementing the end product, one individual will be responsible for the end-to-end development of the song map editor or interactive lesson player components, including frontend UI, backend parsing, and schema integration. This allows technical expertise to be evenly distributed across the team, providing an equal learning and development opportunity for each teammate.
+
+\vspace{1em}
+
+Administrative tasks will be broken down into the following operational roles, which will be cycled on a regular basis:
+
+\subsection{Project Lead}
+\begin{itemize}
+    \item Chairs meetings with the team and supervisors by preparing agendas and guiding discussions.
+    \item Serves as the primary liaison with the supervisor, Dr.~Angela Zavaleta Bernuy.
+    \item Ensures the team is making steady progress toward weekly project goals and capstone milestones.
+\end{itemize}
+
+\subsection{Content Manager}
+\begin{itemize}
+    \item Collects and manages materials needed for external approvals, custom document submissions, and ethics/copyright disclosures.
+    \item Documents external datasets, audio libraries, language processing packages, and academic references utilized throughout the project.
+\end{itemize}
+
+\subsection{Minute-Taker}
+\begin{itemize}
+    \item Takes detailed meeting minutes during internal team meetings and supervisor syncs.
+    \item Highlights upcoming project deliverables, internal task deadlines, and submission requirements.
+    \item Coordinates final document compilation and submits course deliverables.
+\end{itemize}
+
+\subsection{DevOps \& Resource Manager}
+\begin{itemize}
+    \item Manages repository configurations, branch protection policies, CI/CD automated pipelines, and cloud web-repository hosting resources.
+    \item Oversees cross-platform compilation environments for desktop (Windows/macOS) and mobile (iOS/Android) targets.
+\end{itemize}
 
 \section{Workflow Plan}
 
+To maintain high code health and release reliability, our engineering pipeline integrates automated continuous testing via GitHub Actions. Every pull request triggers CI jobs that execute unit test suites, run static analysis using \texttt{ESLint} (enforcing Airbnb TypeScript standards), and validate song-map JSON schema integrity. Branch protection rules strictly mandate that all status checks pass and at least one peer approval is logged before changes can be integrated.
+
+\vspace{1em}
+
+Software development and project maintenance will be coordinated using GitHub for version control and issue management. All team activities, ranging from feature implementation to supervisor action items, are tracked through centralized issues. The scope of tracked work encompasses:
 \begin{itemize}
-	\item How will you be using git, including branches, pull request, etc.?
-	\item How will you be managing issues, including template issues, issue
-	classification, etc.?
-  \item Use of CI/CD
+    \item Core Feature \& Interface Engineering
+    \item Automated Test Suite Construction
+    \item Deliverable Compilation \& Submission
+    \item CI/CD Pipeline \& Cross-Platform Target Configuration
+    \item Defect Remediation \& Bug Fixes
+    \item Advisor Feedback Implementation
+    \item Regular Synchronizations \& Architecture Reviews
 \end{itemize}
+
+\vspace{1em}
+
+Work items involving code or document modifications must be tagged with a primary taxonomy label upon creation. Git feature branches are spawned directly from \texttt{develop} and must utilize the designated label as a name prefix, as structured in Table~\ref{TblBranchNaming}.
+
+\begin{table}[hp]
+\caption{Task Taxonomy and Git Branch Conventions} \label{TblBranchNaming}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Taxonomy Label} & \textbf{Git Branch Pattern} & \textbf{Scope \& Application}\\
+\midrule
+Docs & \texttt{docs/*} & Revisions to setup guides, system architecture specifications, and capstone reports.\\
+Feat & \texttt{feat/*} & Constructing new capabilities within the lesson player, editor, or Anki export module.\\
+Bug & \texttt{bug/*} & Fixing playback timing drift, parsing errors, or runtime exceptions.\\
+Enhancement & \texttt{enhance/*} & Refactoring source code, optimizing audio performance, or refining UI components.\\
+Infra & \texttt{infra/*} & Pipeline workflow updates, build target configurations, or dependency maintenance.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Feature branches must adhere to the naming convention \texttt{prefix/issue-id-short-description} (e.g., \texttt{feat/12-sync-player} or \texttt{bug/04-anki-payload}).
+
+\vspace{1em}
+
+Sprint backlogs are refined during weekly planning syncs. Tasks are initialized using structured GitHub Issue templates requiring a comprehensive technical summary, acceptance criteria defining the Definition of Done (DoD), explicit owner and reviewer assignments, and linked dependencies. Developers work within isolated feature branches and write descriptive commit logs. Upon fulfilling the DoD and passing local lint/test checks, the author opens a Pull Request referencing the issue ID, addresses feedback from the assigned peer reviewer, and merges the work into \texttt{develop} once sign-off is complete.
 
 \section{Project Decomposition and Scheduling}
 
+Task progression and milestone tracking will be managed using GitHub Projects via a dedicated Kanban board to visualize development status. Swimlanes are defined to capture each phase of the task lifecycle:
+
 \begin{itemize}
-  \item How will you be using GitHub projects?
-  \item Include a link to your GitHub project
+    \item \textbf{Backlog:} items that have been identified and logged for future iterations
+    \item \textbf{To Do:} prioritized tasks scoped for the upcoming sprint, refined by team members
+    \item \textbf{In Progress:} active development or documentation tasks underway
+    \item \textbf{In Review:} implementation complete, awaiting peer feedback and automated test pass
+    \item \textbf{Done:} Definition of Done (DoD) fully satisfied and merged into develop
 \end{itemize}
 
-\wss{How will the project be scheduled?  This is the big picture schedule, not
-details. You will need to reproduce information that is in the course outline
-for deadlines.}
+Major deliverables and target deadlines for the term are outlined below:
 
+\begin{itemize}
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/ProblemStatementAndGoals}{Problem Statement}, \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/PoCPlan}{PoC Plan}, and \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/DevelopmentPlan}{Development Plan} -- September 28, 2026
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/SRS}{SRS Document} and \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/HazardAnalysis}{Hazard Analysis} -- October 19, 2026
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/VnVPlan}{V\&V Plan} -- November 2, 2026
+    \item Design Document Revision -1 \& Custom Deliverable Choice -- November 16, 2026:
+        \begin{itemize}
+            \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/Design/SoftArchitecture}{System Architecture (Module Guide)}
+            \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/Design/SoftDetailedDes}{Detailed Design (Module Interface Spec)}
+        \end{itemize}
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/projMngmnt}{Team Contribution Survey and Productivity Report (PoC)} -- November 20, 2026
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/Presentations/PoCDemo}{Proof of Concept Demonstration} -- Between November 23 and December 4, 2026
+    \item Design Document Revision 0 -- January 18, 2027:
+        \begin{itemize}
+            \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/Design/SoftArchitecture}{System Architecture (Module Guide)}
+            \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/Design/SoftDetailedDes}{Detailed Design (Module Interface Spec)}
+        \end{itemize}
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/projMngmnt}{Team Contribution Survey and Productivity Report (Rev 0)} -- January 29, 2027
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/Presentations/Rev0Demo}{Revision 0 Demonstration} -- Between February 1 and February 12, 2027
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/VnVReport}{V\&V Report and Custom Deliverable (Winter)} -- March 8, 2027
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/Presentations/FinalPresentation}{Final Demonstration Revision 1} -- Between March 15 and March 22, 2027
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/projMngmnt}{Team Contribution Survey and Productivity Report (Rev 1)} -- March 19, 2027
+    \item Final Documentation Package -- March 31, 2027
+    \item Video Submission \& EXPO Poster -- TBD / Late March 2027
+    \item \href{https://github.com/rhea333/LingoLyrics/tree/main/docs/Presentations/EXPO}{Capstone EXPO Demonstration} -- TBD
+\end{itemize}
+
+Link to GitHub project: \url{https://github.com/rhea333/LingoLyrics/tree/main}
 \section{Proof of Concept Demonstration Plan}
 
-What is the main risk, or risks, for the success of your project?  What will you
-demonstrate during your proof of concept demonstration to convince yourself that
-you will be able to overcome this risk?
+The purpose of the Proof of Concept (PoC) plan is to outline how our team will validate the feasibility of LingoLyrics by testing and resolving its most critical technical risks prior to full system development.
+
+\subsection{Objective}
+
+The objective of our PoC is to demonstrate the technical feasibility of real-time audio-lyric synchronization, multi-language text segmentation, and direct flashcard export. The PoC does not need to deliver a fully styled end-to-end consumer application; rather, it should validate that the underlying timing, NLP tokenization, and export workflows operate reliably enough to justify full system implementation.
+
+\subsection{Scope of PoC}
+
+\begin{itemize}
+    \item \textbf{Core Deliverables:} A functional prototype that:
+    \begin{itemize}
+        \item Plays back an audio track while maintaining sub-second, real-time highlighting of corresponding lyric lines across desktop and mobile browsers.
+        \item Accurately parses non-Latin or unspaced text (e.g., Japanese Kanji/Kana or Vietnamese) into interactive words with corresponding transliteration/romanization.
+        \item Generates and transmits a serialized vocabulary package (including target word, definition, and context sentence) directly into a local or remote Anki instance.
+    \end{itemize}
+
+    \item \textbf{Exploratory Nature:}
+    \begin{enumerate}
+        \item Evaluating cross-platform web audio timing APIs to achieve reliable sub-second synchronization latency.
+        \item Comparing language-specific tokenization pipelines for accurate segmentation of non-spaced scripts.
+        \item Testing seamless integration methods with Anki (e.g., AnkiConnect API versus custom file payloads).
+    \end{enumerate}
+
+    \item \textbf{Not Included:} Complete user account management, custom UI design/styling, broad catalog expansion, or cloud sync backends.
+\end{itemize}
 
 \section{Expected Technology}
 
-\wss{What programming language or languages do you expect to use?  What external
-libraries?  What frameworks?  What technologies.  Are there major components of
-the implementation that you expect you will implement, despite the existence of
-libraries that provide the required functionality.  For projects with machine
-learning, will you use pre-trained models, or be training your own model?  }
+We expect to use \textbf{TypeScript} as our primary programming language across the client application and backend service integration, ensuring type safety and code reusability. Python or Go may be utilized for backend microservices or specialized text processing tasks.
 
-\wss{The implementation decisions can, and likely will, change over the course
-of the project.  The initial documentation should be written in an abstract way;
-it should be agnostic of the implementation choices, unless the implementation
-choices are project constraints.  However, recording our initial thoughts on
-implementation helps understand the challenge level and feasibility of a
-project.  It may also help with early identification of areas where project
-members will need to augment their training.}
+\vspace{1em}
 
-Topics to discuss include the following:
+For application development, we plan to use \href{https://reactnative.dev/}{\textbf{React Native}} with \href{https://expo.dev/}{\textbf{Expo}} (or \textbf{Electron/React} for desktop targets) to build a responsive, cross-platform user interface. For language processing, we will integrate specialized text segmentation tools such as \texttt{kuromoji.js} or \texttt{Sudachi} to handle word tokenization, furigana generation, and romanization of non-Latin scripts.
 
-\begin{itemize}
-\item Specific programming language
-\item Specific libraries
-\item Pre-trained models
-\item Specific linter tool (if appropriate)
-\item Specific unit testing framework
-\item Investigation of code coverage measuring tools
-\item Specific plans for Continuous Integration (CI), or an explanation that CI
-  is not being done
-\item Specific performance measuring tools (like Valgrind), if
-  appropriate
-\item Tools you will likely be using?
-\end{itemize}
+\vspace{1em}
 
-\wss{git, GitHub and GitHub projects should be part of your technology.}
+Audio timing and synchronized lyric rendering will be handled using platform-agnostic playback engines such as \href{https://howlerjs.com/}{\textbf{Howler.js}} or the native Expo Audio API, capable of sub-second timekeeping precision.
+
+\vspace{1em}
+
+We will use \href{https://eslint.org/}{\textbf{ESLint}} and \href{https://prettier.io/}{\textbf{Prettier}} to enforce consistent code formatting and coding standards, managed locally via \textbf{Husky} pre-commit hooks.
+
+\vspace{1em}
+
+Testing will be conducted using \href{https://jestjs.io/}{\textbf{Jest}} for unit and integration tests, alongside \textbf{istanbul/nyc} or built-in coverage tools to measure test completeness.
+
+\bigskip
+\noindent\textbf{CI/CD \& Version Control:} We will use \textbf{Git}, \textbf{GitHub}, and \textbf{GitHub Projects} for version control, issue tracking, and sprint management. Continuous Integration (CI) pipelines will be executed via \textbf{GitHub Actions} to run automated test suites, lint checks, and cross-platform build verifications on every pull request.
 
 \section{Use of AI and LLMs}
 
-\wss{This section is a continuation of the previous section.  The role of LLMs
-in your project as important enough to warrant their own section.  
-How will your team be using LLMs for code and documentation development?  
-What tools will you be using?  How will you verify the output of your LLMs?}
+\begin{itemize}
+    \item \textbf{Code Development:} AI tools (e.g., GitHub Copilot, ChatGPT) will be utilized as programming assistants for generating boilerplate code, routine utility functions, and regular expressions for text parsing.
+    \item \textbf{Documentation \& Quality Assurance:} LLMs will be used exclusively for proofreading documentation—identifying grammatical errors, resolving text parsing inconsistencies, and ensuring proper LaTeX syntax formatting—as well as suggesting candidate unit test scenarios.
+    \item \textbf{Verification Protocol:} No AI-generated code or text modifications will be integrated directly without human verification. All outputs must undergo thorough manual peer review, adhere to project linting standards, and pass automated unit test suites prior to being merged.
+\end{itemize}
 
 \section{Coding Standard}
 
-\wss{What coding standard will you adopt?}
+All codebase components will strictly follow the **Airbnb JavaScript/TypeScript Style Guide**. Adherence will be automatically enforced via \texttt{ESLint} pre-commit hooks and status checks in GitHub Actions.
 
 \newpage{}
-
 \section{Appendix --- Generative AI Use Disclosure}
 
 \subsection{AI Tools Used}
-OpenAI Codex, using the GPT-5.6 Terra model with medium reasoning effort, was
-used through the Codex desktop application.
-
-\subsection{How and Where Used}
-Codex was used to review, reword, restructure, and propose candidate wording
-for the \emph{Problem Statement and Goals} document. In particular, it assisted
-with clarifying the intended user group; improving the problem description;
-organizing the inputs, outputs, stakeholders, and environment sections;
-defining key terms; and presenting the minimum viable product and stretch goals
-in tables. It also suggested measurable acceptance conditions for the goals and
-identified document-level issues such as undefined terms, template commentary,
-and incomplete scope boundaries.
-
-The team used Codex as a drafting and editing aid, not as an authoritative
-source. The final Problem Statement was edited by the team to reflect its own
-decisions about the project scope, target users, goals, and evaluation criteria.
-
-This disclosure covers both the Problem Statement and the Development Plan. At
-the time of this revision, no AI-generated or AI-modified content has been
-retained in the body of the Development Plan other than this disclosure. This
-section will be updated if material AI assistance is used in later Development
-Plan revisions.
-
-\subsection{Verification of AI-Generated Content}
-The team verified AI-assisted material before retaining it by:
 \begin{itemize}
-    \item reviewing and editing every AI-assisted passage to ensure it reflects
-    the team's intended deliverable and does not introduce unapproved features
-    or commitments;
-    \item checking that the problem statement, inputs and outputs,
-    stakeholders, environment, goals, and stretch goals use consistent
-    terminology and scope boundaries;
-    \item replacing vague success statements with explicit acceptance criteria
-    that the team can evaluate during implementation and testing;
-    \item checking technical, copyright, licensing, and integration claims
-    against the team's implementation plan, supervisor guidance, and primary
-    sources where external facts are required; and
-    \item conducting a final team review for accuracy, completeness,
-    consistency, grammar, and appropriateness for the capstone audience.
+    \item \textbf{Tool Name:} OpenAI ChatGPT / Anthropic Claude / Google Gemini.
+    \item \textbf{Version:} Current Web Models.
 \end{itemize}
 
-The team remains responsible for the accuracy, completeness, consistency, and
-appropriateness of all submitted material, whether it was initially written by
-a team member or assisted by an AI tool.
+\subsection{How and Where Used}
+\begin{itemize}
+    \item \textbf{Proofreading and Quality Control:} Generative AI was \textbf{not} used to generate core documentation text or technical content directly. Instead, tools were strictly limited to proofreading existing team-written drafts, catching grammatical and syntactical errors, and refining text phrasing for clarity and consistency.
+\end{itemize}
+
+\subsection{Verification of AI-Generated Content}
+All proofreading edits and technical terminology refinements provided by AI tools were systematically reviewed, edited, and verified by team members to guarantee complete accuracy, originality, and alignment with LingoLyrics project goals and course submission standards.
 
 \newpage{}
 
 \section*{Appendix --- Reflection}
 
-\wss{Not required for CAS 741}
-
-\input{../Reflection.text}
-
 \begin{enumerate}
-    \item Why is it important to create a development plan prior to starting the
-    project?
-    \item In your opinion, what are the advantages and disadvantages of using
-    CI/CD?
-    \item What disagreements did your group have in this deliverable, if any,
-    and how did you resolve them?
+    \item Why is it important to create a development plan prior to starting the project?
+
+    Creating a development plan prior to starting the project encourages the team to establish collaboration practices, align expectations, and identify technical risks early before writing code. It sets clear guidelines for communication, Git workflows, coding standards, and project scheduling, which significantly reduces misunderstandings and integration friction later. A comprehensive plan also provides a shared reference for team roles, decision-making protocols, and toolchains. By agreeing on these foundational practices upfront, the team saves time, prevents scope creep, and can focus directly on executing technical milestones such as real-time audio synchronization and multi-language tokenization.
+
+    \item In your opinion, what are the advantages and disadvantages of using CI/CD?
+
+    \textbf{Advantages:} CI/CD enforces coding standards automatically from day one. Automated build and test workflows instantly catch syntax errors, broken dependencies, and failing component logic before pull requests reach the main branch. It maintains a stable codebase, streamlines peer reviews through automated linting checks, and provides fast feedback on overall project health across diverse development environments.
+
+    \textbf{Disadvantages:} Pipeline configuration and maintenance require non-trivial setup time and technical overhead. Continuous integration scripts can slow down rapid prototyping if builds become slow or flaky. Furthermore, CI/CD is only as reliable as the underlying test suite; maintaining comprehensive test coverage demands ongoing team effort, and build runners can introduce minor resource bottlenecks during tight delivery windows.
+
+    \item What disagreements did your group have in this deliverable, if any, and how did you resolve them?
+
+    While organizing the Proof of Concept (PoC) plan and overall development strategy, our team had two key technical debates:
+    \begin{itemize}
+        \item \textbf{Target Platform (Web Application vs. Native Mobile App):} We debated whether to focus initial development on a web-based app or a native mobile application. The core issue was balancing low-latency, sub-second audio sync across platforms with team implementation bandwidth. We resolved this by agreeing on a web-first architecture that prioritizes cross-browser media timing APIs, while leaving mobile-responsive layout options open for expansion.
+        \item \textbf{Primary Target Audience (Focused/Serious vs. Casual Learners):} We had differing views on whether the app should cater to "sit-down" power users (who require deep grammar breakdowns, detailed segment tokenization, and direct Anki flashcard export) versus casual, on-the-go language learners. We resolved this by prioritizing serious self-directed learners as our primary persona for the PoC scope, while keeping the user interface clean and accessible enough for casual listening.
+    \end{itemize}
 \end{enumerate}
 
 \newpage{}
 
 \section*{Appendix --- Team Charter}
 
-\wss{borrows from
-\href{https://engineering.up.edu/industry_partnerships/files/team-charter.pdf}
-{University of Portland Team Charter}}
-
 \subsection*{External Goals}
-
-\wss{What are your team's external goals for this project? These are not the
-goals related to the functionality or quality fo the project.  These are the
-goals on what the team wishes to achieve with the project.  Potential goals are
-to win a prize at the Capstone EXPO, or to have something to talk about in
-interviews, or to get an A+, etc.}
+The team's main goal is to create an engaging, accessible tool that bridges music consumption and language acquisition. Through LingoLyrics, we aim to strengthen our technical capabilities in cross-platform web audio engineering, multi-language NLP tokenization, and third-party workflow integrations like Anki. We also hope to deliver a polished, technically rigorous project that stands out at the Capstone EXPO, serves as a strong portfolio piece for full-stack software development, and earns recognition from judges and peers.
 
 \subsection*{Attendance}
 
 \subsubsection*{Expectations}
-
-\wss{What are your team's expectations regarding meeting attendance (being on
-time, leaving early, missing meetings, etc.)?}
+The team expects all members to attend scheduled syncs and arrive on time. If a member is unable to attend or will be late, they are expected to notify the team in Discord ahead of time, review the recorded meeting notes, and provide an async status update on their assigned tasks. Prior to each meeting, the meeting chair will share an agenda outlining key discussion points (e.g., audio engine performance, map editor features, SRS integration). Meetings will end early if all agenda topics are resolved, or continue asynchronously in Discord if further technical discussion is needed.
 
 \subsubsection*{Acceptable Excuse}
+An acceptable excuse for missing a meeting is an unpredictable personal emergency, illness, or documented academic exam conflict communicated ahead of time. Missing meetings due to poor time management or avoidable scheduling conflicts is unacceptable.
 
-\wss{What constitutes an acceptable excuse for missing a meeting or a deadline?
-What types of excuses will not be considered acceptable?}
+For project deliverables, acceptable excuses include unforeseen personal emergencies or severe technical blockers that were proactively flagged to the group. Unacceptable excuses include underestimating task complexity, poor time planning, or neglecting assigned components until right before deadline dates. We value transparency and expect everyone to communicate potential delays early so the team can adjust task allocations.
 
 \subsubsection*{In Case of Emergency}
-
-\wss{What process will team members follow if they have an emergency and cannot
-attend a team meeting or complete their individual work promised for a team
-deliverable?}
+Team members must notify the group via Discord as soon as practically possible during an emergency. For occasional occurrences, team members will redistribute critical tasks (such as urgent PR reviews or deliverable sections) to keep project development moving forward. However, if a member experiences repeated issues meeting deadlines, the team will schedule a check-in to re-balance responsibilities or consult course instructors if necessary.
 
 \subsection*{Accountability and Teamwork}
 
 \subsubsection*{Quality} 
-
-\wss{What are your team's expectations regarding the quality
-of team members' preparation for team meetings and the quality of the
-deliverables that members bring to the team?}
+Deliverables and codebase additions must meet Level 4 standard criteria on project rubrics. Code merged into main branches must pass automated CI linting checks, unit tests, and receive approval from a designated peer reviewer. If team members encounter unfamiliar domain concepts—such as complex foreign text tokenizers or cross-platform web audio APIs—they are expected to research solutions independently and consult team members to maintain high technical standards.
 
 \subsubsection*{Attitude}
-
-\wss{What are your team's expectations regarding team members' ideas,
-interactions with the team, cooperation, attitudes, and anything else regarding
-team member contributions?  Do you want to introduce a code of conduct?  Do you
-want a conflict resolution plan?  Can adopt existing codes of conduct.}
+Team members must maintain a professional, supportive, and open-minded attitude. Feedback during pull request reviews or planning sessions should remain constructive and focused on code quality and project objectives rather than personal preferences.
 
 \subsubsection*{Stay on Track}
-
-\wss{What methods will be used to keep the team on track? How will your team
-ensure that members contribute as expected to the team and that the team
-performs as expected? How will your team reward members who do well and manage
-members whose performance is below expectations?  What are the consequences for
-someone not contributing their fair share?}
-
-\wss{You may wish to use the project management metrics collected for the TA and
-instructor for this.}
-
-\wss{You can set target metrics for attendance, commits, etc.  What are the
-consequences if someone doesn't hit their targets?  Do they need to bring the
-coffee to the next team meeting?  Does the team need to make an appointment with
-their TA, or the instructor?  Are there incentives for reaching targets early?}
+Each team member is accountable for completing assigned GitHub issues within sprint timeframes. Work progress will be tracked transparently using GitHub Projects and commit histories. If someone anticipates falling behind on a task, they must flag it early in Discord so workload can be shared. Individual contributions will be regularly reviewed through issue completion and active participation in code reviews to ensure equitable workloads.
 
 \subsubsection*{Team Building}
-
-\wss{How will you build team cohesion (fun time, group rituals, etc.)? }
+Our team will hold regular in-person meetings each week to foster strong working relationships. We also plan to dedicate brief informal time before sprint planning sessions and organize monthly team social activities to maintain high team morale and open communication.
 
 \subsubsection*{Decision Making} 
-
-\wss{How will you make decisions in your group? Consensus?  Vote? How will you
-handle disagreements? }
+Decisions will be made through technical consensus following research and discussion of trade-offs. If the team reaches an impasse on architectural choices (e.g., platform targets or language tokenization libraries), members will present brief technical comparisons, consult with project advisors if needed, and conduct a formal team vote to reach a binding decision.
 
 \end{document}

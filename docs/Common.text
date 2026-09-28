@@ -2,10 +2,10 @@
 
 \newcommand{\progname}{Software Engineering} % PUT YOUR PROGRAM NAME HERE
 \newcommand{\authname}{Team \#21, LingoLyrics
-\\ Student 1 name
+\\ Rhea Gokhale
 \\ Aansh Kotian
-\\ Student 3 name
-\\ Student 4 name} % AUTHOR NAMES                  
+\\ Omar Bakr
+\\ Raymond Ma} % AUTHOR NAMES
 
 \usepackage{hyperref}
     \hypersetup{colorlinks=true, linkcolor=blue, citecolor=blue, filecolor=blue,

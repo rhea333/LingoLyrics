@@ -28,8 +28,9 @@
 \toprule
 \textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
 \midrule
-September 22, 2026 & Team LingoLyrics & Initial Revision 0 draft\\
-September 28, 2026 & Team LingoLyrics & Filled out the template; implemented supervisor feedback; reworded documentation with Codex.\\
+September 22, 2026 & Omar Bakr & Initial Revision 0 draft\\
+September 28, 2026 & Raymond Ma & Filled out the template; implemented supervisor feedback; reworded documentation with Codex.\\
+September 28, 2026 & Rhea Gokhale & Changed goals to selling point level, confirmed customer documents, overall polish and review \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -67,6 +68,12 @@ synchronized, annotated lyrics and retain selected vocabulary through Anki.
         and language metadata.
   \item \textbf{Contextual annotation:} an explanation of a word, phrase, or
         lyric line that captures its intended meaning in the song.
+  \item \textbf{Segmentation:} splitting a line of text into individual words,
+        which is needed for languages such as Japanese that do not put spaces
+        between words.
+  \item \textbf{Transliteration:} writing a word in another alphabet (for
+        example, Japanese written in Latin letters) so a learner can
+        pronounce it before they can read the original script.    
   \item \textbf{Anki:} a spaced-repetition flashcard application used for
         vocabulary review.
 \end{itemize}
@@ -105,9 +112,10 @@ Secondary stakeholders include:
 
 \subsection{Environment}
 The learner-facing application is designed for short, self-directed study
-moments on a smartphone, including while listening to music with headphones.
-The creator workflow will be delivered through a desktop or web-based editor.
-Both workflows must use a shared song-map representation.
+moments on an iOS or Android smartphone, including while listening to music
+with headphones. The creator workflow will be delivered through a web-based
+editor used on a laptop or desktop computer. Both workflows must use a shared
+song-map representation.
 
 The initial release will use team-created, public-domain, or appropriately
 licensed content. It does not promise streaming-service integration, a
@@ -123,14 +131,18 @@ tools, such as lyrics websites, translation tools, and music players. This
 interrupts listening and makes it harder to understand and retain vocabulary
 in its original lyrical context.
 
-LingoLyrics combines timed lyrics, translations, contextual annotations, and
+\progname{} combines timed lyrics, translations, contextual annotations, and
 vocabulary export in one workflow. Its reusable song-map format prevents
 learners and teachers from having to reconstruct the same context separately.
+
+Table~\ref{TblGoals} lists the goals that \progname{} must achieve to be
+considered acceptable and complete. Each goal has a measure that will be
+refined into requirements in the Software Requirements Specification (SRS).
 
 \begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.22\textwidth}
                        >{\raggedright\arraybackslash}p{0.48\textwidth}
                        >{\raggedright\arraybackslash}p{0.22\textwidth}@{}}
-\caption{Minimum Viable Product Goals}\label{TblMVPGoals}\\
+\caption{Minimum Viable Product Goals}\label{TblGoals}\\
 \toprule
 \textbf{Goal} & \textbf{Explanation} & \textbf{Reasoning}\\
 \midrule
@@ -191,13 +203,22 @@ Timing and Annotation Assistance & Evaluate automatic assistance while preservin
 
 \section{Custom Documents (CDs)}
 \begin{itemize}
-  \item Fall: Design Thinking Report or User/Stakeholder/Client Interview Report
-  \item Winter: User Manual or Usability Report
+  \item Fall: Design Thinking Report or User/Stakeholder/Client Interview Report: interviews
+        with target learners and song-map creators to validate the problem and
+        the learner and creator workflows before design begins.
+  \item Winter: User Manual or Usability Report: usability testing of the mobile
+        learner app and the web editor with representative users, measured
+        against the goals in Table~\ref{TblGoals}.
 \end{itemize}
 
-The fall custom document will validate learner and creator workflows. The
+The Winter CD was changed from a User Manual to a Usability Report following
+instructor feedback. The fall custom document will validate learner and creator workflows. The
 winter custom document will document and evaluate the editor and mobile lesson
 flows.
+
+\section*{Generative AI Use}
+The Generative AI Use Disclosure covering this document is in the appendix of
+the \progname{} Development Plan.
 
 \newpage{}
 
@@ -211,16 +232,29 @@ flows.
 
   \item \textbf{What pain points did you experience during this deliverable,
   and how did you resolve them?}\\
-  A few meetings needed to be rescheduled, which made coordination more
-  difficult. The team established recurring meeting times to provide a more
-  reliable schedule for future deliverables.
+  A few meetings had to be rescheduled, which made coordination harder; we
+  resolved this by setting recurring Friday meeting times. The harder problem
+  was the level of detail in the goals. Our first drafts were either too vague
+  to measure or so specific that they read like test cases (for example, naming
+  the exact Anki deck and field names). We resolved this by checking each goal
+  against the checklist question ``is this a selling point or a requirement?'',
+  keeping the measurable part, and moving implementation detail to the SRS. We
+  also found that parts of our drafts assumed a web app while others assumed a
+  phone app; we agreed on a mobile learner app with a web-based editor and
+  updated both documents to match.
 
   \item \textbf{How did you and your team adjust the scope of your goals to
   ensure they are suitable for a Capstone project?}\\
   Professor feedback identified ``language learners'' as too broad a target
-  group. The team narrowed the intended users to self-directed,
-  early-intermediate to intermediate learners who use songs to study a target
-  language, allowing the project goals to remain focused and feasible.
+  group, so we narrowed the intended users to self-directed, early
+  to intermediate learners who use songs to study a target language. We then
+  limited the core product to two languages, a two-song acceptance suite, and
+  team-created or licensed content, and explicitly excluded streaming-service
+  integration and a production music catalogue. Features we liked but could not
+  guarantee, such as a third language, collaborative review, and automatic
+  timing assistance, became stretch goals. Keeping one non-Latin language in
+  the core goals keeps the project technically challenging enough for a senior
+  design project.
 \end{enumerate}
 
 \end{document}

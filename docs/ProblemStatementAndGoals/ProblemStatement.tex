@@ -2,6 +2,7 @@
 
 \usepackage{tabularx}
 \usepackage{booktabs}
+\usepackage{longtable}
 
 \title{Problem Statement and Goals\\\progname}
 
@@ -138,21 +139,36 @@ Table~\ref{TblGoals} lists the goals that \progname{} must achieve to be
 considered acceptable and complete. Each goal has a measure that will be
 refined into requirements in the Software Requirements Specification (SRS).
 
-\begin{table}[hp]
-\caption{Minimum Viable Product Goals} \label{TblGoals}
-\begin{tabularx}{\textwidth}{lXX} \\[-8pt]
+\begin{longtable}{@{}>{\raggedright\arraybackslash}p{0.22\textwidth}
+                       >{\raggedright\arraybackslash}p{0.48\textwidth}
+                       >{\raggedright\arraybackslash}p{0.22\textwidth}@{}}
+\caption{Minimum Viable Product Goals}\label{TblGoals}\\
 \toprule
 \textbf{Goal} & \textbf{Explanation} & \textbf{Reasoning}\\
 \midrule
-Synchronized Lesson Playback & Across every lyric-line transition in a fixed two-song acceptance suite, at least 95\% occur within 0.5 seconds of their mapped timestamps. & Timing keeps the lesson connected to the music.\\
-In-Context Vocabulary Support & Every annotated target in the fixed two-song acceptance suite displays its translation and contextual annotation when selected. & Meaning is clearer when vocabulary is preserved in context.\\
-Creator-to-Learner Interoperability & A song map created by the editor validates against one shared format and is opened by the learner application without manual file modification. & Learners receive consistent lessons, while creators avoid duplicate content preparation.\\
-Practical Lesson Creation & At least two of three test creators can produce a complete map for a pre-defined short test track within 45 minutes, without manually editing the underlying map file; each resulting map must validate and play in the learner application. & A lesson system is only useful if content can be prepared consistently.\\
-Language-Aware Support & Demonstrate two languages with different text-handling needs; at least one must require non-Latin rendering, language-specific segmentation, or transliteration. & This validates that the product is not limited to one writing system.\\
-Vocabulary Retention Handoff & Sending a selected vocabulary item creates a note in the named \emph{LingoLyrics Test} Anki deck with correctly populated \emph{Term}, \emph{Translation}, and \emph{Context} fields. & This connects song learning to spaced-repetition study.\\
+\endfirsthead
+\multicolumn{3}{c}{\tablename\ \thetable{} -- continued from previous page}\\
+\toprule
+\textbf{Goal} & \textbf{Explanation} & \textbf{Reasoning}\\
+\midrule
+\endhead
+\midrule
+\multicolumn{3}{r}{Continued on next page}\\
+\endfoot
 \bottomrule
-\end{tabularx}
-\end{table}
+\endlastfoot
+Synchronized Lesson Playback & Across every lyric-line transition in a fixed two-song acceptance suite, at least 95\% occur within 0.5 seconds of their mapped timestamps. & Timing keeps the lesson connected to the music.\\
+\addlinespace
+In-Context Vocabulary Support & Every annotated target in the fixed two-song acceptance suite displays its translation and contextual annotation when selected. & Meaning is clearer when vocabulary is preserved in context.\\
+\addlinespace
+Creator-to-Learner Interoperability & A song map created by the editor validates against one shared format and is opened by the learner application without manual file modification. & Learners receive consistent lessons, while creators avoid duplicate content preparation.\\
+\addlinespace
+Practical Lesson Creation & At least two of three test creators can produce a complete map for a pre-defined short test track within 45 minutes, without manually editing the underlying map file; each resulting map must validate and play in the learner application. & A lesson system is only useful if content can be prepared consistently.\\
+\addlinespace
+Language-Aware Support & The application must correctly display lyrics for two languages with different text-handling needs. At least one language must use a non-Latin writing system, and its word divisions and transliterations must match the song map. & This shows that the application can support different languages and writing systems without displaying text incorrectly.\\
+\addlinespace
+Vocabulary Retention Handoff & Sending a selected vocabulary item creates a note in the named \emph{LingoLyrics Test} Anki deck with correctly populated \emph{Term}, \emph{Translation}, and \emph{Context} fields. & This connects song learning to spaced-repetition study.\\
+\end{longtable}
 
 For goal evaluation, the \textbf{fixed two-song acceptance suite} contains one
 map for each demonstrated language and is defined before implementation testing

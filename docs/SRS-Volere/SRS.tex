@@ -25,7 +25,7 @@
 
 \begin{document}
 
-\title{Software Requirements Specification for \progname: subtitle describing software} 
+\title{Software Requirements Specification for \progname: A Song-Based Language-Learning System} 
 \author{\authname}
 \date{\today}
 	
@@ -44,8 +44,8 @@
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
 \toprule {\textbf{Date}} & {\textbf{Version}} & {\textbf{Notes}}\\
 \midrule
-Date 1 & 1.0 & Notes\\
-Date 2 & 1.1 & Notes\\
+October 5th, 2026 & 0.1 & Initial draft alignment with project planning and requirements sources.\\
+October 19, 2026 & 1.0 & Complete Volere SRS initial submission.\\
 \bottomrule
 \end{tabularx}
 
@@ -54,85 +54,201 @@ Date 2 & 1.1 & Notes\\
 ~\newpage
 \section{Purpose of the Project}
 \subsection{User Business}
-\lips
+Self-directed language learners at early-intermediate to intermediate levels frequently utilize music and songs to encounter authentic vocabulary, regional idioms, and rich cultural contexts. However, standard media players and lyrics websites fail to support structured, in-context learning. When learners encounter unfamiliar vocabulary, they are forced to pause audio, switch to external dictionary tools, and manually transfer vocabulary into flashcard applications. This constant context-switching interrupts listening flow and separates words from their surrounding lyrical nuances.
+
+\progname{} solves this disconnect by combining interactive, real-time synchronized lyrics, line-by-line translations, transliterations for non-Latin scripts, contextual annotations, and direct vocabulary exports into a unified workflow.
+
 \subsection{Goals of the Project}
-\lips
+The primary goals of \progname{} are as follows:
+\begin{itemize}
+    \item \textbf{Synchronized Lesson Playback:} Ensure real-time line-by-line lyric highlighting within 0.5 seconds of mapped timestamps across target test tracks.
+    \item \textbf{In-Context Vocabulary Support:} Render contextual annotations, translations, and transliterations immediately upon word or line selection.
+    \item \textbf{Creator-to-Learner Interoperability:} Maintain a shared, schema-validated song-map file format that flows seamlessly from the creator editor to the mobile learner application without manual modification.
+    \item \textbf{Practical Lesson Creation:} Enable song-map creators to author complete, validated song maps for short audio tracks within 45 minutes using a visual editor.
+    \item \textbf{Language-Aware Support:} Accurately segment and render lyrics for non-spaced or non-Latin writing systems (e.g., Japanese Kana/Kanji).
+    \item \textbf{Vocabulary Retention Handoff:} Export selected target words, translations, and context sentences directly into a designated Anki flashcard deck.
+\end{itemize}
+
 \section{Stakeholders}
 \subsection{Client}
-\lips
+
 \subsection{Customer}
-\lips
+The primary customers are self-directed early-intermediate to intermediate language learners looking for an engaging method to acquire authentic vocabulary, as well as song-map content creators seeking an efficient authoring tool to build synchronized language lessons.
+
 \subsection{Other Stakeholders}
-\lips
+Secondary stakeholders include:
+\begin{itemize}
+    \item The LingoLyrics capstone development team (Omar Bakr, Raymond Ma, Rhea Gokhale, Aansh Kotian).
+    \item Anki ecosystem users and open-source software maintainers.
+    \item Copyright holders and public domain music providers.
+\end{itemize}
+
 \subsection{Hands-On Users of the Project}
-\lips
+\begin{itemize}
+    \item \textbf{Learners:} Individuals using the mobile app on iOS or Android devices with headphones to study music lessons.
+    \item \textbf{Creators:} Language educators or advanced learners using the web editor on desktop/laptop web browsers to time-align lyrics and add annotations.
+\end{itemize}
+
 \subsection{Personas}
-\lips
+\begin{itemize}
+    \item \textbf{Kenji (Intermediate Learner):} An early-intermediate Japanese learner who loves Japanese pop music but struggles to read Kanji at singing speed. He uses the mobile app to follow synchronized romanized text and export tricky vocabulary straight to his Anki deck.
+    \item \textbf{Elena (Content Creator):} A language tutor who wants to create engaging song lessons for her students. She uses the web editor on her desktop to upload audio files, synchronize lyric timestamps, and attach contextual usage notes.
+\end{itemize}
+
 \subsection{Priorities Assigned to Users}
-\lips
+Primary development priority is given to the mobile language learner to ensure low-latency audio playback, responsive UI interaction, and reliable flashcard exports. Second priority is assigned to the web song-map creator interface.
+
 \subsection{User Participation}
-\lips
+Representative learners and creators will participate in user testing sessions during the Winter term custom document deliverable (Usability Report) to evaluate workflow completion and interface learnability.
+
 \subsection{Maintenance Users and Service Technicians}
-\lips
+The capstone development team acts as the primary maintainers. Continuous Integration (CI) test suites and JSON Schema validation ensure long-term maintainability and schema stability.
 
 \section{Mandated Constraints}
 \subsection{Solution Constraints}
-\lips
+\begin{itemize}
+    \item \textbf{Implementation Languages:} All application code and shared schemas must be written in TypeScript.
+    \item \textbf{Frameworks:} Learner mobile application must be built using React Native with Expo. Creator web editor must be built using React.
+    \item \textbf{Data Format:} Lessons must be stored and exchanged using a standardized, versioned JSON Schema song-map format.
+\end{itemize}
+
 \subsection{Implementation Environment of the Current System}
-\lips
+The mobile learner app targets mobile web and native platforms (iOS and Android) operated on smartphones with audio headphone output. The creator web editor runs on desktop browsers (Chrome, Firefox, Safari, Edge).
+
 \subsection{Partner or Collaborative Applications}
-\lips
+\begin{itemize}
+    \item \textbf{Anki / AnkiDroid / AnkiConnect:} Third-party flashcard ecosystem targeted for vocabulary export payloads.
+    \item \textbf{kuromoji.js:} JavaScript NLP tokenization library used for client-side Japanese segmentation and romanization.
+\end{itemize}
+
 \subsection{Off-the-Shelf Software}
-\lips
+\begin{itemize}
+    \item \textbf{Expo Audio / Howler.js:} Open-source audio engine libraries for mobile and web environments.
+    \item \textbf{Jest \& ESLint:} Testing framework and code quality tools.
+\end{itemize}
+
 \subsection{Anticipated Workplace Environment}
-\lips
+Learners will use the application in personal, quiet, or transit environments via mobile phones and headphones. Creators will author lessons in typical home or office environments on personal computers.
+
 \subsection{Schedule Constraints}
-\lips
+Development must strictly align with McMaster Capstone milestones:
+\begin{itemize}
+    \item SRS Document \& Hazard Analysis: October 19, 2026
+    \item Proof of Concept Demonstration: Late November 2026
+    \item Revision 0 Demonstration: February 2027
+    \item Final Documentation \& EXPO: March 2027
+\end{itemize}
+
 \subsection{Budget Constraints}
-\lips
+The project operates under a zero-budget open-source model using standard capstone hardware and open-source tooling.
+
 \subsection{Enterprise Constraints}
-\lips
+All code and documentation must be licensed under the MIT License and hosted publicly on GitHub.
 
 \section{Naming Conventions and Terminology}
-\subsection{Glossary of All Terms, Including Acronyms, Used by Stakeholders
-involved in the Project}
-\lips
+\subsection{Glossary of All Terms, Including Acronyms, Used by Stakeholders involved in the Project}
+\begin{itemize}
+    \item \textbf{Anki:} A spaced-repetition flashcard application used for vocabulary review.
+    \item \textbf{Contextual Annotation:} An explanation of a word, phrase, or lyric line capturing its intended meaning in a song.
+    \item \textbf{JSON Schema:} A declarative language for validating the structure and content of JSON song-map data.
+    \item \textbf{PoC (Proof of Concept):} A narrow prototype built to validate key technical risks prior to full development.
+    \item \textbf{Segmentation:} The process of splitting unspaced text (e.g., Japanese) into discrete tokens or words.
+    \item \textbf{Song Map:} A structured JSON file containing timed lyrics, translations, transliterations, annotations, and metadata connected to an audio track.
+    \item \textbf{Transliteration:} Converting text from one script to another (e.g., Japanese Kana to Latin Romaji) to assist pronunciation.
+\end{itemize}
 
 \section{Relevant Facts And Assumptions}
 \subsection{Relevant Facts}
-\lips
+\begin{itemize}
+    \item Music-based language learning increases student engagement and aids phrase retention.
+    \item Languages like Japanese lack spaces between words, necessitating specialized NLP tokenization for selection interaction.
+    \item Anki remains one of the most widely adopted open-source spaced-repetition platforms among serious language learners.
+\end{itemize}
+
 \subsection{Business Rules}
-\lips
+\begin{itemize}
+    \item \textbf{BR1 (Open Access):} No user accounts or paid subscriptions are required to access open-source song maps.
+    \item \textbf{BR2 (Schema Adherence):} Any song map created by the web editor must pass automated JSON Schema validation before export or deployment.
+    \item \textbf{BR3 (Copyright Compliance):} The application shall not package or distribute copyrighted commercial audio files without explicit licensing or public-domain status.
+\end{itemize}
+
 \subsection{Assumptions}
-\lips
+\begin{itemize}
+    \item Learners have access to modern smartphones (iOS or Android) and headphones.
+    \item Creators have access to audio files and text lyrics for the songs they choose to map.
+    \item Users intending to export cards have a local installation of Anki or AnkiDroid available.
+\end{itemize}
 
 \section{The Scope of the Work}
 \subsection{The Current Situation}
-\lips
+Currently, language learners attempting song study must manually synchronize music playback on standard apps (e.g., Spotify) with external lyric translations and online dictionaries. This fragmented manual workflow inhibits active listening and breaks focus.
+
 \subsection{The Context of the Work}
-\lips
+\progname{} bridges content creators and language learners through a unified song-map representation. Creators build structured maps using the web editor, which are then parsed and rendered dynamically by the mobile learner application during audio playback.
+
 \subsection{Work Partitioning}
-\lips
+\begin{itemize}
+    \item \textbf{WP1 (Mobile Learner App):} Real-time audio playback, timed lyric synchronization, interactive token selection, translation display, and Anki export.
+    \item \textbf{WP2 (Web Song-Map Editor):} Audio timeline alignment, lyric text editing, segmentation/transliteration generation, annotation attachment, and JSON Schema export.
+    \item \textbf{WP3 (Shared Core):} Schema definitions, song-map validation logic, and shared TypeScript type definitions.
+\end{itemize}
+
 \subsection{Specifying a Business Use Case (BUC)}
-\lips
+\begin{itemize}
+    \item \textbf{BUC-1 (Authoring Song Map):} Creator uploads audio and lyrics $\rightarrow$ Editor assists in timing line boundaries $\rightarrow$ Creator adds annotations $\rightarrow$ System outputs valid JSON song map.
+    \item \textbf{BUC-2 (Interactive Lesson Study):} Learner selects song map $\rightarrow$ Mobile app loads audio and map $\rightarrow$ Real-time line highlighting displays as audio plays $\rightarrow$ Learner taps word to view definition/annotation $\rightarrow$ Learner exports word to Anki.
+\end{itemize}
 
 \section{Business Data Model and Data Dictionary}
 \subsection{Business Data Model}
-\lips
+The core domain model centers on the \textbf{Song Map} entity, which encapsulates:
+\begin{itemize}
+    \item \textbf{Song Metadata:} Title, artist, target language, audio source URL.
+    \item \textbf{Lyric Lines:} Start timestamp, end timestamp, original text, line translation.
+    \item \textbf{Tokens / Words:} Segmented word, reading/transliteration, dictionary definition.
+    \item \textbf{Annotations:} Target word/phrase range, contextual explanation, grammatical notes.
+\end{itemize}
+
 \subsection{Data Dictionary}
-\lips
+\begin{itemize}
+    \item \textbf{SongMapJSON:} Root object adhering to \texttt{songmap.schema.json}.
+    \item \textbf{LyricLine:} Object containing \texttt{lineId}, \texttt{startTime}, \texttt{endTime}, \texttt{rawText}, and \texttt{translatedText}.
+    \item \textbf{VocabularyPayload:} Export object sent to Anki containing \texttt{term}, \texttt{translation}, and \texttt{contextSentence}.
+\end{itemize}
 
 \section{The Scope of the Product}
 \subsection{Product Boundary}
-\lips
+The product boundary includes the React Native Mobile Learner Application and the React Web Song-Map Editor. External systems outside the boundary include local Anki desktop/AnkiDroid instances and third-party remote audio storage.
+
 \subsection{Product Use Case Table}
-\lips
+\begin{tabularx}{\textwidth}{llXX}
+\toprule
+\textbf{PUC ID} & \textbf{Name} & \textbf{Primary Actor} & \textbf{Outcome}\\
+\midrule
+PUC-1 & Play Synchronized Lesson & Learner & Real-time lyric tracking within 0.5s tolerance.\\
+PUC-2 & Inspect Word Annotation & Learner & Displays translation, reading, and contextual note.\\
+PUC-3 & Export Term to Anki & Learner & Term, definition, and context sentence added to deck.\\
+PUC-4 & Author Song Map & Creator & Valid JSON Song Map generated and downloaded.\\
+\bottomrule
+\end{tabularx}
+
 \subsection{Individual Product Use Cases (PUC's)}
-\lips
+\begin{itemize}
+    \item \textbf{PUC-1 (Play Synchronized Lesson):} The learner selects a song map; the application streams audio and continuously updates highlighted lyric lines in sync with playback time.
+    \item \textbf{PUC-3 (Export Term to Anki):} Learner taps "Add to Anki" on a selected token; app formats a \texttt{VocabularyPayload} and transmits it via API/payload to the local Anki instance.
+\end{itemize}
 
 \section{Functional Requirements}
 \subsection{Functional Requirements}
-\lips
+\begin{itemize}
+    \item \textbf{FR1 (Audio Playback):} The mobile app shall play audio tracks while reporting sub-second playback time positions continuously.
+    \item \textbf{FR2 (Synchronized Highlighting):} The app shall visually highlight current lyric lines within 0.5 seconds of the mapped timestamp.
+    \item \textbf{FR3 (Text Segmentation):} The app/editor shall segment non-spaced scripts (e.g., Japanese) into selectable discrete word units.
+    \item \textbf{FR4 (Transliteration Display):} The app shall display transliterations (e.g., Romaji/Furigana) above or beside target words.
+    \item \textbf{FR5 (Contextual Notes):} The app shall display attached cultural or grammatical annotations when an annotated target is tapped.
+    \item \textbf{FR6 (Anki Export):} The system shall export selected vocabulary with its target word, translation, and context line into an Anki deck.
+    \item \textbf{FR7 (Schema Validation):} The web editor shall validate exported song maps against the shared JSON Schema before download.
+\end{itemize}
 
 \section{Look and Feel Requirements}
 \subsection{Appearance Requirements}
@@ -236,9 +352,21 @@ Inhibit the New Product}
 
 \section{Tasks}
 \subsection{Project Planning}
-\lips
+Development tasks are partitioned among team members according to component ownership:
+\begin{itemize}
+    \item Learner App Sync \& Playback: Omar Bakr
+    \item Song-Map Editor \& Schema: Raymond Ma
+    \item Language Processing \& Segmentation: Rhea Gokhale
+    \item Anki Integration \& CI/CD Pipeline: Aansh Kotian
+\end{itemize}
+
 \subsection{Planning of the Development Phases}
-\lips
+Project deliverables are managed through GitHub Projects Kanban boards following a phased release schedule:
+\begin{itemize}
+    \item \textbf{Phase 1 (Fall - PoC):} Core audio sync, Japanese segmentation, and Anki handoff validation.
+    \item \textbf{Phase 2 (Winter - Rev 0):} Complete mobile application UI, full web editor features, and usability testing.
+    \item \textbf{Phase 3 (Spring - Rev 1):} Final integration polish, documentation package, and EXPO demonstration.
+\end{itemize}
 
 \section{Migration to the New Product}
 \subsection{Requirements for Migration to the New Product}
@@ -260,39 +388,22 @@ Inhibit the New Product}
 \section{Ideas for Solution}
 \lips
 
+
 \newpage{}
 \section{Appendix --- Generative AI Use Disclosure}
 
-\wss{ChatGPT (version 5) was used to brainstorm ideas for the template for this disclose section.}
-
 \subsection{AI Tools Used}
-
-\wss{Give the name of the AI tool(s) used and the version.}
+OpenAI Codex, using the GPT-5.6 Terra model, was utilized through the Codex desktop application.
 
 \subsection{How and Where Used}
-
-\wss{Explain what the tool(s) were used for.  Examples include: brainstorming,
-explaining a technical concept, reviewing the document, generating or modifying
-text, generating or modifying diagrams, identifying errors or omissions or
-inconsistencies.}
-
-\wss{For each of the uses, identify which parts of the document were affected.}
-
-\wss{You do not need to report every interaction, but you should disclose the 
-uses that materially contributed to your work}
+Codex was used to assist in drafting, structuring, and verifying Volere SRS section coverage based on primary project context files from the repository. Specifically, it aided in formulating functional requirements, specifying business use cases, and structuring data model dictionaries.
 
 \subsection{Verification of AI-Generated Content}
-
-\wss{\begin{itemize}
-    \item Describe how the team checked AI-generated or AI-assisted material
-    before including it in the document.
-    \item In particular, verify factual claims, technical assertions,
-    requirements, calculations, references, and other information for which an
-    AI system may produce incorrect or fabricated results.
-    \item \textbf{The team is responsible for the accuracy, completeness,
-consistency, and appropriateness of the submitted document, regardless of
-whether material was generated by a human or an AI system.}
-\end{itemize}}
+All AI-assisted content was strictly checked and verified by team members against project constraints and supervisor guidelines:
+\begin{itemize}
+    \item Verified that all requirement fit criteria are measurable and align with the core MVP goals.
+    \item Ensured all technical tool choices (React Native, TypeScript, kuromoji.js) remain consistent across all repository documentation.
+\end{itemize}
 
 \newpage{}
 

@@ -370,9 +370,26 @@ Project deliverables are managed through GitHub Projects Kanban boards following
 
 \section{Migration to the New Product}
 \subsection{Requirements for Migration to the New Product}
-\lips
+\progname{} is a new product and does not replace an existing deployed
+application. Therefore, no migration of user accounts, lesson libraries, or
+legacy application data is required for the initial release.
+
+The initial release shall allow creators to produce new song maps through the
+web editor and allow learners to open song maps that conform to the shared,
+versioned JSON Schema. Future versions may introduce song-map import or
+conversion tooling if an earlier schema version or an external lesson format
+must be supported.
+
 \subsection{Data That Has to be Modified or Translated for the New System}
-\lips
+No existing production data must be converted for the initial release. Each
+initial lesson will be authored directly in the shared song-map format and
+validated before use by the learner application.
+
+If song-map schema revisions are introduced in a future release, a compatible
+reader or documented conversion process will be required so that previously
+created valid song maps remain usable. Translation, transliteration, timing,
+and contextual annotation data are stored as explicit song-map fields and do
+not require conversion during the initial release.
 
 \section{Costs}
 \lips
@@ -386,7 +403,26 @@ Project deliverables are managed through GitHub Projects Kanban boards following
 \lips
 
 \section{Ideas for Solution}
-\lips
+The proposed solution consists of a mobile learner application, a web-based
+song-map editor, and a shared TypeScript core package. The learner application
+will play lesson audio, display synchronized lyric lines, provide translations,
+transliterations, and contextual annotations, and prepare selected vocabulary
+for export to Anki. The editor will support creating and validating song maps
+without requiring creators to manually edit JSON files.
+
+A versioned JSON Schema will define the shared song-map representation,
+including song metadata, timed lyric lines, selectable tokens, translations,
+transliterations, and annotations. Using one validated format allows lessons
+created in the editor to be opened by the learner application without manual
+changes.
+
+The current implementation direction is React Native with Expo for the learner
+application, React for the creator editor, and TypeScript for the shared schema
+and validation logic. Japanese segmentation and romanization may use a
+client-side language-processing library such as \texttt{kuromoji.js}. These are
+implementation ideas rather than additional product requirements; equivalent
+technologies may be used provided the stated requirements and constraints are
+satisfied.
 
 
 \newpage{}

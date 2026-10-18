@@ -8,6 +8,11 @@
 
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{float}
 \usepackage{hyperref}
 \hypersetup{
     bookmarks=true,         % show bookmarks bar?
@@ -18,17 +23,24 @@
     urlcolor=cyan           % color of external links
 }
 
-\newcommand{\lips}{\textit{Insert your content here.}}
-
 \input{../Comments.text}
 \input{../Common.text}
 
+% Symbolic constant (values are listed in Appendix~\ref{SecConstants})
+\newcommand{\cn}[1]{\texttt{#1}}
+% Parts of a requirement entry
+\newcommand{\rat}[1]{\\\textit{Rationale:} #1}
+\newcommand{\fit}[1]{\\\textit{Fit criterion:} #1}
+\newcommand{\trace}[1]{\\\textit{Traces to:} #1}
+% Ragged-right fixed-width column
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+
 \begin{document}
 
-\title{Software Requirements Specification for \progname: A Song-Based Language-Learning System} 
+\title{Software Requirements Specification for \progname: A Language Learning System Based on Songs}
 \author{\authname}
 \date{\today}
-	
+
 \maketitle
 
 ~\newpage
@@ -45,405 +57,1675 @@
 \toprule {\textbf{Date}} & {\textbf{Version}} & {\textbf{Notes}}\\
 \midrule
 October 5th, 2026 & 0.1 & Initial draft alignment with project planning and requirements sources.\\
-October 19, 2026 & 1.0 & Complete Volere SRS initial submission.\\
+October 18, 2026 & 1.1 & Filled the remaining Volere sections. Added fit
+criteria, rationale, and traces to each requirement. Added the safety and
+security requirements from the Hazard Analysis. Added symbolic constants, a
+formal specification, likely and unlikely changes, and traceability tables.\\
 \bottomrule
 \end{tabularx}
 
 ~\\
 
 ~\newpage
+
+\pagenumbering{arabic}
+
+\section*{About This Document}
+
+This document specifies the requirements for \progname{}. It follows the
+Volere template, with the following changes:
+
+\begin{itemize}
+  \item The \emph{Risks} section is removed because project risks are covered by
+        the Development Plan (PoC risks R1 to R3) and hazards are covered by the
+        Hazard Analysis.
+  \item Section~\ref{SecFormal} (\emph{Formal Specification}) is added. It
+        defines a valid song map, the line that must be highlighted at a given
+        playback time, and the learner app's playback modes.
+  \item Section~\ref{SecChanges} (\emph{Likely and Unlikely Changes}) is added.
+  \item Appendix~\ref{SecConstants} (\emph{Symbolic Constants}) and
+        Appendix~\ref{SecTrace} (\emph{Traceability}) are added.
+  \item Each requirement is written as a statement followed by its rationale,
+        fit criterion, and the goals, use cases, or hazards it traces to.
+        Numeric values are written as symbolic constants such as
+        \cn{SYNC\_TOL}. Their values and the reason for each value are in
+        Appendix~\ref{SecConstants}.
+\end{itemize}
+
+Requirement identifiers use the following prefixes: MC (mandated
+constraint), FR (functional), LF (look
+and feel), UH (usability and humanity), SL (speed and latency), PA (precision
+or accuracy), RB (robustness), CP (capacity), SC (scalability), LO
+(longevity), OE (operational and environmental), MS (maintainability and
+support), CU (cultural), and ST (standards). The prefixes HS (health and
+safety), AC (access), IN (integrity), PR (privacy), AU (audit), IM (immunity),
+and LG (legal) are shared with the Hazard Analysis so that each safety or
+security requirement has the same identifier in both documents.
+
 \section{Purpose of the Project}
 \subsection{User Business}
-Self-directed language learners at early-intermediate to intermediate levels frequently utilize music and songs to encounter authentic vocabulary, regional idioms, and rich cultural contexts. However, standard media players and lyrics websites fail to support structured, in-context learning. When learners encounter unfamiliar vocabulary, they are forced to pause audio, switch to external dictionary tools, and manually transfer vocabulary into flashcard applications. This constant context-switching interrupts listening flow and separates words from their surrounding lyrical nuances.
+Language learners who study on their own at early intermediate to intermediate levels
+often use songs to hear vocabulary, idioms, and cultural references as native
+speakers use them. Media players and lyrics websites do not support studying
+this material. When a learner meets an unfamiliar word, they have to pause the
+audio, look the word up in another tool, and copy it into a flashcard
+application by hand. This interrupts listening and separates the word from the
+lyric that gives it its meaning.
 
-\progname{} solves this disconnect by combining interactive, real-time synchronized lyrics, line-by-line translations, transliterations for non-Latin scripts, contextual annotations, and direct vocabulary exports into a unified workflow.
+\progname{} combines synchronized lyrics, translations of each line,
+transliterations for scripts other than Latin, contextual annotations, and vocabulary
+export to Anki in one workflow.
 
 \subsection{Goals of the Project}
-The primary goals of \progname{} are as follows:
+The goals below are taken from the Problem Statement and Goals document. Each
+goal's measure is refined into the requirements listed in
+Table~\ref{TblGoalTrace}.
+
 \begin{itemize}
-    \item \textbf{Synchronized Lesson Playback:} Ensure real-time line-by-line lyric highlighting within 0.5 seconds of mapped timestamps across target test tracks.
-    \item \textbf{In-Context Vocabulary Support:} Render contextual annotations, translations, and transliterations immediately upon word or line selection.
-    \item \textbf{Creator-to-Learner Interoperability:} Maintain a shared, schema-validated song-map file format that flows seamlessly from the creator editor to the mobile learner application without manual modification.
-    \item \textbf{Practical Lesson Creation:} Enable song-map creators to author complete, validated song maps for short audio tracks within 45 minutes using a visual editor.
-    \item \textbf{Language-Aware Support:} Accurately segment and render lyrics for non-spaced or non-Latin writing systems (e.g., Japanese Kana/Kanji).
-    \item \textbf{Vocabulary Retention Handoff:} Export selected target words, translations, and context sentences directly into a designated Anki flashcard deck.
+    \item[G1] \textbf{Synchronized Lesson Playback:} highlight each lyric line
+    within \cn{SYNC\_TOL} of its mapped timestamp for at least \cn{SYNC\_PASS}
+    of line transitions in the acceptance suite.
+    \item[G2] \textbf{Vocabulary Support in Context:} show the translation and
+    contextual annotation of every annotated target when it is selected.
+    \item[G3] \textbf{Interoperability between Creators and Learners:} a song map created by
+    the editor validates against one shared format and opens in the learner app
+    without manual changes.
+    \item[G4] \textbf{Practical Lesson Creation:} at least \cn{CREATE\_PASS} test
+    creators produce a complete map for a test track of at most
+    \cn{TEST\_TRACK\_LINES} lines within \cn{CREATE\_TIME}, without editing
+    the map file by hand.
+    \item[G5] \textbf{Support for Different Writing Systems:} display lyrics correctly for
+    \cn{LANG\_COUNT} languages, at least one with a writing system other than Latin,
+    with word divisions and transliterations that match the song map.
+    \item[G6] \textbf{Vocabulary Retention Handoff:} sending a selected item
+    creates an Anki note with correct \emph{Term}, \emph{Translation}, and
+    \emph{Context} fields.
 \end{itemize}
 
 \section{Stakeholders}
 \subsection{Client}
+The project has no external client. The project supervisor, Dr.~Angela Zavaleta
+Bernuy, acts as the client: the supervisor reviews the scope and goals and
+accepts the deliverables at each milestone.
 
 \subsection{Customer}
-The primary customers are self-directed early-intermediate to intermediate language learners looking for an engaging method to acquire authentic vocabulary, as well as song-map content creators seeking an efficient authoring tool to build synchronized language lessons.
+The customers are language learners at early intermediate to intermediate levels who study on their own who want to study vocabulary from songs, and song map creators who
+want a tool for preparing synchronized song lessons.
 
 \subsection{Other Stakeholders}
-Secondary stakeholders include:
 \begin{itemize}
-    \item The LingoLyrics capstone development team (Omar Bakr, Raymond Ma, Rhea Gokhale, Aansh Kotian).
-    \item Anki ecosystem users and open-source software maintainers.
-    \item Copyright holders and public domain music providers.
+    \item The \progname{} capstone development team (Omar Bakr, Raymond Ma,
+          Rhea Gokhale, Aansh Kotian).
+    \item The course instructor and teaching assistants, who evaluate the
+          deliverables.
+    \item Anki users and the maintainers of Anki, AnkiDroid, and AnkiConnect,
+          whose software receives the exported notes.
+    \item Copyright holders of songs and lyrics, whose rights limit what
+          content can be distributed.
 \end{itemize}
 
 \subsection{Hands-On Users of the Project}
 \begin{itemize}
-    \item \textbf{Learners:} Individuals using the mobile app on iOS or Android devices with headphones to study music lessons.
-    \item \textbf{Creators:} Language educators or advanced learners using the web editor on desktop/laptop web browsers to time-align lyrics and add annotations.
+    \item \textbf{Learners:} use the mobile app on an iOS or Android phone,
+          usually with headphones, to study song lessons. They are assumed to
+          be comfortable with common phone apps and to have at least
+          beginner knowledge of the target language. They are not assumed to
+          know linguistic terms such as \emph{segmentation}.
+    \item \textbf{Creators:} language tutors or advanced learners who use the
+          web editor on a laptop or desktop computer to time lyrics and write
+          translations and annotations. They are assumed to read the target
+          language well and to be able to work with audio and text files.
 \end{itemize}
 
 \subsection{Personas}
 \begin{itemize}
-    \item \textbf{Kenji (Intermediate Learner):} An early-intermediate Japanese learner who loves Japanese pop music but struggles to read Kanji at singing speed. He uses the mobile app to follow synchronized romanized text and export tricky vocabulary straight to his Anki deck.
-    \item \textbf{Elena (Content Creator):} A language tutor who wants to create engaging song lessons for her students. She uses the web editor on her desktop to upload audio files, synchronize lyric timestamps, and attach contextual usage notes.
+    \item \textbf{Kenji (learner):} a Japanese learner at early intermediate level who
+          listens to Japanese pop music but cannot read kanji at singing speed.
+          He follows the romanized lyrics in the app and sends unfamiliar words
+          to his Anki deck.
+    \item \textbf{Elena (creator):} a language tutor who prepares song lessons
+          for her students. She uses the web editor to load audio, time the
+          lyric lines, and add usage notes.
 \end{itemize}
 
 \subsection{Priorities Assigned to Users}
-Primary development priority is given to the mobile language learner to ensure low-latency audio playback, responsive UI interaction, and reliable flashcard exports. Second priority is assigned to the web song-map creator interface.
+Learners have first priority because they are the users of the lessons:
+playback timing, word selection, and Anki export are developed first. Creators
+have second priority. The editor is needed to produce lessons but is used by
+fewer people.
 
 \subsection{User Participation}
-Representative learners and creators will participate in user testing sessions during the Winter term custom document deliverable (Usability Report) to evaluate workflow completion and interface learnability.
+Representative learners and creators will take part in the interviews for the
+Fall custom document and in the usability testing for the Winter custom
+document (Usability Report). The usability sessions measure the fit criteria
+of UH1 to UH4 and G4.
 
 \subsection{Maintenance Users and Service Technicians}
-The capstone development team acts as the primary maintainers. Continuous Integration (CI) test suites and JSON Schema validation ensure long-term maintainability and schema stability.
+The development team maintains the product. There are no separate service
+technicians.
 
 \section{Mandated Constraints}
 \subsection{Solution Constraints}
 \begin{itemize}
-    \item \textbf{Implementation Languages:} All application code and shared schemas must be written in TypeScript.
-    \item \textbf{Frameworks:} Learner mobile application must be built using React Native with Expo. Creator web editor must be built using React.
-    \item \textbf{Data Format:} Lessons must be stored and exchanged using a standardized, versioned JSON Schema song-map format.
+    \item[MC1] All application code and the shared song map types shall be
+    written in TypeScript.
+    \\\textit{Rationale:} one language for the app, editor, and shared code
+    lets all three use the same song map types and validator.
+    \item[MC2] The learner app shall be built with React Native and Expo. The
+    editor shall be built with React.
+    \\\textit{Rationale:} one code base covers iOS and Android, and the editor
+    can reuse the app's TypeScript code (Development Plan, Expected
+    Technology).
+    \item[MC3] Lessons shall be stored and exchanged as song maps that conform
+    to one versioned JSON Schema.
+    \\\textit{Rationale:} required by goal G3.
 \end{itemize}
 
 \subsection{Implementation Environment of the Current System}
-The mobile learner app targets mobile web and native platforms (iOS and Android) operated on smartphones with audio headphone output. The creator web editor runs on desktop browsers (Chrome, Firefox, Safari, Edge).
+There is no current system. The learner app will run on iOS and Android phones
+that meet the minimum operating system versions of the Expo SDK release used.
+The editor will run in current desktop versions of Chrome, Firefox, Safari, and
+Edge.
 
 \subsection{Partner or Collaborative Applications}
 \begin{itemize}
-    \item \textbf{Anki / AnkiDroid / AnkiConnect:} Third-party flashcard ecosystem targeted for vocabulary export payloads.
-    \item \textbf{kuromoji.js:} JavaScript NLP tokenization library used for client-side Japanese segmentation and romanization.
+    \item \textbf{Anki, AnkiDroid, and AnkiConnect:} receive vocabulary notes
+          from the learner app (Section~\ref{SecAdjacent}).
 \end{itemize}
 
 \subsection{Off-the-Shelf Software}
 \begin{itemize}
-    \item \textbf{Expo Audio / Howler.js:} Open-source audio engine libraries for mobile and web environments.
-    \item \textbf{Jest \& ESLint:} Testing framework and code quality tools.
+    \item \textbf{Expo Audio and Howler.js:} audio playback with position
+          reporting in the app and the editor.
+    \item \textbf{kuromoji.js:} Japanese segmentation and readings in
+          JavaScript.
+    \item \textbf{A JSON Schema validator library:} validates song maps in the
+          editor, the app, and CI.
+    \item \textbf{Jest and ESLint:} testing and code quality tools.
 \end{itemize}
 
 \subsection{Anticipated Workplace Environment}
-Learners will use the application in personal, quiet, or transit environments via mobile phones and headphones. Creators will author lessons in typical home or office environments on personal computers.
+Learners use the app at home, in transit, or while walking, usually with
+headphones and in short sessions. Creators work at a desk on a laptop or
+desktop computer, with headphones or speakers.
 
 \subsection{Schedule Constraints}
-Development must strictly align with McMaster Capstone milestones:
+The project follows the capstone deadlines in the Development Plan:
 \begin{itemize}
-    \item SRS Document \& Hazard Analysis: October 19, 2026
-    \item Proof of Concept Demonstration: Late November 2026
-    \item Revision 0 Demonstration: February 2027
-    \item Final Documentation \& EXPO: March 2027
+    \item SRS and Hazard Analysis: October 19, 2026
+    \item Proof of Concept demonstration: November 23 to December 4, 2026
+    \item Revision 0 demonstration: February 1 to 12, 2027
+    \item Final demonstration (Revision 1): March 15 to 22, 2027
+    \item Final documentation package: March 31, 2027
 \end{itemize}
 
 \subsection{Budget Constraints}
-The project operates under a zero-budget open-source model using standard capstone hardware and open-source tooling.
+No budget is allocated. The project uses free and open source tools and team
+members' own devices. Costs that may arise are listed in Section~\ref{SecCosts}.
 
 \subsection{Enterprise Constraints}
-All code and documentation must be licensed under the MIT License and hosted publicly on GitHub.
+Code and documentation are released under the MIT License and hosted publicly
+on GitHub.
 
 \section{Naming Conventions and Terminology}
 \subsection{Glossary of All Terms, Including Acronyms, Used by Stakeholders involved in the Project}
-\begin{itemize}
-    \item \textbf{Anki:} A spaced-repetition flashcard application used for vocabulary review.
-    \item \textbf{Contextual Annotation:} An explanation of a word, phrase, or lyric line capturing its intended meaning in a song.
-    \item \textbf{JSON Schema:} A declarative language for validating the structure and content of JSON song-map data.
-    \item \textbf{PoC (Proof of Concept):} A narrow prototype built to validate key technical risks prior to full development.
-    \item \textbf{Segmentation:} The process of splitting unspaced text (e.g., Japanese) into discrete tokens or words.
-    \item \textbf{Song Map:} A structured JSON file containing timed lyrics, translations, transliterations, annotations, and metadata connected to an audio track.
-    \item \textbf{Transliteration:} Converting text from one script to another (e.g., Japanese Kana to Latin Romaji) to assist pronunciation.
-\end{itemize}
+\begin{longtable}{@{}P{0.27\textwidth}P{0.68\textwidth}@{}}
+\toprule
+\textbf{Term} & \textbf{Meaning}\\
+\midrule
+\endhead
+Acceptance suite & The fixed set of \cn{LANG\_COUNT} song maps, one per
+supported language, used to evaluate the goals. It is fixed before
+implementation testing begins.\\
+Annotated target & A word or line that has both a translation and a contextual
+annotation.\\
+Anki & A spaced repetition flashcard application. AnkiDroid is its Android
+version. AnkiConnect is an extension that lets other programs add notes to desktop
+Anki.\\
+Contextual annotation & An explanation of a word, phrase, or line that gives
+its meaning in the song.\\
+Creator & A person who prepares song maps with the editor.\\
+Editor & The song map editor, which runs in a web browser.\\
+Explicit content & Lyrics containing profanity, slurs, or sexual or violent
+content.\\
+JSON Schema & A language for describing and validating the structure of JSON
+data.\\
+Learner & A person who studies song lessons with the learner app.\\
+Learner app & The mobile application used by learners.\\
+Lesson & A song map and its audio, as opened in the learner app.\\
+PoC & Proof of Concept.\\
+Romanization & Transliteration into the Latin alphabet (for Japanese,
+\emph{r\=omaji}).\\
+Segmentation & Splitting a line of text into words, needed for languages such
+as Japanese that do not put spaces between words.\\
+Song map & A file that connects an audio track with its timed lyric lines,
+segmentation, transliterations, translations, annotations, and metadata.
+Its structure is defined in Section~\ref{SecDataModel}.\\
+Song map package & A folder or archive containing one song map and the audio
+file it refers to.\\
+SRS & Software Requirements Specification.\\
+Test creator & A participant given the same audio, lyric, and annotation
+material for evaluating G4.\\
+Transliteration & Writing a word in another script so that a learner can
+pronounce it.\\
+Verified & Describes a segmentation or reading that a creator has confirmed
+in the editor.\\
+\bottomrule
+\end{longtable}
 
 \section{Relevant Facts And Assumptions}
 \subsection{Relevant Facts}
 \begin{itemize}
-    \item Music-based language learning increases student engagement and aids phrase retention.
-    \item Languages like Japanese lack spaces between words, necessitating specialized NLP tokenization for selection interaction.
-    \item Anki remains one of the most widely adopted open-source spaced-repetition platforms among serious language learners.
+    \item Japanese is written without spaces between words and mixes kanji,
+          hiragana, and katakana. Many kanji have more than one reading, and
+          the correct reading depends on the context.
+    \item Anki stores notes in decks. Each note has a note type that defines
+          its fields.
+    \item AnkiConnect runs only with desktop Anki. AnkiDroid provides an API
+          that other Android apps can use to add notes once the user grants
+          permission.
+    \item Mobile operating systems control audio routing, system volume, and
+          when background apps are suspended.
 \end{itemize}
 
 \subsection{Business Rules}
 \begin{itemize}
-    \item \textbf{BR1 (Open Access):} No user accounts or paid subscriptions are required to access open-source song maps.
-    \item \textbf{BR2 (Schema Adherence):} Any song map created by the web editor must pass automated JSON Schema validation before export or deployment.
-    \item \textbf{BR3 (Copyright Compliance):} The application shall not package or distribute copyrighted commercial audio files without explicit licensing or public-domain status.
+    \item \textbf{BR1 (Open Access):} no user account or payment is required to
+          open a song map.
+    \item \textbf{BR2 (Schema Adherence):} a song map must pass validation
+          (Section~\ref{SecFormal}) before the editor exports it or the learner
+          app opens it.
+    \item \textbf{BR3 (Copyright Compliance):} the project does not distribute
+          audio or lyrics unless they are created by the team, in the public domain,
+          or licensed for that use.
 \end{itemize}
 
 \subsection{Assumptions}
 \begin{itemize}
-    \item Learners have access to modern smartphones (iOS or Android) and headphones.
-    \item Creators have access to audio files and text lyrics for the songs they choose to map.
-    \item Users intending to export cards have a local installation of Anki or AnkiDroid available.
+    \item[A1] Learners have an iOS or Android phone that meets the minimum
+    operating system version of the Expo SDK release used.
+    \\\textit{Rationale:} the app cannot run on older systems. This is a
+    platform limit, not a design choice.
+    \item[A2] Creators have the audio and lyric text for the songs they map,
+    and the right to use them.
+    \\\textit{Rationale:} the editor does not supply content (BR3, LG1).
+    \item[A3] Learners who want to export vocabulary have Anki installed on
+    the device that receives the notes.
+    \\\textit{Rationale:} \progname{} is not a flashcard application. It hands
+    vocabulary to Anki (G6).
+    \item[A4] Software from other vendors (the operating systems, browsers, Anki,
+    AnkiDroid, and AnkiConnect) behaves as described in its documentation.
+    \\\textit{Rationale:} defects inside that software are outside the
+    team's control. The app must still detect and report a failed handoff
+    (IN8).
 \end{itemize}
+
+Song maps and their creators are not assumed to be free of errors or trustworthy.
+Requirements IN2, IN4, IN5, IM1, and IM2 handle incorrect or malicious song
+maps.
 
 \section{The Scope of the Work}
 \subsection{The Current Situation}
-Currently, language learners attempting song study must manually synchronize music playback on standard apps (e.g., Spotify) with external lyric translations and online dictionaries. This fragmented manual workflow inhibits active listening and breaks focus.
+To study a song today, a learner plays it in a music app, reads the lyrics and
+a translation on a separate website, looks up words in a dictionary, and types
+useful words into Anki. Creators who want to share a song lesson have no
+common format, so each lesson is prepared by hand in documents or slides, and
+timing is not recorded.
 
 \subsection{The Context of the Work}
-\progname{} bridges content creators and language learners through a unified song-map representation. Creators build structured maps using the web editor, which are then parsed and rendered dynamically by the mobile learner application during audio playback.
+Figure~\ref{FigContext} shows the work context. Creators supply audio, lyrics,
+translations, and annotations to the editor, which produces a song map.
+Learners open song maps in the learner app, which plays the audio, shows the
+lyrics, and sends selected vocabulary to Anki.
+
+\begin{figure}[h!]
+\centering
+\begin{tabular}{ccccc}
+\fbox{Creator} & $\xrightarrow{\text{audio, lyrics, notes}}$ &
+\fbox{\parbox{3.2cm}{\centering \progname{}\\(editor, learner app,\\shared core)}} &
+$\xrightarrow{\text{vocabulary notes}}$ & \fbox{Anki}\\[4pt]
+ & & $\Big\updownarrow$ \small{lesson view, selections} & & \\[4pt]
+ & & \fbox{Learner} & & \\
+\end{tabular}
+\caption{Context of the work} \label{FigContext}
+\end{figure}
 
 \subsection{Work Partitioning}
+Table~\ref{TblEvents} lists the business events the work responds to.
+
+\begin{table}[h!]
+\caption{Business events} \label{TblEvents}
+\begin{tabularx}{\textwidth}{lXX}
+\toprule
+\textbf{Event} & \textbf{Input} & \textbf{Output}\\
+\midrule
+E1 Creator prepares a lesson & Audio file, lyric text, translations,
+annotations, licence information & Validated song map package\\
+E2 Learner opens a lesson & Song map package & Lesson ready to play, or a
+message saying why it was rejected\\
+E3 Learner plays a lesson & Play, pause, and seek actions & Audio with the
+current line and word highlighted\\
+E4 Learner selects a word or line & Selection & Translation, reading, and
+annotation\\
+E5 Learner sends a word to Anki & Selected word & Anki note, or a queued item
+and an error message\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The product is divided into three parts:
 \begin{itemize}
-    \item \textbf{WP1 (Mobile Learner App):} Real-time audio playback, timed lyric synchronization, interactive token selection, translation display, and Anki export.
-    \item \textbf{WP2 (Web Song-Map Editor):} Audio timeline alignment, lyric text editing, segmentation/transliteration generation, annotation attachment, and JSON Schema export.
-    \item \textbf{WP3 (Shared Core):} Schema definitions, song-map validation logic, and shared TypeScript type definitions.
+    \item \textbf{WP1 (Learner app):} lesson import, playback, synchronized
+          highlighting, word selection, annotation display, and Anki export.
+    \item \textbf{WP2 (Editor):} audio and lyric loading, timing, segmentation
+          and transliteration review, translation and annotation entry,
+          preview, and export.
+    \item \textbf{WP3 (Shared core):} the song map schema, validation rules,
+          and shared TypeScript types.
 \end{itemize}
 
 \subsection{Specifying a Business Use Case (BUC)}
 \begin{itemize}
-    \item \textbf{BUC-1 (Authoring Song Map):} Creator uploads audio and lyrics $\rightarrow$ Editor assists in timing line boundaries $\rightarrow$ Creator adds annotations $\rightarrow$ System outputs valid JSON song map.
-    \item \textbf{BUC-2 (Interactive Lesson Study):} Learner selects song map $\rightarrow$ Mobile app loads audio and map $\rightarrow$ Real-time line highlighting displays as audio plays $\rightarrow$ Learner taps word to view definition/annotation $\rightarrow$ Learner exports word to Anki.
+    \item \textbf{BUC1 (Author a song map):} the creator loads audio and
+          lyrics, sets line timings, reviews segmentation and readings, adds
+          translations and annotations, and exports a validated song map
+          (events E1).
+    \item \textbf{BUC2 (Study a lesson):} the learner opens a song map, plays
+          it while the current line is highlighted, selects words to read
+          their meaning, and sends useful words to Anki (events E2 to E5).
 \end{itemize}
 
-\section{Business Data Model and Data Dictionary}
+\section{Business Data Model and Data Dictionary} \label{SecDataModel}
 \subsection{Business Data Model}
-The core domain model centers on the \textbf{Song Map} entity, which encapsulates:
+A \textbf{song map} contains:
 \begin{itemize}
-    \item \textbf{Song Metadata:} Title, artist, target language, audio source URL.
-    \item \textbf{Lyric Lines:} Start timestamp, end timestamp, original text, line translation.
-    \item \textbf{Tokens / Words:} Segmented word, reading/transliteration, dictionary definition.
-    \item \textbf{Annotations:} Target word/phrase range, contextual explanation, grammatical notes.
+    \item \textbf{Metadata:} schema version, title, artist, target language,
+          difficulty level, explicit content flag, audio file path, audio
+          duration, audio and lyric source and licence, and export history.
+    \item \textbf{Lyric lines:} start time, end time, original text, line
+          translation, and an ordered list of words.
+    \item \textbf{Words:} surface text, reading or transliteration,
+          optional start and end time, translation, and a verified flag.
+    \item \textbf{Annotations:} the word or line range they apply to, a
+          contextual explanation, an optional note on register (how formal or offensive a term is), the author,
+          and the review status.
 \end{itemize}
 
 \subsection{Data Dictionary}
-\begin{itemize}
-    \item \textbf{SongMapJSON:} Root object adhering to \texttt{songmap.schema.json}.
-    \item \textbf{LyricLine:} Object containing \texttt{lineId}, \texttt{startTime}, \texttt{endTime}, \texttt{rawText}, and \texttt{translatedText}.
-    \item \textbf{VocabularyPayload:} Export object sent to Anki containing \texttt{term}, \texttt{translation}, and \texttt{contextSentence}.
-\end{itemize}
+\begin{longtable}{@{}P{0.26\textwidth}P{0.69\textwidth}@{}}
+\toprule
+\textbf{Name} & \textbf{Content}\\
+\midrule
+\endhead
+\texttt{SongMap} & \texttt{schemaVersion} + \texttt{metadata} +
+\texttt{lines} + \texttt{annotations}. Must satisfy \textit{valid}
+(Section~\ref{SecFormal}).\\
+\texttt{schemaVersion} & Version string \textit{major.minor.patch}. A change
+in \textit{major} means older apps cannot read the map (IN3).\\
+\texttt{metadata} & \texttt{title}, \texttt{artist}, \texttt{language},
+\texttt{difficulty}, \texttt{explicit}, \texttt{audioPath},
+\texttt{audioDuration}, \texttt{source}, \texttt{exports}.\\
+\texttt{audioPath} & Path of the audio file relative to the song map package.
+Absolute paths and URLs are not allowed (IM2).\\
+\texttt{source} & For both the audio and the lyrics: origin, licence type,
+and rights holder (LG1).\\
+\texttt{exports} & List of (date, creator name, map version) entries, one per
+export (AU2).\\
+\texttt{LyricLine} & \texttt{lineId}, \texttt{startTime}, \texttt{endTime},
+\texttt{rawText}, \texttt{translatedText}, \texttt{words}.\\
+\texttt{Word} & \texttt{text}, \texttt{reading}, optional
+\texttt{startTime} and \texttt{endTime}, \texttt{translation},
+\texttt{verified}.\\
+\texttt{Annotation} & \texttt{target} (line identifier and word range),
+\texttt{note}, optional \texttt{register}, \texttt{author},
+\texttt{reviewedBy}.\\
+\texttt{VocabularyPayload} & \texttt{term}, \texttt{translation},
+\texttt{contextSentence}, \texttt{mapId}, \texttt{lineId}. Sent to Anki
+(FR8).\\
+Times & Seconds from the start of the audio, stored with resolution
+\cn{TIME\_RES}.\\
+\bottomrule
+\end{longtable}
 
 \section{The Scope of the Product}
 \subsection{Product Boundary}
-The product boundary includes the React Native Mobile Learner Application and the React Web Song-Map Editor. External systems outside the boundary include local Anki desktop/AnkiDroid instances and third-party remote audio storage.
+The product consists of the learner app, the editor, and the shared core.
+Anki, AnkiDroid, AnkiConnect, the phone and computer operating systems, and
+the source of the audio and lyric content are outside the boundary. The
+initial release has no user accounts, no server, and no cloud storage. Song map
+packages are moved between the editor and the learner app as files.
 
 \subsection{Product Use Case Table}
-\begin{tabularx}{\textwidth}{llXX}
+\begin{tabularx}{\textwidth}{lXlX}
 \toprule
-\textbf{PUC ID} & \textbf{Name} & \textbf{Primary Actor} & \textbf{Outcome}\\
+\textbf{PUC} & \textbf{Name} & \textbf{Actor} & \textbf{Outcome}\\
 \midrule
-PUC-1 & Play Synchronized Lesson & Learner & Real-time lyric tracking within 0.5s tolerance.\\
-PUC-2 & Inspect Word Annotation & Learner & Displays translation, reading, and contextual note.\\
-PUC-3 & Export Term to Anki & Learner & Term, definition, and context sentence added to deck.\\
-PUC-4 & Author Song Map & Creator & Valid JSON Song Map generated and downloaded.\\
+PUC1 & Play synchronized lesson & Learner & Lesson plays with the current
+line highlighted (FR1 to FR5).\\
+PUC2 & Inspect a word or line & Learner & Translation, reading, and
+annotation are shown (FR6, FR7).\\
+PUC3 & Send a term to Anki & Learner & A note is added to the
+\progname{} deck (FR8).\\
+PUC4 & Author a song map & Creator & A validated song map package is
+exported (FR9 to FR16).\\
 \bottomrule
 \end{tabularx}
 
 \subsection{Individual Product Use Cases (PUC's)}
 \begin{itemize}
-    \item \textbf{PUC-1 (Play Synchronized Lesson):} The learner selects a song map; the application streams audio and continuously updates highlighted lyric lines in sync with playback time.
-    \item \textbf{PUC-3 (Export Term to Anki):} Learner taps "Add to Anki" on a selected token; app formats a \texttt{VocabularyPayload} and transmits it via API/payload to the local Anki instance.
+    \item \textbf{PUC1 (Play synchronized lesson):} the learner opens a
+          song map package. The app validates it and shows the lesson. The
+          learner presses play. The app plays the audio and highlights the
+          current line and word. If validation fails, the app shows the
+          reason and does not open the lesson.
+    \item \textbf{PUC2 (Inspect a word or line):} the learner taps a word or
+          line. The app shows the translation, reading, and annotation, if
+          any, without stopping playback.
+    \item \textbf{PUC3 (Send a term to Anki):} the learner taps \emph{Add to
+          Anki} on a selected word. The app builds a
+          \texttt{VocabularyPayload}, sends it to Anki, and shows whether the
+          note was created. If sending fails, the item is kept in a queue.
+    \item \textbf{PUC4 (Author a song map):} the creator loads audio and
+          lyric text, marks line start times while the audio plays, adjusts
+          times, reviews the suggested segmentation and readings, enters
+          translations and annotations, previews the lesson, and exports it.
+          Export is refused until the map is valid.
 \end{itemize}
 
 \section{Functional Requirements}
 \subsection{Functional Requirements}
-\begin{itemize}
-    \item \textbf{FR1 (Audio Playback):} The mobile app shall play audio tracks while reporting sub-second playback time positions continuously.
-    \item \textbf{FR2 (Synchronized Highlighting):} The app shall visually highlight current lyric lines within 0.5 seconds of the mapped timestamp.
-    \item \textbf{FR3 (Text Segmentation):} The app/editor shall segment non-spaced scripts (e.g., Japanese) into selectable discrete word units.
-    \item \textbf{FR4 (Transliteration Display):} The app shall display transliterations (e.g., Romaji/Furigana) above or beside target words.
-    \item \textbf{FR5 (Contextual Notes):} The app shall display attached cultural or grammatical annotations when an annotated target is tapped.
-    \item \textbf{FR6 (Anki Export):} The system shall export selected vocabulary with its target word, translation, and context line into an Anki deck.
-    \item \textbf{FR7 (Schema Validation):} The web editor shall validate exported song maps against the shared JSON Schema before download.
-\end{itemize}
+
+\subsubsection*{Learner app}
+\begin{description}
+\item[FR1] The learner app shall let the learner open a song map package from
+the device's storage and shall validate it (Section~\ref{SecFormal}) before
+showing the lesson.
+\rat{Learners receive lessons as files in the initial release. Only valid maps
+can be played correctly.}
+\fit{Every map in the acceptance suite opens. Every map in a set of invalid
+test maps is rejected with a message naming the failed rule.}
+\trace{G3, PUC1, IN2, IN3, IN11.}
+
+\item[FR2] The learner app shall list the lessons it has opened, showing each
+lesson's title, artist, language, difficulty, and explicit content flag.
+\rat{Learners choose lessons by song and by level.}
+\fit{All listed fields match the song map metadata for every acceptance suite
+map.}
+\trace{G3, PUC1, HS6, HS7.}
+
+\item[FR3] The learner app shall provide play, pause, and seek controls, and
+a control that restarts the current line.
+\rat{Learners replay short sections to catch words.}
+\fit{After each control is used, the reported audio position equals the
+expected position within \cn{SYNC\_TOL}.}
+\trace{G1, PUC1, HS1.}
+
+\item[FR4] During playback, the learner app shall highlight the line that is
+active at the current audio position, as defined by \textit{active} in
+Section~\ref{SecFormal}.
+\rat{This is the main function of the lesson player.}
+\fit{In the acceptance suite, at least \cn{SYNC\_PASS} of line transitions
+occur within \cn{SYNC\_TOL} of their mapped start times.}
+\trace{G1, PUC1, IN1, PA1.}
+
+\item[FR5] When the active line has word timings, the learner app shall also
+highlight the active word.
+\rat{Word timing helps learners match syllables to sounds, especially in fast
+songs.}
+\fit{As FR4, applied to word start times.}
+\trace{G1, PUC1.}
+
+\item[FR6] The learner app shall display each line in its original script with
+the stored segmentation, and shall let the learner show or hide the
+transliteration and the line translation.
+\rat{Learners at different levels need different amounts of support.}
+\fit{For every line in the acceptance suite, the displayed words and readings
+match the song map, and each layer can be turned on and off.}
+\trace{G5, PUC2, IN4, IN12.}
+
+\item[FR7] When the learner selects a word or line, the learner app shall
+display its translation, reading, and contextual annotation, if present,
+without stopping playback.
+\rat{Meaning is clearer when shown next to the lyric (G2).}
+\fit{Every annotated target in the acceptance suite shows its translation and
+annotation when selected.}
+\trace{G2, PUC2, SL2.}
+
+\item[FR8] When the learner sends a selected word to Anki, the learner app
+shall create a note in the \progname{} deck whose \emph{Term},
+\emph{Translation}, and \emph{Context} fields contain the word, its
+translation, and the line it appears in.
+\rat{Connects song study to spaced repetition review (G6).}
+\fit{For each acceptance suite language, a sent word appears in the test deck
+with all three fields correct.}
+\trace{G6, PUC3, IN8, IN9, IN10, AC1.}
+\end{description}
+
+\subsubsection*{Editor}
+\begin{description}
+\item[FR9] The editor shall let the creator load an audio file and lyric text,
+and open an existing song map for editing.
+\rat{Creators start from material they already have, and correct maps later.}
+\fit{The test track's audio and lyrics load, and a previously exported map
+reopens with no data lost.}
+\trace{G4, PUC4.}
+
+\item[FR10] The editor shall let the creator mark the start time of each line
+while the audio plays, and adjust start and end times by hand.
+\rat{Marking times while listening is faster than typing them (G4).}
+\fit{Measured by G4 in usability testing.}
+\trace{G1, G4, PUC4, IN7.}
+
+\item[FR11] For a supported language without spaces between words, the editor
+shall suggest a segmentation and readings for each line and let the creator
+accept or correct them.
+\rat{Automatic suggestions reduce work. Creator review corrects errors in lyric
+text that tokenizers handle poorly (PoC risk R2).}
+\fit{At least \cn{SEG\_ACC} of suggested word boundaries in
+\cn{SEG\_SAMPLE} test lines match a segmentation checked by the team.}
+\trace{G4, G5, PUC4, IN4, PA3.}
+
+\item[FR12] The editor shall let the creator enter a translation for each line
+and word, contextual annotations for words and lines, and the lesson metadata
+listed in Section~\ref{SecDataModel}.
+\rat{These are the contents of a lesson.}
+\fit{Each field in the data dictionary can be entered and appears in the
+exported map.}
+\trace{G2, G4, PUC4, HS6, LG1.}
+
+\item[FR13] The editor shall provide a preview that plays the song map as the
+learner app will show it.
+\rat{Creators find timing and display errors before export.}
+\fit{For the acceptance suite, the preview's line changes match the learner
+app's within \cn{SYNC\_TOL}.}
+\trace{G1, G4, PUC4, IN7.}
+
+\item[FR14] The editor shall export a song map package only if the map is valid,
+and shall list every rule a map fails.
+\rat{Learners must receive only valid maps (G3, BR2).}
+\fit{Export is refused for every invalid test map, and the listed rules match
+the rules the map breaks.}
+\trace{G3, PUC4, IN2, IN4, IN5.}
+
+\item[FR15] The creator shall be able to complete FR9 to FR14 without editing
+the song map file directly.
+\rat{G4 requires that creators do not edit the file by hand.}
+\fit{Measured by G4 in usability testing.}
+\trace{G4, PUC4.}
+\end{description}
+
+\subsubsection*{Shared core}
+\begin{description}
+\item[FR16] The editor and the learner app shall use the same validation code
+and schema version to decide whether a song map is valid.
+\rat{If the two disagree, the editor could export a map the app rejects (G3).}
+\fit{The validator is a single shared module. CI validates every example map
+with it.}
+\trace{G3, IN2, IN3.}
+\end{description}
+
+\section{Formal Specification} \label{SecFormal}
+
+This section defines a valid song map, the line that is active at a given
+audio position, and the learner app's playback modes. Constants are listed in
+Appendix~\ref{SecConstants}.
+
+\subsection{Song Map}
+A song map is a tuple $S = (v, d, L, N)$ where $v = (v_{\mathit{maj}},
+v_{\mathit{min}}, v_{\mathit{pat}})$ is the schema version, $d \in
+\mathbb{R}^{+}$ is the audio duration in seconds, $L = \langle \ell_1, \ldots,
+\ell_n \rangle$ is the sequence of lines, and $N$ is the set of annotations.
+Each line is $\ell_i = (s_i, e_i, W_i)$ with start time $s_i$, end time $e_i$,
+and words $W_i = \langle w_{i,1}, \ldots, w_{i,m_i} \rangle$. A word
+$w_{i,j}$ has a verified flag $\mathit{ver}_{i,j}$ and optional times
+$s_{i,j}, e_{i,j}$. An annotation $a \in N$ has a translation
+$a.\mathit{tr}$ and a note $a.\mathit{note}$.
+
+$S$ is valid, written $\mathit{valid}(S)$, when all of conditions V1 to V8
+hold:
+\begin{description}
+\item[V1] (version) $v_{\mathit{maj}} \in \cn{SUPPORTED\_MAJOR}$ (IN3).
+\item[V2] (at least one line) $n \ge 1$.
+\item[V3] (lines inside the audio) $\forall i \in [1..n] : 0 \le s_i < e_i
+\le d$.
+\item[V4] (lines ordered, no overlap) $\forall i \in [1..n-1] : e_i \le
+s_{i+1}$.
+\item[V5] (words inside their line) for every word $w_{i,j}$ that has times,
+$s_i \le s_{i,j} < e_{i,j} \le e_i$.
+\item[V6] (segmentation verified) $\forall i, j : \mathit{ver}_{i,j}$ (IN4).
+\item[V7] (annotations complete) $\forall a \in N : a.\mathit{tr} \neq
+\varepsilon \wedge a.\mathit{note} \neq \varepsilon$.
+\item[V8] (audio reference and limits) the audio path is relative (IM2),
+$|d - d_{\mathit{audio}}| \le \cn{AUDIO\_DUR\_TOL}$ (IN11), the map size is
+at most \cn{MAX\_MAP\_SIZE}, and its nesting depth is at most
+\cn{MAX\_NESTING} (IM1).
+\end{description}
+Here $d_{\mathit{audio}}$ is the duration of the decoded audio file and
+$\varepsilon$ is the empty string. The JSON Schema checks structure and types.
+The shared validator checks the remaining conditions (FR16).
+
+\subsection{Active Line and Synchronization}
+For an audio position $p$, the active line is
+\[
+\mathit{active}(p) =
+\begin{cases}
+i & \text{if } s_i \le p < e_i\\
+\bot & \text{if no line satisfies } s_i \le p < e_i
+\end{cases}
+\]
+which is well defined because valid lines do not overlap. Let $h_i$ be the
+audio position at which the learner app changes the highlight to line $i$.
+A transition is on time when $|h_i - s_i| \le \cn{SYNC\_TOL}$. FR4 requires
+that, over all transitions in the acceptance suite,
+\[
+\frac{|\{ i : |h_i - s_i| \le \cn{SYNC\_TOL} \}|}{\text{number of transitions}}
+\ \ge\ \cn{SYNC\_PASS}.
+\]
+
+\subsection{Playback Modes}
+The learner app is in one of the modes \textit{NoLesson}, \textit{Ready},
+\textit{Playing}, and \textit{Paused}. The initial mode is \textit{NoLesson}.
+Table~\ref{TblModes} gives the transitions. Events not listed for a mode leave
+the mode unchanged. In \textit{Playing} and \textit{Paused}, the highlighted
+line is $\mathit{active}(p)$, where $p$ is the position reported by the audio
+player.
+
+\begin{table}[h!]
+\caption{Learner app playback mode transitions} \label{TblModes}
+\begin{tabularx}{\textwidth}{P{0.15\textwidth}P{0.30\textwidth}XP{0.13\textwidth}}
+\toprule
+\textbf{Mode} & \textbf{Event} & \textbf{Action} & \textbf{New mode}\\
+\midrule
+NoLesson & open $S$, $\mathit{valid}(S)$ & $p := 0$ & Ready\\
+NoLesson & open $S$, $\neg\mathit{valid}(S)$ & show failed rules & NoLesson\\
+Ready & learner presses play & start audio, fade in & Playing\\
+Playing & learner presses pause & stop audio & Paused\\
+Playing & audio output disconnected & stop audio within
+\cn{DISCONNECT\_PAUSE} & Paused\\
+Playing & end of audio & $p := d$ & Paused\\
+Playing, Paused & seek to $t$ & $p := t$. Highlight $\mathit{active}(t)$ &
+unchanged\\
+Paused & learner presses play & start audio, fade in & Playing\\
+any & close lesson & stop audio & NoLesson\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+No transition enters \textit{Playing} except a learner action, which is HS1.
+The transition on audio output disconnection is HS2.
 
 \section{Look and Feel Requirements}
 \subsection{Appearance Requirements}
-\lips
+\begin{description}
+\item[LF1] The active line and word shall be distinguishable from the other
+lines by a cue other than colour alone.
+\rat{Learners with colour vision deficiency must be able to follow the lesson
+(Hazard Analysis H2.5).}
+\fit{The active line can be identified in a greyscale screenshot and in a
+colour blindness simulation.}
+\trace{G1, HS5.}
+
+\item[LF2] In the lesson view, the lyric area shall take up more of the screen
+than the playback controls and menus.
+\rat{The lyrics are the content the learner studies.}
+\fit{Measured on screenshots of the lesson view on a phone screen.}
+\trace{G1, G2.}
+\end{description}
+
 \subsection{Style Requirements}
-\lips
+\begin{description}
+\item[LF3] The learner app shall follow the platform's interface conventions
+for controls and navigation on iOS and Android.
+\rat{Learners already know these conventions, which reduces learning time
+(UH3).}
+\fit{Usability test participants operate the controls without instruction.}
+\trace{UH3.}
+\end{description}
 
 \section{Usability and Humanity Requirements}
 \subsection{Ease of Use Requirements}
-\lips
+\begin{description}
+\item[UH1] A learner shall be able to open a lesson that has already been
+imported and start playback in at most \cn{MAX\_TAPS\_PLAY} taps from the
+app's home screen.
+\rat{Learners use the app in short sessions.}
+\fit{Counted on the release build.}
+\trace{G1, PUC1.}
+
+\item[UH2] At least \cn{CREATE\_PASS} test creators shall produce a complete,
+valid map for the test track within \cn{CREATE\_TIME}, without editing the map
+file by hand.
+\rat{Goal G4.}
+\fit{Measured in the usability study described in the V\&V Plan.}
+\trace{G4, PUC4, FR9 to FR15.}
+\end{description}
+
 \subsection{Personalization and Internationalization Requirements}
-\lips
+\begin{description}
+\item[UH3] The learner shall be able to show or hide the transliteration and
+translation layers, and the app shall remember the choice between sessions.
+\rat{Learners reduce support as they improve.}
+\fit{Settings persist after the app is closed and reopened.}
+\trace{G5, FR6.}
+
+\item[UH4] The user interface of the learner app and the editor shall be in
+English in the initial release. Lesson content shall support at least
+\cn{LANG\_COUNT} target languages.
+\rat{The team and the test users work in English. G5 requires
+\cn{LANG\_COUNT} languages.}
+\fit{All interface text is English. The acceptance suite contains
+\cn{LANG\_COUNT} languages.}
+\trace{G5.}
+\end{description}
+
 \subsection{Learning Requirements}
-\lips
+\begin{description}
+\item[UH5] A learner using the app for the first time shall be able to open a lesson, play it,
+display a word's annotation, and send the word to Anki within
+\cn{LEARN\_TIME} without help.
+\rat{Learners use the app on their own, without training.}
+\fit{At least \cn{CREATE\_PASS} of usability test participants succeed.}
+\trace{G1, G2, G6.}
+\end{description}
+
 \subsection{Understandability and Politeness Requirements}
-\lips
+\begin{description}
+\item[UH6] Every error message shall state what failed and what the user can
+do next, in plain language and without blaming the user.
+\rat{Learners and creators are not expected to know the song map format or
+Anki internals.}
+\fit{Review of every error message string against this rule.}
+\trace{FR1, FR14, IN3, IN8.}
+\end{description}
+
 \subsection{Accessibility Requirements}
-\lips
+\begin{description}
+\item[UH7] Every control in the learner app shall have a label read by the
+platform screen reader, and lyric text shall scale with the device's text size
+setting.
+\rat{Learners with low vision must be able to use the app.}
+\fit{Each control is announced by VoiceOver and TalkBack. Lyrics remain
+readable at the largest system text size.}
+\trace{HS5.}
+\end{description}
+
+The accessibility requirements HS4 (flashing) and HS5 (colour and text size)
+are listed under Safety-Critical Requirements.
 
 \section{Performance Requirements}
 \subsection{Speed and Latency Requirements}
-\lips
+\begin{description}
+\item[SL1] A lesson shall be ready to play within \cn{LOAD\_TIME} of the
+learner opening it.
+\rat{Taken from the PoC pass criterion for risk R2.}
+\fit{Measured on the test phone for each acceptance suite lesson.}
+\trace{G1, G5, FR1.}
+
+\item[SL2] The translation and annotation of a selected word or line shall be
+displayed within \cn{SELECT\_RESPONSE} of the selection.
+\rat{The learner reads the meaning while the line is still playing.}
+\fit{Measured on the test phone with instrumented timestamps.}
+\trace{G2, FR7.}
+
+\item[SL3] The learner app shall report the result of sending a word to Anki
+within \cn{ANKI\_TIMEOUT}. If Anki has not confirmed by then, the item shall
+be treated as failed and queued (IN8).
+\rat{The learner should not wait without feedback.}
+\fit{Tested with Anki available and unavailable.}
+\trace{G6, FR8, IN8.}
+\end{description}
+
 \subsection{Safety-Critical Requirements}
-\lips
+These requirements come from the Hazard Analysis. The FMEA row each one
+mitigates is given in brackets.
+
+\begin{description}
+\item[HS1] The learner app shall not start audio playback without an explicit
+action by the learner.
+\rat{Unexpected audio can cause hearing discomfort with headphones.}
+\fit{Opening, resuming, and returning to a lesson never starts audio
+(Table~\ref{TblModes}).}
+\trace{Hazard H1.2.}
+
+\item[HS2] The learner app shall pause playback within \cn{DISCONNECT\_PAUSE}
+when the active audio output device is disconnected.
+\rat{Prevents audio from playing aloud through the phone speaker.}
+\fit{Tested by unplugging wired and disconnecting Bluetooth headphones during
+playback on iOS and Android.}
+\trace{Hazard H1.2.}
+
+\item[HS3] The learner app shall provide a listening mode in which a
+lesson can be followed without looking at or touching the screen, and shall show a notice on first launch only, advising against using the screen while
+driving, cycling, or crossing traffic.
+\rat{Learners use the app while moving.}
+\fit{The notice appears on first launch only. In listening mode a full
+lesson plays with no required interaction.}
+\trace{Hazard H1.4.}
+
+\item[HS4] Lyric highlighting shall not produce more than \cn{MAX\_FLASHES}
+large area flashes in any period of one second, and shall follow the operating
+system's reduce motion setting.
+\rat{Rapid flashing can trigger seizures in photosensitive people (WCAG 2.1,
+Success Criterion 2.3.1).}
+\fit{Count of highlight changes per second in the fastest acceptance suite
+song, and a check with reduce motion turned on.}
+\trace{Hazard H2.4.}
+
+\item[HS5] The learner app shall indicate the active line and word with a cue
+other than colour alone, and shall respect the device's text size setting.
+\rat{See LF1 and UH7.}
+\fit{As LF1 and UH7.}
+\trace{Hazard H2.5.}
+
+\item[HS6] Each song map shall include an explicit content flag. Lessons
+flagged as explicit shall show a warning before opening and can be hidden
+through a learner setting. Annotations of vulgar or offensive terms shall
+include a note describing their register.
+\rat{Learners may otherwise use an offensive term without knowing it.}
+\fit{Schema requires the flag. A flagged test lesson shows the warning and is
+hidden when the setting is on.}
+\trace{Hazard H3.2.}
+
+\item[HS7] The learner app shall not use streak loss penalties, countdown
+timers, or unsolicited push notifications to encourage use, and shall show each
+lesson's difficulty level before it is opened.
+\rat{Avoids stress and compulsive use.}
+\fit{Design review of the release build.}
+\trace{Hazards H1.4, H3.3.}
+\end{description}
+
 \subsection{Precision or Accuracy Requirements}
-\lips
+\begin{description}
+\item[PA1] Song map times shall be stored with a resolution of \cn{TIME\_RES}
+or finer.
+\rat{Storage resolution must be much finer than \cn{SYNC\_TOL} so that
+rounding does not use up the timing tolerance.}
+\fit{Schema check on the time fields.}
+\trace{G1, FR4.}
+
+\item[PA2] Line highlighting accuracy shall meet the fit criterion of FR4.
+\rat{Goal G1.}
+\fit{As FR4.}
+\trace{G1.}
+
+\item[PA3] Automatically suggested segmentation shall meet the fit criterion of
+FR11.
+\rat{Taken from the PoC pass criterion for risk R2.}
+\fit{As FR11.}
+\trace{G5.}
+\end{description}
+
 \subsection{Robustness or Fault-Tolerance Requirements}
-\lips
+\begin{description}
+\item[RB1] The learner app and the editor shall not crash when given an invalid
+or malformed song map. They shall reject it with a message (UH6).
+\rat{Song maps are files that can be damaged or altered.}
+\fit{A set of malformed test maps (truncated, wrong types, oversized, deeply
+nested) is rejected without a crash.}
+\trace{FR1, FR14, IM1.}
+
+\item[RB2] The learner app shall play lessons that are already on the device
+without a network connection.
+\rat{The product has no server, and learners use the app in transit.}
+\fit{All acceptance suite lessons play in airplane mode.}
+\trace{G1.}
+\end{description}
+
 \subsection{Capacity Requirements}
-\lips
+\begin{description}
+\item[CP1] The learner app and the editor shall support songs up to
+\cn{MAX\_AUDIO\_LENGTH} long with up to \cn{MAX\_LESSON\_LINES} lines.
+\rat{Covers typical popular songs.}
+\fit{A test map at both limits opens, plays, and meets FR4.}
+\trace{G1, G4.}
+
+\item[CP2] The learner app shall keep at least \cn{LIBRARY\_SIZE} lessons.
+\rat{Learners keep several songs in progress.}
+\fit{\cn{LIBRARY\_SIZE} lessons imported and listed on the test phone.}
+\trace{FR2.}
+\end{description}
+
 \subsection{Scalability or Extensibility Requirements}
-\lips
+\begin{description}
+\item[SC1] Adding a further target language shall not require a change to the
+major version of the song map schema.
+\rat{The stretch goal of a third language. Existing maps must remain valid.}
+\fit{The schema's fields that are specific to a language are optional and keyed by language
+code. Reviewed when the design is complete.}
+\trace{G5, LO1.}
+\end{description}
+
 \subsection{Longevity Requirements}
-\lips
+\begin{description}
+\item[LO1] A learner app version shall open every valid song map whose major
+schema version it supports, regardless of minor or patch version.
+\rat{Lessons made earlier must keep working.}
+\fit{CI opens maps of every released minor version with the current app.}
+\trace{G3, IN3.}
+\end{description}
 
 \section{Operational and Environmental Requirements}
 \subsection{Expected Physical Environment}
-\lips
+\begin{description}
+\item[OE1] The learner app shall be usable on a phone held in one hand, with
+headphones, in indoor and outdoor lighting.
+\rat{Learners study in short sessions in varied places.}
+\fit{All lesson controls reachable with one hand. Checked during usability
+testing.}
+\trace{HS3.}
+\end{description}
+
 \subsection{Wider Environment Requirements}
-\lips
-\subsection{Requirements for Interfacing with Adjacent Systems}
-\lips
+The product has no wider environment requirements. It does not run on shared
+infrastructure.
+
+\subsection{Requirements for Interfacing with Adjacent Systems} \label{SecAdjacent}
+\begin{description}
+\item[OE2] The learner app shall send vocabulary to Anki using at least one
+of: the AnkiDroid API on Android, AnkiConnect with desktop Anki, or an export
+file that the learner imports into Anki.
+\rat{No single method works on every platform. The PoC (risk R3) selects the
+method. The export file is the fallback in the Development Plan.}
+\fit{FR8's fit criterion is met with the selected method.}
+\trace{G6, FR8, AC1, AC2, PR2.}
+
+\item[OE3] The editor shall read audio in at least one format that the learner
+app can play on both iOS and Android, and shall export only such formats.
+\rat{A map whose audio cannot play on one platform fails G3.}
+\fit{Each acceptance suite package plays on an iOS and an Android test device.}
+\trace{G3, IN11.}
+\end{description}
+
 \subsection{Productization Requirements}
-\lips
+\begin{description}
+\item[OE4] The learner app shall be installable on iOS and Android test
+devices as an Expo development or preview build, and the editor shall run from
+a URL without installation.
+\rat{Store publication is not required for the capstone.}
+\fit{Installed and run on one iOS and one Android device. Editor opened in each
+supported browser.}
+\trace{MC2.}
+\end{description}
+
 \subsection{Release Requirements}
-\lips
+\begin{description}
+\item[OE5] Each release shall be tagged on the \texttt{main} branch and shall
+state the song map schema version it supports.
+\rat{Creators and learners need to know which maps a release can open
+(LO1).}
+\fit{Check of release tags and notes.}
+\trace{LO1.}
+\end{description}
 
 \section{Maintainability and Support Requirements}
 \subsection{Maintenance Requirements}
-\lips
+\begin{description}
+\item[MS1] Every example song map in the repository shall be validated in CI on
+each pull request.
+\rat{Detects schema changes that break existing maps.}
+\fit{CI configuration and run history.}
+\trace{G3, FR16.}
+
+\item[MS2] The shared core shall have statement coverage by unit tests of at least
+\cn{COVERAGE}.
+\rat{The validator decides what learners can open. Errors there affect every
+lesson.}
+\fit{Coverage report from CI.}
+\trace{FR16, IN2.}
+\end{description}
+
 \subsection{Supportability Requirements}
-\lips
+\begin{description}
+\item[MS3] The project shall provide written instructions for learners
+(importing lessons, setting up Anki) and for creators (using the editor,
+licence fields).
+\rat{There is no support staff.}
+\fit{Usability test participants complete their tasks using only the
+instructions (UH2, UH5).}
+\trace{UH2, UH5, AC2.}
+\end{description}
+
 \subsection{Adaptability Requirements}
-\lips
+\begin{description}
+\item[MS4] The learner app shall run on both iOS and Android from one code
+base.
+\rat{MC2. Learners use both platforms.}
+\fit{The same release build runs on one device of each platform.}
+\trace{MC2, OE4.}
+\end{description}
 
 \section{Security Requirements}
+These requirements come from the Hazard Analysis. The FMEA row each one
+mitigates is given in brackets.
+
 \subsection{Access Requirements}
-\lips
+\begin{description}
+\item[AC1] The learner app shall only add notes, and only to the \progname{}
+deck. It shall not edit or delete existing notes, decks, or note types in the
+learner's Anki collection.
+\rat{The learner's existing study data must not be damaged.}
+\fit{Code review of every Anki call. An integration test confirms the test
+collection is unchanged apart from added notes.}
+\trace{Hazard H6.3.}
+
+\item[AC2] If AnkiConnect is used, the product and its setup instructions shall
+allow only the specific origin the product requires, never a wildcard origin,
+and shall use an API key when AnkiConnect supports one.
+\rat{A wildcard origin lets any web page change the learner's collection.}
+\fit{Review of the setup instructions and default configuration.}
+\trace{Hazard H6.5.}
+\end{description}
+
 \subsection{Integrity Requirements}
-\lips
+\begin{description}
+\item[IN1] The learner app shall drive lyric highlighting from the audio
+player's reported position and shall realign the highlight after every seek,
+pause, resume, and return from the background.
+\rat{A separate timer drifts from the audio.}
+\fit{FR4's fit criterion holds after seeks and after returning from the
+background.}
+\trace{Hazard H1.1.}
+
+\item[IN2] The song map validator shall check, in addition to the schema, the
+conditions of $\mathit{valid}$ in Section~\ref{SecFormal}. The editor shall run
+it before export and the learner app shall run it on import.
+\rat{Schema validation alone accepts maps with overlapping times or times outside the audio.}
+\fit{One invalid test map per condition is rejected by both the editor and the
+app.}
+\trace{Hazards H1.1, H4.1.}
+
+\item[IN3] Each song map shall declare its format version. The learner app
+shall refuse to open a map with an unsupported major version and shall tell
+the learner why.
+\rat{Prevents fields from being ignored or misread.}
+\fit{A map with an unsupported major version is rejected with a message.}
+\trace{Hazard H4.2.}
+
+\item[IN4] Song maps shall store word segmentation and transliteration
+explicitly, and the learner app shall display the stored values without segmenting again at runtime. The editor shall mark automatically generated values
+as unverified until the creator confirms them, and shall not export a map
+containing unverified lines.
+\rat{Tokenizers make errors on lyrics. Creator review catches them once.}
+\fit{The app contains no tokenizer. Export of a map with an unverified line is
+refused.}
+\trace{Hazards H2.1, H2.2.}
+
+\item[IN5] Each annotation shall record its author and review status. The
+editor shall not mark a map as published until every annotation has been
+reviewed by someone other than its author.
+\rat{Incorrect annotations teach the wrong meaning.}
+\fit{A map with an annotation reviewed only by its author cannot be marked
+published.}
+\trace{Hazard H3.1.}
+
+\item[IN6] The editor shall autosave the current draft at least every
+\cn{AUTOSAVE\_INT}, offer to restore it when reopened, warn before closing with
+unsaved changes, provide undo and redo for all edits, and ask for confirmation
+before any operation that changes more than one line.
+\rat{Timing work takes time and is easy to lose.}
+\fit{Closing the tab during an edit and reopening restores the draft. Each
+bulk operation asks for confirmation.}
+\trace{Hazards H5.1, H5.2.}
+
+\item[IN7] The editor shall provide an audio latency calibration whose offset
+is applied to recorded timestamps, and a preview that plays the map as the
+learner app will (FR13).
+\rat{Browser and Bluetooth output latency shifts every recorded time.}
+\fit{With calibration applied, preview line changes meet FR4's fit criterion.}
+\trace{Hazard H5.3.}
+
+\item[IN8] The learner app shall report a vocabulary item as sent only after
+Anki confirms that the note was created. Items that have not been confirmed
+shall be stored on the device, kept across app restarts, and available to retry
+or export to a file.
+\rat{Learners must not lose words they believe were saved.}
+\fit{With Anki unavailable, sent items remain queued after the app restarts and
+are delivered on retry.}
+\trace{Hazards H6.4, H7.1.}
+
+\item[IN9] Before adding a note, the learner app shall check the \progname{}
+deck for an existing note with the same term and context, and shall disable the
+send control while a request is in progress.
+\rat{Prevents duplicate cards.}
+\fit{Sending the same word twice creates one note.}
+\trace{Hazard H6.1.}
+
+\item[IN10] The learner app shall fill Anki note fields by field name, shall
+stop with a message if the note type lacks the \emph{Term},
+\emph{Translation}, or \emph{Context} field, and shall send all text as UTF-8.
+\rat{Prevents misplaced or garbled fields.}
+\fit{Japanese test words appear correctly in the right fields. A note type
+missing a field produces the message.}
+\trace{Hazard H6.2.}
+
+\item[IN11] On import, the learner app shall check that the audio file
+referenced by a map exists, can be decoded, and has a duration within
+\cn{AUDIO\_DUR\_TOL} of the map's \texttt{audioDuration}, and shall reject the
+lesson with a message if not.
+\rat{Finds broken packages before playback.}
+\fit{Packages with a missing, corrupt, or mismatched audio file are rejected.}
+\trace{Hazard H1.3.}
+
+\item[IN12] The learner app shall include fonts covering every script used by
+its supported languages, and all song maps shall be read and written as UTF-8.
+\rat{Device fonts may not cover every script.}
+\fit{Every acceptance suite line renders with no boxes for missing glyphs on both
+platforms.}
+\trace{Hazard H2.3.}
+\end{description}
+
 \subsection{Privacy Requirements}
-\lips
+\begin{description}
+\item[PR1] The initial release shall not collect personal data or send any
+data off the device, other than notes the learner explicitly sends to Anki.
+Any analytics or crash reporting added later shall stay off unless the learner turns it on.
+\rat{Vocabulary history and listening habits are personal.}
+\fit{Dependency review and network capture during a test session show no other
+outbound traffic.}
+\trace{Hazard H7.2.}
+
+\item[PR2] The learner app shall request the AnkiDroid permission only when the
+learner first sends a word, with an explanation of why it is needed, and shall
+request no other sensitive permissions.
+\rat{Learners should understand what they grant.}
+\fit{Review of the app manifest and the permission prompt sequence.}
+\trace{Hazard H6.6.}
+\end{description}
+
 \subsection{Audit Requirements}
-\lips
+\begin{description}
+\item[AU1] The learner app shall let a learner report a suspected error on any
+lyric line. The report shall contain the map identifier, map version, line, and
+the learner's comment, and shall be sent only when the learner chooses to send
+it.
+\rat{Creators need to know about incorrect annotations.}
+\fit{A report generated from a test lesson contains all four items.}
+\trace{Hazard H3.1.}
+
+\item[AU2] Each song map shall record a version number and, for every export,
+the date and the creator who exported it.
+\rat{Allows changes to a lesson to be traced.}
+\fit{Exporting a map twice adds two entries to \texttt{exports}.}
+\trace{Hazards H3.1, H5.2.}
+\end{description}
+
 \subsection{Immunity Requirements}
-\lips
+\begin{description}
+\item[IM1] The song map parser in both the editor and the learner app shall
+reject a map whose size exceeds \cn{MAX\_MAP\_SIZE} or whose nesting depth
+exceeds \cn{MAX\_NESTING} before parsing it fully, and both shall display all
+map text as plain text, never as HTML.
+\rat{Prevents denial of service and script injection through crafted maps.}
+\fit{Oversized, deeply nested, and test maps containing script are rejected or
+shown as plain text.}
+\trace{Hazard H4.3.}
+
+\item[IM2] Song maps shall refer to audio and other resources only by relative
+paths inside the map package. The validator shall reject absolute and remote
+URLs.
+\rat{Prevents the app from contacting unknown servers.}
+\fit{Maps with absolute paths or URLs are rejected.}
+\trace{Hazards H4.4, H7.2.}
+\end{description}
 
 \section{Cultural Requirements}
 \subsection{Cultural Requirements}
-\lips
+\begin{description}
+\item[CU1] Japanese romanization shall follow modified Hepburn
+romanization.
+\rat{A single standard makes readings consistent across lessons. Hepburn is
+the system most used in learning material written in English.}
+\fit{Romanization of the Japanese acceptance suite map matches Hepburn for every
+word.}
+\trace{G5, FR6.}
+
+\item[CU2] Contextual annotations for culturally specific references (for
+example, place names, holidays, or idioms) shall explain the reference rather
+than only translate it.
+\rat{A literal translation can hide the meaning.}
+\fit{Review of the acceptance suite annotations.}
+\trace{G2, IN5.}
+\end{description}
+
+The explicit content requirement HS6 also addresses cultural sensitivity.
 
 \section{Compliance Requirements}
 \subsection{Legal Requirements}
-\lips
+\begin{description}
+\item[LG1] The editor shall require source and licence information for the
+audio and lyrics before a map can be exported, and the learner app shall show
+these credits for each lesson.
+\rat{Distributing unlicensed lyrics or recordings creates legal liability
+(BR3).}
+\fit{Export is refused when licence fields are empty. Credits appear in each
+acceptance suite lesson.}
+\trace{Hazard H5.4.}
+\end{description}
+
+Because the product collects no personal data (PR1), no privacy legislation
+applies to the initial release beyond what the operating systems require for
+permission prompts (PR2).
+
 \subsection{Standards Compliance Requirements}
-\lips
+\begin{description}
+\item[ST1] The learner app's text and highlight colours shall meet WCAG 2.1
+level AA contrast (Success Criterion 1.4.3), and highlighting shall meet
+Success Criterion 2.3.1 (HS4).
+\rat{WCAG is the common accessibility standard for web and mobile interfaces.}
+\fit{Contrast checker on every text and highlight colour pair.}
+\trace{HS4, HS5.}
+
+\item[ST2] The song map schema shall be written in JSON Schema (the December 2020 draft) and song maps shall be valid JSON (RFC 8259) encoded in UTF-8.
+\rat{Standard formats allow existing validators and editors to be used.}
+\fit{The schema validates against the metaschema of that draft.}
+\trace{G3, MC3.}
+\end{description}
 
 \section{Open Issues}
-\lips
+\begin{itemize}
+    \item \textbf{Anki handoff method.} Whether the learner app uses the
+          AnkiDroid API, AnkiConnect, an export file, or a combination
+          depends on the PoC (risk R3). On iOS no direct method has been
+          confirmed. Affects OE2, AC2, PR2, IN8 to IN10.
+    \item \textbf{Mobile timing accuracy.} Whether Expo Audio reports position
+          accurately enough for FR4 depends on the PoC (risk R1).
+    \item \textbf{Second language.} Japanese is the language whose writing system is not Latin. The
+          second language for G5 has not been chosen.
+    \item \textbf{Japanese tokenizer.} kuromoji.js is the current choice for
+          FR11. Sudachi is more accurate but needs a separate service. Because
+          segmentation runs in the editor (IN4), either is possible.
+    \item \textbf{Lesson distribution.} The initial release moves song map
+          packages as files. Whether lessons should also be bundled with the
+          app for the demonstration is undecided.
+    \item \textbf{Loudness normalization.} The Hazard Analysis (H1.2) recommends
+          that the editor report track loudness. The method and target level
+          are not yet defined.
+\end{itemize}
 
 \section{Off-the-Shelf Solutions}
 \subsection{Ready-Made Products}
-\lips
+\begin{itemize}
+    \item \textbf{LyricsTraining:} a web and mobile game in which learners fill
+          in missing words in song lyrics. It does not provide annotations,
+          transliteration, or Anki export.
+    \item \textbf{Musixmatch:} shows lyrics synchronized with the audio and, for some songs,
+          translations. It is not designed for study and does not export
+          vocabulary.
+    \item \textbf{Language Reactor:} a browser extension that shows dual
+          subtitles and saves words on video sites. It depends on existing
+          subtitles and does not support annotations written by creators for
+          songs.
+\end{itemize}
+None of these combines annotations written by creators, verified segmentation for scripts other than Latin, and Anki export, which are goals G2, G5, and G6.
+
 \subsection{Reusable Components}
-\lips
+\begin{itemize}
+    \item kuromoji.js for Japanese segmentation and readings (FR11).
+    \item A JSON Schema validator library for FR16.
+    \item Expo Audio and Howler.js for playback (FR3, FR13).
+    \item Anki, AnkiDroid, and AnkiConnect as the flashcard system (FR8).
+\end{itemize}
+
 \subsection{Products That Can Be Copied}
-\lips
+The LRC lyric file format stores lines as \texttt{[mm:ss.xx] text}, and its
+extended form adds word timestamps. The song map's timing fields can follow the
+same model, and the editor may import LRC files in a later release
+(stretch goal: song map import and export).
 
 \section{New Problems}
 \subsection{Effects on the Current Environment}
-\lips
+Learners will move some song study from several separate tools into one app.
+Creators will need to record licence information they may not have recorded
+before (LG1).
+
 \subsection{Effects on the Installed Systems}
-\lips
+The learner app adds notes to the learner's Anki collection and may create a
+\progname{} deck and note type (AC1). If AnkiConnect is used, the learner must
+change its configuration (AC2).
+
 \subsection{Potential User Problems}
-\lips
+\begin{itemize}
+    \item Learners may import songs they do not have the right to use. The
+          product cannot prevent this for personal files (BR3 applies only to
+          content the project distributes).
+    \item Learners may rely on transliteration and not learn to read the
+          original script. UH3 lets them hide it.
+    \item Learners may use the app while moving (HS3).
+\end{itemize}
+
 \subsection{Limitations in the Anticipated Implementation Environment That May
 Inhibit the New Product}
-\lips
+\begin{itemize}
+    \item The interval at which Expo Audio reports playback position limits
+          highlight accuracy (risk R1).
+    \item iOS does not provide a confirmed way for another app to add notes to
+          Anki directly (OE2).
+    \item Mobile operating systems may suspend apps in the background, which
+          affects highlight alignment after return (IN1).
+\end{itemize}
+
 \subsection{Follow-Up Problems}
-\lips
+Changes to the song map schema after lessons are published will require older
+maps to remain readable (LO1) or a conversion tool (stretch goal).
 
 \section{Tasks}
 \subsection{Project Planning}
-Development tasks are partitioned among team members according to component ownership:
+Development tasks are divided by component ownership, as in the Development
+Plan:
 \begin{itemize}
-    \item Learner App Sync \& Playback: Omar Bakr
-    \item Song-Map Editor \& Schema: Raymond Ma
-    \item Language Processing \& Segmentation: Rhea Gokhale
-    \item Anki Integration \& CI/CD Pipeline: Aansh Kotian
+    \item Learner app playback and lyric sync: Omar Bakr
+    \item Song map editor and schema: Raymond Ma
+    \item Language processing (segmentation, romanization): Rhea Gokhale
+    \item Anki integration and CI/CD: Aansh Kotian
 \end{itemize}
 
 \subsection{Planning of the Development Phases}
-Project deliverables are managed through GitHub Projects Kanban boards following a phased release schedule:
+Work is tracked on a GitHub Projects board. The phases are:
 \begin{itemize}
-    \item \textbf{Phase 1 (Fall - PoC):} Core audio sync, Japanese segmentation, and Anki handoff validation.
-    \item \textbf{Phase 2 (Winter - Rev 0):} Complete mobile application UI, full web editor features, and usability testing.
-    \item \textbf{Phase 3 (Spring - Rev 1):} Final integration polish, documentation package, and EXPO demonstration.
+    \item \textbf{Phase 1 (Fall 2026, to the PoC demonstration, November 23 to
+          December 4):} audio synchronization (R1), Japanese segmentation
+          (R2), and Anki handoff (R3) on one test phone.
+    \item \textbf{Phase 2 (January to February 2027, to Revision 0):} complete
+          learner app and editor, the requirements in this document marked for
+          the capstone in the Hazard Analysis roadmap, and usability testing.
+    \item \textbf{Phase 3 (February to March 2027, to Revision 1 and the
+          final documentation on March 31):} fixes from usability testing,
+          remaining requirements, and the EXPO demonstration.
 \end{itemize}
 
 \section{Migration to the New Product}
 \subsection{Requirements for Migration to the New Product}
-\progname{} is a new product and does not replace an existing deployed
-application. Therefore, no migration of user accounts, lesson libraries, or
-legacy application data is required for the initial release.
+\progname{} is a new product and does not replace a deployed application, so
+no user accounts, lesson libraries, or other data need to be migrated for the
+initial release.
 
-The initial release shall allow creators to produce new song maps through the
-web editor and allow learners to open song maps that conform to the shared,
-versioned JSON Schema. Future versions may introduce song-map import or
-conversion tooling if an earlier schema version or an external lesson format
-must be supported.
+Creators produce new song maps with the editor, and learners open song maps
+that conform to the shared, versioned JSON Schema. Later versions may add
+import or conversion tools if an earlier schema version or an external lesson
+format must be supported.
 
 \subsection{Data That Has to be Modified or Translated for the New System}
-No existing production data must be converted for the initial release. Each
-initial lesson will be authored directly in the shared song-map format and
-validated before use by the learner application.
+No existing data must be converted for the initial release. Each lesson is
+authored directly in the song map format and validated before use.
 
-If song-map schema revisions are introduced in a future release, a compatible
-reader or documented conversion process will be required so that previously
-created valid song maps remain usable. Translation, transliteration, timing,
-and contextual annotation data are stored as explicit song-map fields and do
-not require conversion during the initial release.
+If the schema's major version changes in a later release, a reader for the old
+version or a documented conversion process will be required so that existing
+valid maps remain usable (LO1). Translation, transliteration, timing, and
+annotation data are stored as explicit song map fields and do not need
+conversion in the initial release.
 
-\section{Costs}
-\lips
+\section{Costs} \label{SecCosts}
+Development uses free tools and team members' devices. Table~\ref{TblCosts}
+lists costs that would apply only if the corresponding option is chosen.
+
+\begin{table}[h!]
+\caption{Possible costs} \label{TblCosts}
+\begin{tabularx}{\textwidth}{lXl}
+\toprule
+\textbf{Item} & \textbf{When it applies} & \textbf{Cost}\\
+\midrule
+Apple Developer Program & Distributing the iOS app through TestFlight or the
+App Store & USD 99 per year\\
+Google Play developer account & Publishing on Google Play & USD 25 once\\
+Editor hosting & The editor is hosted on GitHub Pages & none\\
+Licensed music & Using a commercial song in the acceptance suite & avoided by
+using songs created by the team or in the public domain\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+The main cost is team time, planned in the Development Plan.
+
 \section{User Documentation and Training}
 \subsection{User Documentation Requirements}
-\lips
-\subsection{Training Requirements}
-\lips
-
-\section{Waiting Room}
-\lips
-
-\section{Ideas for Solution}
-The proposed solution consists of a mobile learner application, a web-based
-song-map editor, and a shared TypeScript core package. The learner application
-will play lesson audio, display synchronized lyric lines, provide translations,
-transliterations, and contextual annotations, and prepare selected vocabulary
-for export to Anki. The editor will support creating and validating song maps
-without requiring creators to manually edit JSON files.
-
-A versioned JSON Schema will define the shared song-map representation,
-including song metadata, timed lyric lines, selectable tokens, translations,
-transliterations, and annotations. Using one validated format allows lessons
-created in the editor to be opened by the learner application without manual
-changes.
-
-The current implementation direction is React Native with Expo for the learner
-application, React for the creator editor, and TypeScript for the shared schema
-and validation logic. Japanese segmentation and romanization may use a
-client-side language-processing library such as \texttt{kuromoji.js}. These are
-implementation ideas rather than additional product requirements; equivalent
-technologies may be used provided the stated requirements and constraints are
-satisfied.
-
-
-\newpage{}
-\section{Appendix --- Generative AI Use Disclosure}
-
-\subsection{AI Tools Used}
-OpenAI Codex, using the GPT-5.6 Terra model, was utilized through the Codex desktop application.
-
-\subsection{How and Where Used}
-Codex was used to assist in drafting, structuring, and verifying Volere SRS section coverage based on primary project context files from the repository. Specifically, it aided in formulating functional requirements, specifying business use cases, and structuring data model dictionaries.
-
-\subsection{Verification of AI-Generated Content}
-All AI-assisted content was strictly checked and verified by team members against project constraints and supervisor guidelines:
 \begin{itemize}
-    \item Verified that all requirement fit criteria are measurable and align with the core MVP goals.
-    \item Ensured all technical tool choices (React Native, TypeScript, kuromoji.js) remain consistent across all repository documentation.
+    \item A learner guide covering importing a lesson, playback controls,
+          display settings, sending words to Anki, and Anki setup for the
+          selected handoff method (including the AnkiConnect settings in AC2,
+          if used).
+    \item A creator guide covering loading material, timing, latency
+          calibration, reviewing segmentation, annotations, licence fields, and
+          export errors.
+    \item A description of the song map format for developers, generated from
+          the JSON Schema.
 \end{itemize}
 
+\subsection{Training Requirements}
+No training is required beyond the guides. Test creators in the G4 study
+receive the creator guide and the test material, and no other help (UH2).
+
+\section{Waiting Room}
+The following stretch goals from the Problem Statement are not required for the
+initial release:
+\begin{itemize}
+    \item a third language and a pluggable approach to language processing,
+    \item song map import and export tools (for example, LRC import),
+    \item sharing and collaborative review of song maps,
+    \item learner progress tracking, review inside the app, and further accessibility
+          features,
+    \item automatic timing and annotation assistance, with creator
+          verification.
+\end{itemize}
+
+\section{Ideas for Solution}
+The proposed solution consists of a mobile learner app, a song map editor that runs in a web browser, and a shared TypeScript core. The learner app plays lesson audio,
+displays synchronized lyric lines, shows translations, transliterations, and
+annotations, and sends selected vocabulary to Anki. The editor creates and
+validates song maps without requiring creators to edit JSON files.
+
+A versioned JSON Schema defines the song map, including metadata, timed lyric
+lines, words, translations, transliterations, and annotations. Using one
+validated format lets lessons created in the editor open in the learner app
+without changes.
+
+The current implementation direction is React Native with Expo for the learner
+app, React for the editor, and TypeScript for the shared schema and validation
+logic. Japanese segmentation and romanization may use kuromoji.js in the
+editor. These are implementation ideas, not requirements. Other technologies
+may be used if the requirements and constraints are met.
+
+\section{Likely and Unlikely Changes} \label{SecChanges}
+\subsection{Likely Changes}
+\begin{description}
+\item[LC1] The method for sending vocabulary to Anki (AnkiDroid API,
+AnkiConnect, or export file), depending on the PoC result for risk R3.
+\item[LC2] The second language, and later a third language.
+\item[LC3] The audio playback library in the learner app (Expo Audio or a
+native module), depending on the PoC result for risk R1.
+\item[LC4] The fields of the song map schema, as minor versions.
+\item[LC5] The Japanese tokenizer used by the editor (kuromoji.js or
+Sudachi).
+\item[LC6] The values of the symbolic constants in
+Appendix~\ref{SecConstants}, after measurement in the PoC and usability
+testing.
+\item[LC7] How song map packages reach the learner app (file import, bundled
+lessons, or a hosted catalogue).
+\end{description}
+
+\subsection{Unlikely Changes}
+\begin{description}
+\item[UC1] Learners use a phone app and creators use a web editor on a
+computer.
+\item[UC2] Lessons are song maps with timed lines, stored in one shared,
+versioned format.
+\item[UC3] The initial release has no user accounts and no server.
+\item[UC4] The target users are learners at early intermediate to intermediate levels who study on their own.
+\item[UC5] Anki is the spaced repetition system that receives vocabulary.
+\end{description}
+
+\appendix
+
+\section{Symbolic Constants} \label{SecConstants}
+Values marked \emph{initial} will be confirmed during the PoC or usability
+testing (LC6).
+
+{\small
+\begin{longtable}{@{}P{0.34\textwidth}P{0.15\textwidth}P{0.45\textwidth}@{}}
+\toprule
+\textbf{Constant} & \textbf{Value} & \textbf{Source or rationale}\\
+\midrule
+\endhead
+\cn{SYNC\_TOL} & 0.5\,s & Problem Statement, goal G1.\\
+\cn{SYNC\_PASS} & 95\,\% & Problem Statement, goal G1.\\
+\cn{CREATE\_TIME} & 45\,min & Problem Statement, goal G4.\\
+\cn{CREATE\_PASS} & 2 of 3 & Problem Statement, goal G4 (two of three test
+participants).\\
+\cn{TEST\_TRACK\_LINES} & 12 lines & Problem Statement, goal G4.\\
+\cn{LANG\_COUNT} & 2 & Problem Statement, goal G5.\\
+\cn{LOAD\_TIME} & 3\,s & Development Plan, PoC pass criterion for R2.\\
+\cn{SEG\_ACC} & 90\,\% & Development Plan, PoC pass criterion for R2.\\
+\cn{SEG\_SAMPLE} & 20 lines & Development Plan, PoC pass criterion for R2.\\
+\cn{SELECT\_RESPONSE} & 0.5\,s & Initial. Equal to \cn{SYNC\_TOL}, so the
+meaning appears no later than a late line change would.\\
+\cn{ANKI\_TIMEOUT} & 5\,s & Initial. A local request normally completes in
+well under a second. 5\,s allows for a slow device before reporting failure.\\
+\cn{TIME\_RES} & 0.01\,s & One fiftieth of \cn{SYNC\_TOL}. Also the
+resolution of the LRC format.\\
+\cn{AUDIO\_DUR\_TOL} & 1\,s & Initial. Allows for differences in how
+encoders report duration.\\
+\cn{DISCONNECT\_PAUSE} & 1\,s & Hazard Analysis, HS2.\\
+\cn{MAX\_FLASHES} & 3 per second & WCAG 2.1 Success Criterion 2.3.1.\\
+\cn{AUTOSAVE\_INT} & 60\,s & Hazard Analysis, IN6. Limits lost work to one
+minute.\\
+\cn{MAX\_MAP\_SIZE} & 5\,MB (excluding audio) & Initial. A map at
+\cn{MAX\_LESSON\_LINES} with annotations is estimated at well under 1\,MB.\\
+\cn{MAX\_NESTING} & 32 levels & Initial. The schema nests fewer than 10
+levels.\\
+\cn{SUPPORTED\_MAJOR} & $\{1\}$ & Major schema versions the current release
+reads.\\
+\cn{MAX\_TAPS\_PLAY} & 3 & Initial. Home screen, lesson, play.\\
+\cn{LEARN\_TIME} & 10\,min & Initial. About the length of one study session.\\
+\cn{MAX\_AUDIO\_LENGTH} & 10\,min & Initial. Longer than most popular songs.\\
+\cn{MAX\_LESSON\_LINES} & 150 lines & Initial. Covers a song of 10 minutes with
+short lines.\\
+\cn{LIBRARY\_SIZE} & 20 lessons & Initial. Several songs in progress, with
+storage dominated by audio files.\\
+\cn{COVERAGE} & 80\,\% & Initial. Applies to the shared core only.\\
+\bottomrule
+\end{longtable}
+}
+
+\section{Traceability} \label{SecTrace}
+
+\subsection{Goals to Requirements}
+\begin{table}[H]
+\caption{Goals and the requirements that refine them} \label{TblGoalTrace}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Goal} & \textbf{Requirements}\\
+\midrule
+G1 Synchronized playback & FR3, FR4, FR5, FR10, FR13, LF1, LF2, UH1, SL1,
+PA1, PA2, RB2, CP1, IN1, IN7\\
+G2 Support in context & FR7, FR12, LF2, UH5, SL2, CU2, IN5\\
+G3 Interoperability & FR1, FR2, FR14, FR16, LO1, OE3, MS1, ST2, IN2, IN3,
+IN11, IM1, IM2\\
+G4 Practical lesson creation & FR9 to FR15, UH2, CP1, IN6, IN7\\
+G5 Writing system support & FR6, FR11, UH3, UH4, SL1, PA3, SC1, CU1, IN4,
+IN12\\
+G6 Vocabulary handoff & FR8, UH5, SL3, OE2, AC1, AC2, PR2, IN8, IN9, IN10\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Use Cases to Requirements}
+\begin{table}[H]
+\caption{Product use cases and functional requirements}
+\begin{tabularx}{\textwidth}{lX}
+\toprule
+\textbf{Use case} & \textbf{Requirements}\\
+\midrule
+PUC1 Play synchronized lesson & FR1 to FR5\\
+PUC2 Inspect a word or line & FR6, FR7\\
+PUC3 Send a term to Anki & FR8\\
+PUC4 Author a song map & FR9 to FR15\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Hazards to Requirements}
+Table~\ref{TblHazTrace} lists, for each FMEA row of the Hazard Analysis, the
+requirements in this document that mitigate it.
+
+\begin{longtable}{@{}lP{0.6\textwidth}l@{}}
+\caption{Hazard Analysis FMEA rows and mitigating requirements}
+\label{TblHazTrace}\\
+\toprule
+\textbf{Ref.} & \textbf{Failure mode} & \textbf{Requirements}\\
+\midrule
+\endhead
+H1.1 & Highlighting drifts from the audio & IN1, IN2\\
+H1.2 & Audio starts unexpectedly or loudly & HS1, HS2\\
+H1.3 & Audio file missing or unplayable & IN11\\
+H1.4 & Learner watches the screen while moving & HS3, HS7\\
+H2.1 & Incorrect segmentation & IN4\\
+H2.2 & Incorrect transliteration & IN4\\
+H2.3 & Script does not render & IN12\\
+H2.4 & Rapid flashing & HS4\\
+H2.5 & Cues by colour only, fixed text size & HS5\\
+H3.1 & Incorrect translation or annotation & IN5, AU1, AU2\\
+H3.2 & Explicit content without warning & HS6\\
+H3.3 & Compulsive use or discouragement & HS7\\
+H4.1 & Map passes schema but is inconsistent & IN2\\
+H4.2 & Format version mismatch & IN3\\
+H4.3 & Crafted or malformed map & IM1\\
+H4.4 & Map refers to external URLs & IM2\\
+H5.1 & Creator loses unsaved work & IN6\\
+H5.2 & Creator overwrites timings & IN6, AU2\\
+H5.3 & Editor timestamps offset & IN7\\
+H5.4 & Unlicensed content & LG1\\
+H6.1 & Duplicate Anki notes & IN9\\
+H6.2 & Incorrect or garbled note fields & IN10\\
+H6.3 & App changes other Anki data & AC1\\
+H6.4 & Handoff fails silently & IN8\\
+H6.5 & AnkiConnect accepts any origin & AC2\\
+H6.6 & Unneeded permissions & PR2\\
+H7.1 & Queued vocabulary lost & IN8\\
+H7.2 & Data leaves the device & PR1, IM2\\
+\bottomrule
+\end{longtable}
+
+\newpage{}
+\section{Appendix:  Generative AI Use Disclosure}
+
+\subsection{AI Tools Used}
+\begin{itemize}
+  \item OpenAI Codex, using the GPT-5.6 Terra model, through the Codex desktop
+        application.
+  \item Claude (Anthropic), model Claude Opus 5.5, through Claude Code.
+\end{itemize}
+
+\subsection{How and Where Used}
+Codex was used to draft and structure the Volere sections from the
+repository's project documents, in particular the functional requirements,
+business use cases, and data dictionary of Version 1.0.
+
+Claude was used for Version 1.1. It was given this document, the Problem
+Statement, the Development Plan, the Hazard Analysis, the SRS checklist, and
+example requirements documents from previous capstone projects. It filled the
+remaining Volere sections, rewrote the requirements in the
+format of statement, rationale, fit criterion, and trace, added the Hazard Analysis
+requirements, and wrote the formal specification, likely and unlikely changes,
+symbolic constants, and traceability tables.
+
+\subsection{Verification of AI-Generated Content}
+Content from Version 1.0 was checked by team members against project
+constraints and supervisor guidance:
+\begin{itemize}
+    \item Verified that requirement fit criteria are measurable and align with
+          the goals.
+    \item Ensured that technical choices (React Native, TypeScript,
+          kuromoji.js) are consistent across the repository's documents.
+\end{itemize}
+
+\textit{[To be completed by the team for Version 1.1: describe how the content
+added with Claude was reviewed, in particular the initial constant values in
+Appendix~\ref{SecConstants}, the descriptions of LyricsTraining, Musixmatch,
+and Language Reactor, the statements about AnkiDroid and AnkiConnect, and the
+WCAG and JSON Schema references.]}
+
 \newpage{}
 
-\section{Appendix --- Reflection}
+\section{Appendix:  Reflection}
 
 \input{../Reflection.text}
 

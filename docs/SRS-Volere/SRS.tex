@@ -14,6 +14,8 @@
 \usepackage{amssymb}
 \usepackage{float}
 \usepackage{hyperref}
+% Let long URLs and identifiers break at dots, slashes, and underscores
+\def\UrlBreaks{\do\.\do\/\do\_\do\-}
 \hypersetup{
     bookmarks=true,         % show bookmarks bar?
       colorlinks=true,      % false: boxed links; true: colored links
@@ -61,6 +63,11 @@ October 18, 2026 & 1.1 & Filled the remaining Volere sections. Added fit
 criteria, rationale, and traces to each requirement. Added the safety and
 security requirements from the Hazard Analysis. Added symbolic constants, a
 formal specification, likely and unlikely changes, and traceability tables.\\
+October 18, 2026 & 1.2 & Addressed review comments: added HS8 (fade in) and
+HS9 (loudness reporting), narrowed HS3, IN5, IN7, and AU1 to the capstone
+scope, revised AC2 and PR1, replaced the privacy legislation statement,
+corrected the product comparisons, added references, and completed the
+verification of AI-generated content.\\
 \bottomrule
 \end{tabularx}
 
@@ -289,7 +296,9 @@ Editor & The song map editor, which runs in a web browser.\\
 Explicit content & Lyrics containing profanity, slurs, or sexual or violent
 content.\\
 JSON Schema & A language for describing and validating the structure of JSON
-data.\\
+data~\cite{JSONSchema2020}.\\
+LUFS & Loudness units relative to full scale, the unit of integrated loudness
+defined in ITU-R BS.1770~\cite{BS1770}. LU is a difference in loudness.\\
 Learner & A person who studies song lessons with the learner app.\\
 Learner app & The mobile application used by learners.\\
 Lesson & A song map and its audio, as opened in the learner app.\\
@@ -319,11 +328,20 @@ in the editor.\\
     \item Japanese is written without spaces between words and mixes kanji,
           hiragana, and katakana. Many kanji have more than one reading, and
           the correct reading depends on the context.
-    \item Anki stores notes in decks. Each note has a note type that defines
-          its fields.
-    \item AnkiConnect runs only with desktop Anki. AnkiDroid provides an API
-          that other Android apps can use to add notes once the user grants
-          permission.
+    \item In Anki, a note holds related information in fields, and its note
+          type defines those fields and the cards generated from it. Cards
+          are organized into decks~\cite{AnkiManual}.
+    \item AnkiConnect is an add-on for desktop Anki. By default it accepts
+          requests only on \texttt{127.0.0.1}, port 8765, and it can be
+          configured to require an API key~\cite{AnkiConnect}.
+    \item AnkiDroid provides an API that other Android apps can use to add
+          notes. It requires a permission that Android asks the user to
+          grant at runtime~\cite{AnkiDroidAPI}:\\
+          \nolinkurl{com.ichi2.anki.permission.READ_WRITE_DATABASE}.
+    \item AnkiMobile, the iOS version of Anki, accepts new notes through an
+          \nolinkurl{anki://x-callback-url/addnote} URL from version 2.0.30
+          onwards~\cite{AnkiMobileURL}. Whether this can confirm that a note
+          was created, as IN8 requires, has not been tested.
     \item Mobile operating systems control audio routing, system volume, and
           when background apps are suspended.
 \end{itemize}
@@ -441,14 +459,16 @@ A \textbf{song map} contains:
 \begin{itemize}
     \item \textbf{Metadata:} schema version, title, artist, target language,
           difficulty level, explicit content flag, audio file path, audio
-          duration, audio and lyric source and licence, and export history.
+          duration, measured audio loudness, audio and lyric source and
+          licence, published flag, and export history.
     \item \textbf{Lyric lines:} start time, end time, original text, line
           translation, and an ordered list of words.
     \item \textbf{Words:} surface text, reading or transliteration,
           optional start and end time, translation, and a verified flag.
     \item \textbf{Annotations:} the word or line range they apply to, a
-          contextual explanation, an optional note on register (how formal or offensive a term is), the author,
-          and the review status.
+          contextual explanation, an optional note on register (how formal or
+          offensive a term is), the name of the author, and the name of the
+          reviewer.
 \end{itemize}
 
 \subsection{Data Dictionary}
@@ -464,7 +484,12 @@ A \textbf{song map} contains:
 in \textit{major} means older apps cannot read the map (IN3).\\
 \texttt{metadata} & \texttt{title}, \texttt{artist}, \texttt{language},
 \texttt{difficulty}, \texttt{explicit}, \texttt{audioPath},
-\texttt{audioDuration}, \texttt{source}, \texttt{exports}.\\
+\texttt{audioDuration}, \texttt{loudness}, \texttt{source},
+\texttt{published}, \texttt{exports}.\\
+\texttt{loudness} & Integrated loudness of the audio in LUFS, measured by the
+editor (HS9).\\
+\texttt{published} & Boolean. May be true only if the map satisfies
+\textit{publishable} (Section~\ref{SecFormal}, IN5).\\
 \texttt{audioPath} & Path of the audio file relative to the song map package.
 Absolute paths and URLs are not allowed (IM2).\\
 \texttt{source} & For both the audio and the lyrics: origin, licence type,
@@ -478,7 +503,8 @@ export (AU2).\\
 \texttt{verified}.\\
 \texttt{Annotation} & \texttt{target} (line identifier and word range),
 \texttt{note}, optional \texttt{register}, \texttt{author},
-\texttt{reviewedBy}.\\
+\texttt{reviewedBy}. Names are entered by the creator and are not verified
+(no user accounts).\\
 \texttt{VocabularyPayload} & \texttt{term}, \texttt{translation},
 \texttt{contextSentence}, \texttt{mapId}, \texttt{lineId}. Sent to Anki
 (FR8).\\
@@ -679,7 +705,8 @@ Each line is $\ell_i = (s_i, e_i, W_i)$ with start time $s_i$, end time $e_i$,
 and words $W_i = \langle w_{i,1}, \ldots, w_{i,m_i} \rangle$. A word
 $w_{i,j}$ has a verified flag $\mathit{ver}_{i,j}$ and optional times
 $s_{i,j}, e_{i,j}$. An annotation $a \in N$ has a translation
-$a.\mathit{tr}$ and a note $a.\mathit{note}$.
+$a.\mathit{tr}$, a note $a.\mathit{note}$, an author $a.\mathit{auth}$, and a
+reviewer $a.\mathit{rev}$.
 
 $S$ is valid, written $\mathit{valid}(S)$, when all of conditions V1 to V8
 hold:
@@ -701,8 +728,16 @@ at most \cn{MAX\_MAP\_SIZE}, and its nesting depth is at most
 \cn{MAX\_NESTING} (IM1).
 \end{description}
 Here $d_{\mathit{audio}}$ is the duration of the decoded audio file and
-$\varepsilon$ is the empty string. The JSON Schema checks structure and types.
-The shared validator checks the remaining conditions (FR16).
+$\varepsilon$ is the empty string. The JSON Schema~\cite{JSONSchema2020}
+checks structure and types. The shared validator checks the remaining
+conditions (FR16).
+
+A valid map may be marked as published only when every annotation has a
+reviewer other than its author (IN5):
+\[
+\mathit{publishable}(S) \equiv \mathit{valid}(S) \wedge \forall a \in N :
+a.\mathit{rev} \neq \varepsilon \wedge a.\mathit{rev} \neq a.\mathit{auth}.
+\]
 
 \subsection{Active Line and Synchronization}
 For an audio position $p$, the active line is
@@ -738,21 +773,25 @@ player.
 \midrule
 NoLesson & open $S$, $\mathit{valid}(S)$ & $p := 0$ & Ready\\
 NoLesson & open $S$, $\neg\mathit{valid}(S)$ & show failed rules & NoLesson\\
-Ready & learner presses play & start audio, fade in & Playing\\
+Ready & learner presses play & start audio, fade in over \cn{FADE\_IN} &
+Playing\\
 Playing & learner presses pause & stop audio & Paused\\
 Playing & audio output disconnected & stop audio within
 \cn{DISCONNECT\_PAUSE} & Paused\\
 Playing & end of audio & $p := d$ & Paused\\
 Playing, Paused & seek to $t$ & $p := t$. Highlight $\mathit{active}(t)$ &
 unchanged\\
-Paused & learner presses play & start audio, fade in & Playing\\
+Paused & learner presses play & start audio, fade in over \cn{FADE\_IN} &
+Playing\\
 any & close lesson & stop audio & NoLesson\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-No transition enters \textit{Playing} except a learner action, which is HS1.
-The transition on audio output disconnection is HS2.
+No transition enters \textit{Playing} except a learner action, which is HS1,
+and every such transition fades the audio in, which is HS8. The transition on
+audio output disconnection is HS2. Locking the screen or moving the app to the
+background is not an event, so it leaves \textit{Playing} unchanged (HS3).
 
 \section{Look and Feel Requirements}
 \subsection{Appearance Requirements}
@@ -894,19 +933,24 @@ when the active audio output device is disconnected.
 playback on iOS and Android.}
 \trace{Hazard H1.2.}
 
-\item[HS3] The learner app shall provide a listening mode in which a
-lesson can be followed without looking at or touching the screen, and shall show a notice on first launch only, advising against using the screen while
-driving, cycling, or crossing traffic.
-\rat{Learners use the app while moving.}
-\fit{The notice appears on first launch only. In listening mode a full
-lesson plays with no required interaction.}
+\item[HS3] Once a lesson has been started, the learner app shall continue
+playing it to the end, with no interaction required, while the screen is
+locked or the app is in the background. The app shall show a notice on first
+launch advising against using the screen while driving, cycling, or crossing
+traffic.
+\rat{Learners use the app while moving. A lesson that can be followed by
+listening alone lets them put the phone away. A separate listening mode
+designed for use while moving is future work (Hazard Analysis, Roadmap).}
+\fit{On iOS and Android, a full acceptance suite lesson plays to the end with
+the screen locked after the learner presses play. The notice appears on the
+first launch after installation and not on later launches.}
 \trace{Hazard H1.4.}
 
 \item[HS4] Lyric highlighting shall not produce more than \cn{MAX\_FLASHES}
 large area flashes in any period of one second, and shall follow the operating
 system's reduce motion setting.
 \rat{Rapid flashing can trigger seizures in photosensitive people (WCAG 2.1,
-Success Criterion 2.3.1).}
+Success Criterion 2.3.1~\cite{WCAG21, WCAG231}).}
 \fit{Count of highlight changes per second in the fastest acceptance suite
 song, and a check with reduce motion turned on.}
 \trace{Hazard H2.4.}
@@ -932,6 +976,27 @@ lesson's difficulty level before it is opened.
 \rat{Avoids stress and compulsive use.}
 \fit{Design review of the release build.}
 \trace{Hazards H1.4, H3.3.}
+
+\item[HS8] When playback starts or resumes, the learner app shall raise the
+playback volume from silence to its set level over \cn{FADE\_IN}.
+\rat{A sudden start at full level is uncomfortable with headphones, and a
+short fade gives the learner time to lower the volume.}
+\fit{A recording of the app's audio output at the start of playback and after
+each resume rises from silence to the set level over \cn{FADE\_IN}, within
+0.1\,s, on iOS and Android.}
+\trace{Hazard H1.2.}
+
+\item[HS9] The editor shall measure the integrated loudness of each track's
+audio, as defined in ITU-R BS.1770~\cite{BS1770}, and display it to the
+creator. Before export, it shall warn the creator when the loudness differs
+from \cn{TARGET\_LOUDNESS} by more than \cn{LOUDNESS\_TOL}. The measured value
+shall be stored in the song map's \texttt{loudness} field.
+\rat{Tracks mastered at very different levels make one lesson much louder than
+the previous one at the same volume setting.}
+\fit{For test tracks with known integrated loudness, the displayed value is
+within 1\,LU of the known value. A test track outside the tolerance produces
+the warning before export.}
+\trace{Hazard H1.2.}
 \end{description}
 
 \subsection{Precision or Accuracy Requirements}
@@ -1110,9 +1175,15 @@ collection is unchanged apart from added notes.}
 
 \item[AC2] If AnkiConnect is used, the product and its setup instructions shall
 allow only the specific origin the product requires, never a wildcard origin,
-and shall use an API key when AnkiConnect supports one.
-\rat{A wildcard origin lets any web page change the learner's collection.}
-\fit{Review of the setup instructions and default configuration.}
+and shall require AnkiConnect's API key (\texttt{apiKey}~\cite{AnkiConnect}).
+The setup instructions shall warn the learner before any step that makes
+AnkiConnect listen on an address other than \texttt{127.0.0.1}.
+\rat{A wildcard origin lets any web page change the learner's collection.
+AnkiConnect listens only on \texttt{127.0.0.1} by default, so a phone can
+reach it only if it is opened to the network, where any device could send it
+requests.}
+\fit{Review of the setup instructions and default configuration. A request
+without the API key is refused.}
 \trace{Hazard H6.5.}
 \end{description}
 
@@ -1150,12 +1221,15 @@ containing unverified lines.
 refused.}
 \trace{Hazards H2.1, H2.2.}
 
-\item[IN5] Each annotation shall record its author and review status. The
-editor shall not mark a map as published until every annotation has been
-reviewed by someone other than its author.
-\rat{Incorrect annotations teach the wrong meaning.}
-\fit{A map with an annotation reviewed only by its author cannot be marked
-published.}
+\item[IN5] Each annotation shall record the name of its author and the name
+of its reviewer. The editor shall not mark a map as published while any
+annotation has no reviewer or has its author as its reviewer
+($\mathit{publishable}$, Section~\ref{SecFormal}).
+\rat{Incorrect annotations teach the wrong meaning. Because the initial release
+has no user accounts, names cannot be verified. The residual risk is accepted
+in the Hazard Analysis.}
+\fit{A map with an annotation that has no reviewer, or whose reviewer is its
+author, cannot be marked published.}
 \trace{Hazard H3.1.}
 
 \item[IN6] The editor shall autosave the current draft at least every
@@ -1167,9 +1241,10 @@ before any operation that changes more than one line.
 bulk operation asks for confirmation.}
 \trace{Hazards H5.1, H5.2.}
 
-\item[IN7] The editor shall provide an audio latency calibration whose offset
-is applied to recorded timestamps, and a preview that plays the map as the
-learner app will (FR13).
+\item[IN7] The editor shall let the creator set an audio latency offset,
+either by entering it or by tapping along to a test click track, and shall
+apply it to recorded timestamps. It shall also provide a preview that plays
+the map as the learner app will (FR13).
 \rat{Browser and Bluetooth output latency shifts every recorded time.}
 \fit{With calibration applied, preview line changes meet FR4's fit criterion.}
 \trace{Hazard H5.3.}
@@ -1216,9 +1291,10 @@ platforms.}
 
 \subsection{Privacy Requirements}
 \begin{description}
-\item[PR1] The initial release shall not collect personal data or send any
-data off the device, other than notes the learner explicitly sends to Anki.
-Any analytics or crash reporting added later shall stay off unless the learner turns it on.
+\item[PR1] The initial release shall not send any data off the device, other
+than notes the learner explicitly sends to Anki and error reports the learner
+chooses to share (AU1). Any analytics or crash reporting added later shall
+stay off unless the learner turns it on.
 \rat{Vocabulary history and listening habits are personal.}
 \fit{Dependency review and network capture during a test session show no other
 outbound traffic.}
@@ -1234,12 +1310,17 @@ request no other sensitive permissions.
 
 \subsection{Audit Requirements}
 \begin{description}
-\item[AU1] The learner app shall let a learner report a suspected error on any
-lyric line. The report shall contain the map identifier, map version, line, and
-the learner's comment, and shall be sent only when the learner chooses to send
-it.
-\rat{Creators need to know about incorrect annotations.}
-\fit{A report generated from a test lesson contains all four items.}
+\item[AU1] The learner app shall let a learner prepare a report of a suspected
+error on any lyric line. The report shall contain the map identifier, map
+version, line, and the learner's comment. The app shall pass the report to the
+operating system's share sheet, so that the learner decides whether and where
+to send it, and shall not send it itself.
+\rat{Creators need to know about incorrect annotations. The product has no
+backend, so the learner chooses the channel (for example, email or the
+project's issue tracker).}
+\fit{A report prepared from a test lesson contains all four items and opens in
+the share sheet on iOS and Android. Network capture shows that the app sends
+nothing when the learner cancels the share sheet.}
 \trace{Hazard H3.1.}
 
 \item[AU2] Each song map shall record a version number and, for every export,
@@ -1302,22 +1383,51 @@ acceptance suite lesson.}
 \trace{Hazard H5.4.}
 \end{description}
 
-Because the product collects no personal data (PR1), no privacy legislation
-applies to the initial release beyond what the operating systems require for
-permission prompts (PR2).
+\subsubsection*{Intended Data Flow and Privacy Obligations}
+The initial release is designed so that the team does not receive any
+personal data. The intended data flow is:
+\begin{itemize}
+    \item The learner's lessons, display preferences, and queue of vocabulary
+          waiting for Anki are stored only on the learner's device (IN8, UH3).
+    \item Vocabulary leaves the app only when the learner sends it to Anki.
+          The note goes to Anki on the same device, or to desktop Anki through
+          AnkiConnect, and is then stored in the learner's own Anki collection.
+          What happens to the collection after that, including synchronization
+          through AnkiWeb, is controlled by the learner and Anki, not by
+          \progname{}.
+    \item Error reports leave the device only through the share sheet, to a
+          destination the learner chooses (AU1).
+    \item Song maps contain the names of the creators and reviewers (AU2, IN5),
+          and these names are distributed with each map.
+    \item The editor stores drafts in the creator's browser storage (IN6).
+\end{itemize}
+
+This data flow limits the product's privacy obligations, but does not remove
+them: the app stores vocabulary history on the device, it writes into the
+learner's Anki collection, and song maps carry creators' names. The team has
+not yet determined which privacy laws and platform policies apply. Before the
+app is distributed outside the team and test participants, the team shall
+confirm this, including Canadian privacy law and the privacy disclosures
+required by the Apple App Store and Google Play, and shall check it again
+whenever the data flow changes (see Open Issues).
 
 \subsection{Standards Compliance Requirements}
 \begin{description}
 \item[ST1] The learner app's text and highlight colours shall meet WCAG 2.1
-level AA contrast (Success Criterion 1.4.3), and highlighting shall meet
-Success Criterion 2.3.1 (HS4).
-\rat{WCAG is the common accessibility standard for web and mobile interfaces.}
+level AA contrast (Success Criterion 1.4.3~\cite{WCAG143}), and highlighting
+shall meet Success Criterion 2.3.1~\cite{WCAG231} (HS4).
+\rat{WCAG~\cite{WCAG21} is the W3C's accessibility standard for web content,
+and the W3C publishes guidance on applying it to software that is not web
+content, such as mobile apps (WCAG2ICT~\cite{WCAG2ICT}).}
 \fit{Contrast checker on every text and highlight colour pair.}
 \trace{HS4, HS5.}
 
-\item[ST2] The song map schema shall be written in JSON Schema (the December 2020 draft) and song maps shall be valid JSON (RFC 8259) encoded in UTF-8.
+\item[ST2] The song map schema shall be written in JSON Schema Draft
+2020-12~\cite{JSONSchema2020}, and song maps shall be valid JSON
+(RFC~8259~\cite{RFC8259}) encoded in UTF-8.
 \rat{Standard formats allow existing validators and editors to be used.}
-\fit{The schema validates against the metaschema of that draft.}
+\fit{The schema validates against the Draft 2020-12 metaschema
+(\url{https://json-schema.org/draft/2020-12/schema}).}
 \trace{G3, MC3.}
 \end{description}
 
@@ -1325,8 +1435,10 @@ Success Criterion 2.3.1 (HS4).
 \begin{itemize}
     \item \textbf{Anki handoff method.} Whether the learner app uses the
           AnkiDroid API, AnkiConnect, an export file, or a combination
-          depends on the PoC (risk R3). On iOS no direct method has been
-          confirmed. Affects OE2, AC2, PR2, IN8 to IN10.
+          depends on the PoC (risk R3). On iOS, AnkiMobile's
+          \texttt{addnote} URL scheme~\cite{AnkiMobileURL} is a candidate,
+          but whether it can confirm that a note was created (IN8) has not
+          been tested. Affects OE2, AC2, PR2, IN8 to IN10.
     \item \textbf{Mobile timing accuracy.} Whether Expo Audio reports position
           accurately enough for FR4 depends on the PoC (risk R1).
     \item \textbf{Second language.} Japanese is the language whose writing system is not Latin. The
@@ -1337,26 +1449,40 @@ Success Criterion 2.3.1 (HS4).
     \item \textbf{Lesson distribution.} The initial release moves song map
           packages as files. Whether lessons should also be bundled with the
           app for the demonstration is undecided.
-    \item \textbf{Loudness normalization.} The Hazard Analysis (H1.2) recommends
-          that the editor report track loudness. The method and target level
-          are not yet defined.
+    \item \textbf{Loudness target.} HS9 measures loudness with ITU-R
+          BS.1770. The values of \cn{TARGET\_LOUDNESS} and
+          \cn{LOUDNESS\_TOL} are initial and will be confirmed with the
+          acceptance suite tracks. Whether the editor should also normalize
+          the audio, rather than only warn, is undecided.
+    \item \textbf{Privacy obligations.} The privacy laws and app store privacy
+          disclosures that apply to the intended data flow (Compliance
+          Requirements) have not been confirmed. This must be done before the
+          app is distributed outside the team and test participants.
 \end{itemize}
 
 \section{Off-the-Shelf Solutions}
 \subsection{Ready-Made Products}
 \begin{itemize}
-    \item \textbf{LyricsTraining:} a web and mobile game in which learners fill
-          in missing words in song lyrics. It does not provide annotations,
-          transliteration, or Anki export.
-    \item \textbf{Musixmatch:} shows lyrics synchronized with the audio and, for some songs,
-          translations. It is not designed for study and does not export
-          vocabulary.
-    \item \textbf{Language Reactor:} a browser extension that shows dual
-          subtitles and saves words on video sites. It depends on existing
-          subtitles and does not support annotations written by creators for
-          songs.
+    \item \textbf{LyricsTraining}~\cite{LyricsTraining}: a website and mobile
+          app in which learners fill in missing words in the lyrics of music
+          videos. Japanese songs can be shown in r\=omaji. We found no
+          contextual annotations or Anki export.
+    \item \textbf{Musixmatch}~\cite{Musixmatch}: a lyrics service that shows
+          lyrics synchronized with the music, line by line and for some songs
+          word by word, with translations contributed by its users for some
+          songs. It is designed for listening rather than study, and we found
+          no vocabulary export.
+    \item \textbf{Language Reactor}~\cite{LanguageReactor}: a browser
+          extension that shows dual subtitles on video sites such as Netflix
+          and YouTube, lets learners look up and save words, and in its paid
+          version exports saved words for use in Anki. It depends on the
+          video's existing subtitles and does not provide annotations written
+          by creators.
 \end{itemize}
-None of these combines annotations written by creators, verified segmentation for scripts other than Latin, and Anki export, which are goals G2, G5, and G6.
+None of these combines annotations written by creators, verified segmentation
+for scripts other than Latin, and Anki export, which are goals G2, G5, and G6.
+These descriptions are based on each product's public website and store
+listings, checked on October 18, 2026. Features may change.
 
 \subsection{Reusable Components}
 \begin{itemize}
@@ -1465,8 +1591,9 @@ lists costs that would apply only if the corresponding option is chosen.
 \textbf{Item} & \textbf{When it applies} & \textbf{Cost}\\
 \midrule
 Apple Developer Program & Distributing the iOS app through TestFlight or the
-App Store & USD 99 per year\\
-Google Play developer account & Publishing on Google Play & USD 25 once\\
+App Store & USD 99 per year~\cite{AppleDev}\\
+Google Play developer account & Publishing on Google Play & USD 25
+once~\cite{GooglePlayFee}\\
 Editor hosting & The editor is hosted on GitHub Pages & none\\
 Licensed music & Using a commercial song in the acceptance suite & avoided by
 using songs created by the team or in the public domain\\
@@ -1505,6 +1632,16 @@ initial release:
           features,
     \item automatic timing and annotation assistance, with creator
           verification.
+\end{itemize}
+The following extensions of hazard mitigations are also future work. The
+risk they would reduce is accepted in the Hazard Analysis (Residual Risk):
+\begin{itemize}
+    \item a listening mode designed for use while moving, beyond HS3,
+    \item verified reviewer identities for IN5, which need user accounts,
+    \item automatic delivery of error reports (AU1) to creators, which needs
+          a backend,
+    \item latency calibration that does not need the creator's help, beyond
+          IN7.
 \end{itemize}
 
 \section{Ideas for Solution}
@@ -1584,7 +1721,12 @@ resolution of the LRC format.\\
 \cn{AUDIO\_DUR\_TOL} & 1\,s & Initial. Allows for differences in how
 encoders report duration.\\
 \cn{DISCONNECT\_PAUSE} & 1\,s & Hazard Analysis, HS2.\\
-\cn{MAX\_FLASHES} & 3 per second & WCAG 2.1 Success Criterion 2.3.1.\\
+\cn{MAX\_FLASHES} & 3 per second & WCAG 2.1 Success Criterion
+2.3.1~\cite{WCAG231}.\\
+\cn{FADE\_IN} & 0.5\,s & Initial. Hazard Analysis, HS8. Long enough to avoid a
+sudden start, short enough not to hide the start of the first line.\\
+\cn{TARGET\_LOUDNESS} & $-16$\,LUFS & Initial. Hazard Analysis, HS9.\\
+\cn{LOUDNESS\_TOL} & 2\,LU & Initial. Hazard Analysis, HS9.\\
 \cn{AUTOSAVE\_INT} & 60\,s & Hazard Analysis, IN6. Limits lost work to one
 minute.\\
 \cn{MAX\_MAP\_SIZE} & 5\,MB (excluding audio) & Initial. A map at
@@ -1654,7 +1796,7 @@ requirements in this document that mitigate it.
 \midrule
 \endhead
 H1.1 & Highlighting drifts from the audio & IN1, IN2\\
-H1.2 & Audio starts unexpectedly or loudly & HS1, HS2\\
+H1.2 & Audio starts unexpectedly or loudly & HS1, HS2, HS8, HS9\\
 H1.3 & Audio file missing or unplayable & IN11\\
 H1.4 & Learner watches the screen while moving & HS3, HS7\\
 H2.1 & Incorrect segmentation & IN4\\
@@ -1677,12 +1819,59 @@ H6.1 & Duplicate Anki notes & IN9\\
 H6.2 & Incorrect or garbled note fields & IN10\\
 H6.3 & App changes other Anki data & AC1\\
 H6.4 & Handoff fails silently & IN8\\
-H6.5 & AnkiConnect accepts any origin & AC2\\
+H6.5 & AnkiConnect reachable by any web page or computer & AC2\\
 H6.6 & Unneeded permissions & PR2\\
 H7.1 & Queued vocabulary lost & IN8\\
 H7.2 & Data leaves the device & PR1, IM2\\
 \bottomrule
 \end{longtable}
+
+\section*{References}
+\addcontentsline{toc}{section}{References}
+
+\begingroup
+\renewcommand{\section}[2]{}
+\begin{thebibliography}{99}
+\bibitem{AnkiManual} Anki, \emph{Anki Manual: Getting Started}.
+  \url{https://docs.ankiweb.net/getting-started.html}
+\bibitem{AnkiDroidAPI} AnkiDroid, \emph{AnkiDroid API} (project wiki).
+  \url{https://github.com/ankidroid/Anki-Android/wiki/AnkiDroid-API}
+\bibitem{AnkiMobileURL} Anki, \emph{AnkiMobile Manual: URL Schemes}.
+  \url{https://docs.ankiweb.net/ankimobile/url-schemes}
+\bibitem{AnkiConnect} A.~Yatskov (FooSoft), \emph{AnkiConnect} (add-on
+  documentation). \url{https://git.sr.ht/~foosoft/anki-connect}
+\bibitem{WCAG21} World Wide Web Consortium, \emph{Web Content Accessibility
+  Guidelines (WCAG) 2.1}, W3C Recommendation.
+  \url{https://www.w3.org/TR/WCAG21/}
+\bibitem{WCAG143} World Wide Web Consortium, \emph{Understanding Success
+  Criterion 1.4.3: Contrast (Minimum)}.
+  \url{https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html}
+\bibitem{WCAG231} World Wide Web Consortium, \emph{Understanding Success
+  Criterion 2.3.1: Three Flashes or Below Threshold}.
+  \url{https://www.w3.org/WAI/WCAG21/Understanding/three-flashes-or-below-threshold.html}
+\bibitem{WCAG2ICT} World Wide Web Consortium, \emph{Guidance on Applying WCAG
+  2 to Non-Web Information and Communications Technologies (WCAG2ICT)}.
+  \url{https://www.w3.org/TR/wcag2ict/}
+\bibitem{JSONSchema2020} JSON Schema, \emph{Draft 2020-12}.
+  \url{https://json-schema.org/draft/2020-12}
+\bibitem{RFC8259} T.~Bray, Ed., \emph{The JavaScript Object Notation (JSON)
+  Data Interchange Format}, RFC 8259, IETF, December 2017.
+  \url{https://www.rfc-editor.org/rfc/rfc8259}
+\bibitem{BS1770} International Telecommunication Union, \emph{Recommendation
+  ITU-R BS.1770: Algorithms to Measure Audio Programme Loudness and True-Peak
+  Audio Level}. \url{https://www.itu.int/rec/R-REC-BS.1770}
+\bibitem{LyricsTraining} LyricsTraining. \url{https://lyricstraining.com/}
+\bibitem{Musixmatch} Musixmatch. \url{https://www.musixmatch.com/}
+\bibitem{LanguageReactor} Language Reactor.
+  \url{https://www.languagereactor.com/}
+\bibitem{AppleDev} Apple, \emph{Apple Developer Program}.
+  \url{https://developer.apple.com/programs/}
+\bibitem{GooglePlayFee} Google, \emph{Get Started with Play Console}, Play Console
+  Help. \url{https://support.google.com/googleplay/android-developer/answer/6112435}
+\end{thebibliography}
+\endgroup
+
+All web sources were accessed on October 18, 2026.
 
 \newpage{}
 \section{Appendix:  Generative AI Use Disclosure}
@@ -1707,6 +1896,11 @@ format of statement, rationale, fit criterion, and trace, added the Hazard Analy
 requirements, and wrote the formal specification, likely and unlikely changes,
 symbolic constants, and traceability tables.
 
+Claude was also used for Version 1.2 to address the review comments on
+Version 1.1: it drafted HS8 and HS9, the narrowed versions of HS3, IN5, IN7,
+and AU1, the revised AC2 and PR1, the description of the intended data flow
+under Compliance Requirements, and the References section.
+
 \subsection{Verification of AI-Generated Content}
 Content from Version 1.0 was checked by team members against project
 constraints and supervisor guidance:
@@ -1717,11 +1911,33 @@ constraints and supervisor guidance:
           kuromoji.js) are consistent across the repository's documents.
 \end{itemize}
 
-\textit{[To be completed by the team for Version 1.1: describe how the content
-added with Claude was reviewed, in particular the initial constant values in
-Appendix~\ref{SecConstants}, the descriptions of LyricsTraining, Musixmatch,
-and Language Reactor, the statements about AnkiDroid and AnkiConnect, and the
-WCAG and JSON Schema references.]}
+Content added with Claude in Versions 1.1 and 1.2 was checked as follows:
+\begin{itemize}
+    \item \textbf{External claims:} the statements about Anki, AnkiDroid,
+          AnkiMobile, and AnkiConnect, the WCAG, JSON Schema, RFC~8259, and
+          ITU-R BS.1770 references, and the developer program fees were
+          checked against the primary sources in the References section on
+          October 18, 2026. This check corrected three statements: AnkiConnect
+          does support an API key and listens only on \texttt{127.0.0.1} by
+          default (AC2), AnkiMobile does provide a URL scheme for adding notes
+          (Open Issues), and Anki organizes cards, not notes, into decks.
+    \item \textbf{Product comparisons:} the descriptions of LyricsTraining,
+          Musixmatch, and Language Reactor were checked against each product's
+          website and store listings. Two were corrected: LyricsTraining shows
+          Japanese lyrics in r\=omaji, and Language Reactor's paid version
+          exports words for Anki.
+    \item \textbf{Constants:} each value in Appendix~\ref{SecConstants} is
+          either taken from the Problem Statement, the Development Plan, the
+          Hazard Analysis, or a cited standard, or is marked \emph{initial}
+          with its reasoning, to be confirmed by measurement (LC6).
+    \item \textbf{Consistency with the Hazard Analysis:} a script checked
+          that every requirement traced to a hazard has the same identifier
+          and FMEA rows in both documents, that Table~\ref{TblHazTrace}
+          matches the FMEA table, and that every symbolic constant used is
+          defined in Appendix~\ref{SecConstants}. The wording was also
+          compared. It matches, except that numeric values are written here as
+          symbolic constants.
+\end{itemize}
 
 \newpage{}
 

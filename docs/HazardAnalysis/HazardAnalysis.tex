@@ -8,6 +8,8 @@
 \usepackage{eso-pic}
 \usepackage[margin=1in]{geometry}
 \usepackage{hyperref}
+% Let long URLs break at dots, slashes, and underscores
+\def\UrlBreaks{\do\.\do\/\do\_\do\-}
 
 \hypersetup{
     colorlinks=true,       % false: boxed links; true: colored links
@@ -45,6 +47,10 @@
 \textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
 \midrule
 October 18, 2026 & Rhea Gokhale & Initial Revision 0 draft\\
+October 18, 2026 & Rhea Gokhale & Addressed review comments: reviewed all
+ratings against the scales, added HS8 and HS9, narrowed HS3, IN5, IN7, and AU1
+to the capstone scope, added the residual risk table, the verification of
+AI-generated content, and references\\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -72,19 +78,21 @@ data, privacy, legal exposure from song content, and the learner's wellbeing.
 
 \subsection*{Definition of Hazard}
 
-Following Nancy Leveson's work, a \textbf{hazard} is a property or condition of
-\progname{} that, together with a condition in its environment, can lead to a
-\textbf{loss}. A \textbf{loss} is any outcome that a stakeholder would find
+Following Nancy Leveson's work~\cite{Leveson2011}, a \textbf{hazard} is a
+property or condition of \progname{} that, together with a condition in its
+environment, can lead to a \textbf{loss}. A \textbf{loss} is any outcome that a stakeholder would find
 unacceptable. The losses considered in this document are listed in
 Section~\ref{SecScope}.
 
 \subsection*{Changes to the Template}
 
-The template has been followed with two additions. Section~\ref{SecFMEA} adds a
+The template has been followed with four additions. Section~\ref{SecFMEA} adds a
 \emph{Hazards Out of Scope} subsection, and the FMEA table rates each failure
 mode for severity, occurrence, and detection and gives its risk priority
 number (RPN). The RPN is used to prioritize the requirements in the Roadmap
-(Section~\ref{SecRoadmap}).
+(Section~\ref{SecRoadmap}), which also records the residual risk accepted for
+each high priority failure mode. A list of references is given at the end of
+the document.
 
 \section{Scope and Purpose of Hazard Analysis} \label{SecScope}
 
@@ -113,9 +121,10 @@ The losses that the hazards in this document could lead to are:
         Anki collection are duplicated, malformed, or overwritten, selected
         vocabulary is silently lost, or a creator loses timing and annotation
         work.
-  \item \textbf{L4 Privacy and security:} personal data leaves the device
-        without consent, or a malicious song map or misconfigured integration
-        allows an attacker to run code or change the learner's data.
+  \item \textbf{L4 Privacy and security:} personal data (including the
+        device's IP address) leaves the device without consent, or a malicious
+        song map or misconfigured integration allows an attacker to run code or
+        change the learner's data.
   \item \textbf{L5 Legal:} distributing lyrics or recordings without the
         right to do so.
   \item \textbf{L6 Wellbeing:} the product causes stress, discouragement, or
@@ -145,8 +154,8 @@ under the team's control:
         entering translations and annotations, verifying segmentation and
         transliteration, and exporting song maps.
   \item \textbf{Anki Handoff}: the learner app's module that sends a selected
-        vocabulary item to Anki through the AnkiDroid API, AnkiConnect, or an
-        export file (the method is decided by the Proof of Concept, risk R3 in
+        vocabulary item to Anki through the AnkiDroid API~\cite{AnkiDroidAPI},
+        AnkiConnect~\cite{AnkiConnect}, or an export file (the method is decided by the Proof of Concept, risk R3 in
         the Development Plan).
   \item \textbf{Local Data Storage} (learner app): stored lessons, display
         preferences, and the queue of vocabulary waiting to be sent to Anki.
@@ -206,7 +215,9 @@ to it.
   \item Defects inside Anki, AnkiDroid, AnkiConnect, the operating system, or
         the browser (see CA1).
   \item The overall volume the learner chooses with their device's controls.
-        The app controls only when playback starts and stops (H1.2). Limits on listening over long periods are managed by the operating system's hearing
+        The app controls when playback starts and stops, how it starts, and
+        reports the loudness of each track to its creator (H1.2). Limits on
+        listening over long periods are left to the operating system's hearing
         protection features.
   \item Hazards of streaming service integration, a production music
         catalogue, user accounts, and cloud sync, none of which are in the
@@ -219,7 +230,11 @@ to it.
 
 Each failure mode is rated on three scales from 1 to 10. The ratings describe
 the failure mode \emph{before} the recommended action is taken, so they show
-how much each action matters.
+how much each action matters. When a failure mode can lead to more than one
+loss, its severity is that of the most severe loss, even if that loss is only
+possible rather than likely. The detection rating describes the checks that
+exist without the recommended action. Checks that are themselves part of the
+recommended action do not lower it.
 
 \begin{table}[h!]
 \caption{Rating scales} \label{TblScales}
@@ -228,16 +243,18 @@ how much each action matters.
 \textbf{Rating} & \textbf{Severity (S)} & \textbf{Occurrence (O)} &
 \textbf{Detection (D)}\\
 \midrule
-9 to 10 & Physical harm (L1), legal exposure (L5), or a privacy or security
-breach (L4) & Almost certain in normal use & Cannot be detected before it
-reaches the user\\
+9 to 10 & Physical harm, including possible harm (L1), legal exposure (L5),
+or a privacy or security breach (L4) & Almost certain in normal use & Cannot
+be detected before it reaches the user\\
 7 to 8 & Permanent loss or damage of user data (L3), or a serious privacy or
-security weakness & Frequent & Detected only by chance\\
-5 to 6 & The learner learns incorrect content (L2), or a goal from the
-Problem Statement fails & Occasional & Detected by careful review or
-targeted testing\\
-3 to 4 & User data is lost but can be recovered, or the user is clearly
-inconvenienced & Rare & Usually detected by routine tests\\
+security weakness that does not by itself expose data & Frequent & Detected
+only by chance\\
+5 to 6 & The learner learns incorrect content (L2), a goal from the Problem
+Statement fails for some users, or lasting stress or discouragement (L6) &
+Occasional & Detected by careful review or targeted testing\\
+3 to 4 & User data is lost but can be recovered, the user is clearly
+inconvenienced, or brief discomfort (L6) & Rare & Usually detected by routine
+tests\\
 1 to 2 & Minor inconvenience with no lasting effect & Very unlikely & Almost
 certainly detected by automated checks\\
 \bottomrule
@@ -314,14 +331,16 @@ c.~Tracks are mastered at very different loudness. &
 Manual test on iOS and Android: open lesson, unplug or disconnect headphones
 during playback. &
 Never start playback without a learner action. Pause playback when the audio
-output device is disconnected. Fade audio in when playback starts. The editor
-reports the loudness of each track so creators can normalize it before export.
+output device is disconnected. Fade audio in when playback starts or resumes.
+The editor measures the loudness of each track and warns the creator before
+export when it is far from the target level, so tracks can be normalized.
 &
-8 & 5 & 4 & 160 & HS1, HS2\\
+9 & 5 & 5 & 225 & HS1, HS2, HS8, HS9\\
 \midrule
 H1.3 & Audio file referenced by a map is missing, corrupt, or in an unsupported
 format. &
-Lesson cannot be played. The app may crash (L3 if queued vocabulary is lost). &
+Lesson cannot be played, or the app crashes. Loss of queued vocabulary in a
+crash is covered by H7.1. &
 a.~File not included in the map package.\newline
 b.~Codec not supported on the learner's platform.\newline
 c.~File damaged during transfer. &
@@ -330,15 +349,16 @@ with the map. &
 Reject the lesson on import with a message naming the problem, instead of
 failing at playback time. Restrict maps to audio formats supported on both
 iOS and Android. &
-4 & 4 & 2 & 32 & IN11\\
+4 & 4 & 3 & 48 & IN11\\
 \midrule
 H1.4 & Learner watches the screen while walking, cycling, or driving. &
 Physical injury to the learner or others from distraction (L1). &
 a.~Intended use includes short study moments on the move.\newline
 b.~Following the lesson requires reading highlighted text. &
 Cannot be reliably detected by the app. &
-Provide a listening mode that can be followed without looking at the
-screen (larger controls, no required taps). Show a notice on first launch only, advising against using the screen while driving, cycling, or crossing
+Let a lesson be followed by listening alone: playback continues with the
+screen locked and needs no taps once started. Show a notice on first launch,
+advising against using the screen while driving, cycling, or crossing
 traffic. Avoid interactions under time pressure that demand attention. &
 10 & 5 & 10 & 500 & HS3, HS7\\
 \midrule
@@ -377,18 +397,19 @@ b.~Text encoding is mishandled when the map is read. &
 Rendering check of every acceptance suite line on both platforms. &
 Bundle fonts that cover every script of the supported languages, and read and
 write all song maps as UTF-8. &
-5 & 3 & 2 & 30 & IN12\\
+5 & 3 & 3 & 45 & IN12\\
 \midrule
 H2.4 & Highlight changes flash rapidly across large areas of the screen. &
 Discomfort or seizure risk for photosensitive learners (L1). &
 a.~Fast songs with very short words.\newline
 b.~Highlight style changes the background colour of whole lines. &
-Review against WCAG~2.3.1 (three flashes or below threshold). Count highlight
+Review against WCAG~2.1 Success Criterion 2.3.1, \emph{Three Flashes or
+Below Threshold}~\cite{WCAG21, WCAG231}. Count highlight
 changes per second in fast test songs. &
 Use a highlight style that does not flash large areas (for example, an
 underline or a moving marker). Limit large area changes to three per second,
 and follow the operating system's reduce motion setting. &
-9 & 3 & 4 & 108 & HS4\\
+9 & 3 & 5 & 135 & HS4\\
 \midrule
 H2.5 & Active line or word is shown only by colour, or text cannot be enlarged. &
 Learners with low vision or colour vision deficiency cannot follow the lesson.
@@ -399,7 +420,7 @@ Accessibility review with the OS text size setting at its largest and a
 colour blindness simulator. &
 Indicate the active line and word with a cue other than colour (weight, underline,
 marker), and respect the device's text size setting. &
-4 & 6 & 3 & 72 & HS5\\
+5 & 6 & 3 & 90 & HS5\\
 \midrule
 % ---------------------------------------------------------------- H3
 \multicolumn{11}{l}{\textbf{H3: Annotation and Lesson Content}}\\
@@ -409,9 +430,10 @@ Learner learns the wrong meaning and reinforces it through Anki reviews (L2). &
 a.~Creator error or misunderstanding of slang or idiom.\newline
 b.~Machine translation copied in without review. &
 Review by a second team member before publishing. Learner error reports. &
-Record the author and review status of each annotation. The editor does not
-mark a map as published until every annotation has been reviewed by someone
-other than its author. Let learners report a suspected error on any line. &
+Record the author and reviewer of each annotation. The editor does not mark a
+map as published until every annotation has a reviewer other than its author.
+Let learners prepare an error report on any line and share it through the
+phone's share sheet. &
 6 & 6 & 6 & 216 & IN5, AU1, AU2\\
 \midrule
 H3.2 & A lesson contains explicit, offensive, or culturally sensitive language
@@ -436,14 +458,14 @@ Design review against HS7. Feedback from usability testing (Winter custom
 document). &
 Do not use streak loss penalties, countdowns, or unsolicited push
 notifications. Show each lesson's difficulty level before it is opened. &
-4 & 4 & 7 & 112 & HS7\\
+5 & 4 & 7 & 140 & HS7\\
 \midrule
 % ---------------------------------------------------------------- H4
 \multicolumn{11}{l}{\textbf{H4: Song Map Format and Validator}}\\
 \midrule
 H4.1 & A map passes schema validation but its content is inconsistent. &
 Desynchronization, missing annotations, or a crash during the lesson (L2, L3). &
-a.~JSON Schema checks structure, not relationships (for example, overlapping or
+a.~JSON Schema~\cite{JSONSchema2020} checks structure, not relationships (for example, overlapping or
 decreasing timestamps, word times outside their line, times past the end of the
 audio). &
 Semantic validation in the editor on export and in the app on import.
@@ -461,7 +483,7 @@ b.~Learner has an older app version. &
 Version check on import. &
 Each map declares its format version. The app refuses maps with an
 unsupported major version and says why, instead of opening them partially. &
-5 & 5 & 2 & 50 & IN3\\
+5 & 5 & 4 & 100 & IN3\\
 \midrule
 H4.3 & A crafted or malformed map is opened. &
 App or editor freezes or crashes. Script injected through annotation text runs
@@ -474,7 +496,7 @@ Fuzz and boundary tests of the parser. Size and depth checks before parsing.
 Reject maps above a size and nesting depth limit before full parsing. Render
 all map text as plain text in both the app and the editor. Never interpret it
 as HTML. &
-8 & 2 & 4 & 64 & IM1\\
+9 & 2 & 5 & 90 & IM1\\
 \midrule
 H4.4 & A map references audio or other resources by an external URL. &
 Learner's device contacts an unknown server, revealing its IP address and
@@ -484,7 +506,7 @@ b.~Map is modified by a third party. &
 Validator rule on all resource paths. &
 Allow only relative paths inside the map package. Reject absolute and remote
 URLs. &
-7 & 3 & 3 & 63 & IM2\\
+9 & 3 & 3 & 81 & IM2\\
 \midrule
 % ---------------------------------------------------------------- H5
 \multicolumn{11}{l}{\textbf{H5: Song Map Editor}}\\
@@ -498,7 +520,7 @@ An indicator of unsaved changes in the editor. &
 Autosave the draft to browser storage at least every 60 seconds and offer to
 restore it when the editor reopens. Warn before the page closes with unsaved
 changes. &
-5 & 5 & 2 & 50 & IN6\\
+7 & 5 & 3 & 105 & IN6\\
 \midrule
 H5.2 & Creator accidentally overwrites or deletes timings or annotations. &
 Corrupted map that may be exported without the creator noticing (L2, L3). &
@@ -507,7 +529,7 @@ b.~Accidental delete. &
 Preview playback before export. Export history (AU2). &
 Provide undo and redo for all edits, and ask for confirmation before any bulk
 operation that changes more than one line. &
-5 & 5 & 5 & 125 & IN6, AU2\\
+7 & 5 & 5 & 175 & IN6, AU2\\
 \midrule
 H5.3 & Timestamps recorded in the editor are offset from the audio. &
 Every lesson made on that computer is out of sync (L2). &
@@ -572,17 +594,21 @@ Response from Anki checked for every request. &
 Report success only after Anki confirms the note was created. Keep failed
 items in a local queue that survives an app restart, and allow retrying them or
 exporting them to a file. &
-6 & 5 & 6 & 180 & IN8\\
+7 & 5 & 6 & 210 & IN8\\
 \midrule
-H6.5 & AnkiConnect is configured to accept requests from any web page. &
-Any website the learner visits can read or change their Anki collection (L3,
-L4). &
+H6.5 & AnkiConnect is configured to accept requests from any web page or any
+computer on the network. &
+Any website the learner visits, or any device on the same network, can read or
+change their Anki collection (L3, L4). &
 a.~Setup instructions tell users to allow all origins (\texttt{*}) to make the
-connection work. &
+connection work.\newline
+b.~AnkiConnect listens only on \texttt{127.0.0.1} by default~\cite{AnkiConnect},
+so reaching it from a phone requires binding it to the network. &
 Review of setup documentation and default configuration. &
 If AnkiConnect is chosen (PoC risk R3), allow only the specific origin the
-product needs, never a wildcard, and use AnkiConnect's API key when it is
-available. &
+product needs, never a wildcard, and require AnkiConnect's API key
+(\texttt{apiKey})~\cite{AnkiConnect}. Warn the learner before any setup step
+that binds AnkiConnect to an address other than \texttt{127.0.0.1}. &
 8 & 3 & 7 & 168 & AC2\\
 \midrule
 H6.6 & App requests platform permissions it does not need, or requests them
@@ -591,10 +617,11 @@ Learner grants access they do not understand, or refuses and loses the feature
 (L4). &
 a.~Permissions declared and requested at install or first launch. &
 Review of the app manifest and permission prompts. &
-Request the AnkiDroid permission only when the learner first sends a word, with
+Request the AnkiDroid permission~\cite{AnkiDroidAPI} only when the learner
+first sends a word, with
 a short explanation of why it is needed. Declare no other sensitive
 permissions. &
-4 & 4 & 2 & 32 & PR2\\
+4 & 4 & 3 & 48 & PR2\\
 \midrule
 % ---------------------------------------------------------------- H7
 \multicolumn{11}{l}{\textbf{H7: Local Data Storage}}\\
@@ -606,7 +633,7 @@ b.~Operating system terminates the app in the background. &
 Restart test with items in the queue. &
 Store the pending queue on the device as soon as an item is selected, and
 remove an item only after Anki confirms it. &
-6 & 4 & 5 & 120 & IN8\\
+7 & 4 & 5 & 140 & IN8\\
 \midrule
 H7.2 & Personal or usage data leaves the device. &
 Privacy breach, including the learner's vocabulary history and listening
@@ -614,10 +641,11 @@ habits (L4). &
 a.~Analytics or crash reporting libraries from other vendors.\newline
 b.~Remote resources referenced by maps (H4.4). &
 Review of dependencies and network traffic during testing. &
-The initial release collects no personal data and sends no data off the device,
-apart from notes the learner explicitly sends to Anki. Any analytics or crash
-reporting added later must stay off unless the learner turns it on. &
-8 & 2 & 6 & 96 & PR1, IM2\\
+The initial release sends no data off the device, apart from notes the learner
+explicitly sends to Anki and error reports the learner chooses to share (AU1).
+Any analytics or crash reporting added later must stay off unless the learner
+turns it on. &
+9 & 2 & 6 & 108 & PR1, IM2\\
 \end{longtable}
 \end{landscape}
 \ClearShipoutPictureFG
@@ -630,16 +658,20 @@ reporting added later must stay off unless the learner turns it on. &
 \textbf{RPN} & \textbf{SR}\\
 \midrule
 H1.4 & Learner watches the screen while moving & 10 & 5 & 10 & 500 & HS3, HS7\\
+H1.2 & Audio starts unexpectedly or loudly & 9 & 5 & 5 & 225 & HS1, HS2, HS8, HS9\\
 H3.1 & Incorrect translation or annotation & 6 & 6 & 6 & 216 & IN5, AU1, AU2\\
+H6.4 & Anki handoff fails silently & 7 & 5 & 6 & 210 & IN8\\
 H2.2 & Incorrect transliteration or reading & 6 & 7 & 5 & 210 & IN4\\
 H3.2 & Explicit content without warning & 6 & 7 & 5 & 210 & HS6\\
 H2.1 & Incorrect segmentation & 6 & 8 & 4 & 192 & IN4\\
 H5.4 & Unlicensed audio or lyrics & 9 & 4 & 5 & 180 & LG1\\
-H6.4 & Anki handoff fails silently & 6 & 5 & 6 & 180 & IN8\\
+H5.2 & Creator overwrites timings or annotations & 7 & 5 & 5 & 175 & IN6, AU2\\
 H5.3 & Editor timestamps offset from the audio & 6 & 7 & 4 & 168 & IN7\\
-H6.5 & AnkiConnect accepts any web page & 8 & 3 & 7 & 168 & AC2\\
-H1.2 & Audio starts unexpectedly or loudly & 8 & 5 & 4 & 160 & HS1, HS2\\
-H2.4 & Rapid flashing & 9 & 3 & 4 & 108 & HS4\\
+H6.5 & AnkiConnect reachable by any web page or computer & 8 & 3 & 7 & 168 & AC2\\
+H2.4 & Rapid flashing & 9 & 3 & 5 & 135 & HS4\\
+H7.2 & Personal or usage data leaves the device & 9 & 2 & 6 & 108 & PR1, IM2\\
+H4.3 & Crafted or malformed map & 9 & 2 & 5 & 90 & IM1\\
+H4.4 & Map refers to external URLs & 9 & 3 & 3 & 81 & IM2\\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -649,12 +681,13 @@ H2.4 & Rapid flashing & 9 & 3 & 4 & 108 & HS4\\
 The requirements below were discovered through the FMEA. Each requirement
 lists the FMEA rows it mitigates. All of them are new requirements and have been
 added to the SRS with the same identifiers, where each one also has a rationale
-and a fit criterion: HS1 to HS7 under \emph{Safety-Critical Requirements}, AC, IN,
+and a fit criterion: HS1 to HS9 under \emph{Safety-Critical Requirements}, AC, IN,
 PR, AU, and IM under \emph{Security Requirements}, and LG1 under \emph{Legal
 Requirements}. In the SRS, the numeric values used here (1 second, three
-flashes per second, 60 seconds) are written as the symbolic constants
-\texttt{DISCONNECT\_PAUSE}, \texttt{MAX\_FLASHES}, and
-\texttt{AUTOSAVE\_INT}. The values of these and of \texttt{AUDIO\_DUR\_TOL},
+flashes per second, 60 seconds, 0.5 seconds, $-16$ LUFS, and 2 LU) are written
+as the symbolic constants \texttt{DISCONNECT\_PAUSE}, \texttt{MAX\_FLASHES},
+\texttt{AUTOSAVE\_INT}, \texttt{FADE\_IN}, \texttt{TARGET\_LOUDNESS}, and
+\texttt{LOUDNESS\_TOL}. The values of these and of \texttt{AUDIO\_DUR\_TOL},
 \texttt{MAX\_MAP\_SIZE}, and \texttt{MAX\_NESTING} are listed in SRS
 Appendix A, \emph{Symbolic Constants}. The SRS also lists, for each FMEA row, the requirements
 that mitigate it (SRS Appendix B, \emph{Hazards to Requirements}).
@@ -666,13 +699,14 @@ that mitigate it (SRS Appendix B, \emph{Hazards to Requirements}).
         explicit action by the learner. \emph{(H1.2)}
   \item[HS2.] The learner app shall pause playback within 1 second when the
         active audio output device is disconnected. \emph{(H1.2)}
-  \item[HS3.] The learner app shall provide a listening mode in which a
-        lesson can be followed without looking at or touching the screen, and
-        shall show a notice on first launch only, advising against using
-        the screen while driving, cycling, or crossing traffic. \emph{(H1.4)}
+  \item[HS3.] Once a lesson has been started, the learner app shall continue
+        playing it to the end, with no interaction required, while the screen
+        is locked or the app is in the background. The app shall show a notice
+        on first launch advising against using the screen while driving,
+        cycling, or crossing traffic. \emph{(H1.4)}
   \item[HS4.] Lyric highlighting shall not produce more than three large area
-        flashes in any period of one second, and shall follow the operating
-        system's reduce motion setting. \emph{(H2.4)}
+        flashes in any period of one second~\cite{WCAG231}, and shall follow
+        the operating system's reduce motion setting. \emph{(H2.4)}
   \item[HS5.] The learner app shall indicate the active line and word with a
         cue other than colour alone, and shall respect the device's text size
         setting. \emph{(H2.5)}
@@ -684,6 +718,14 @@ that mitigate it (SRS Appendix B, \emph{Hazards to Requirements}).
         timers, or unsolicited push notifications to encourage use, and shall
         show each lesson's difficulty level before it is opened.
         \emph{(H1.4, H3.3)}
+  \item[HS8.] When playback starts or resumes, the learner app shall raise
+        the playback volume from silence to its set level over 0.5 seconds.
+        \emph{(H1.2)}
+  \item[HS9.] The editor shall measure the integrated loudness of each
+        track's audio, as defined in ITU-R BS.1770~\cite{BS1770}, and display
+        it to the creator. Before export, it shall warn the creator when the
+        loudness differs from the target of $-16$ LUFS by more than 2 LU. The
+        measured value shall be stored in the song map. \emph{(H1.2)}
 \end{itemize}
 
 \subsection{Access Requirements}
@@ -694,8 +736,10 @@ that mitigate it (SRS Appendix B, \emph{Hazards to Requirements}).
         or note types in the learner's Anki collection. \emph{(H6.3)}
   \item[AC2.] If AnkiConnect is used, the product and its setup instructions
         shall allow only the specific origin the product requires, never a
-        wildcard origin, and shall use an API key when AnkiConnect supports
-        one. \emph{(H6.5)}
+        wildcard origin, and shall require AnkiConnect's API key. The setup
+        instructions shall warn the learner before any step that makes
+        AnkiConnect listen on an address other than \texttt{127.0.0.1}.
+        \emph{(H6.5)}
 \end{itemize}
 
 \subsection{Integrity Requirements}
@@ -723,17 +767,19 @@ that mitigate it (SRS Appendix B, \emph{Hazards to Requirements}).
         generated values as unverified until the creator confirms them, and
         shall not export a map containing unverified lines.
         \emph{(H2.1, H2.2)}
-  \item[IN5.] Each annotation shall record its author and review status. The
-        editor shall not mark a map as published until every annotation has
-        been reviewed by someone other than its author. \emph{(H3.1)}
+  \item[IN5.] Each annotation shall record the name of its author and the
+        name of its reviewer. The editor shall not mark a map as published
+        while any annotation has no reviewer or has its author as its
+        reviewer. \emph{(H3.1)}
   \item[IN6.] The editor shall autosave the current draft at least every 60
         seconds, offer to restore it when reopened, warn before closing with
         unsaved changes, provide undo and redo for all edits, and ask for
         confirmation before any operation that changes more than one line.
         \emph{(H5.1, H5.2)}
-  \item[IN7.] The editor shall provide an audio latency calibration whose
-        offset is applied to recorded timestamps, and a preview that plays the
-        map as the learner app will. \emph{(H5.3)}
+  \item[IN7.] The editor shall let the creator set an audio latency offset,
+        either by entering it or by tapping along to a test click track, and
+        shall apply it to recorded timestamps. It shall also provide a preview
+        that plays the map as the learner app will. \emph{(H5.3)}
   \item[IN8.] The learner app shall report a vocabulary item as sent only
         after Anki confirms that the note was created. Items that have not
         been confirmed shall be stored on the device, kept across app
@@ -759,9 +805,10 @@ that mitigate it (SRS Appendix B, \emph{Hazards to Requirements}).
 \subsection{Privacy Requirements}
 
 \begin{itemize}
-  \item[PR1.] The initial release shall not collect personal data or send any
-        data off the device, other than notes the learner explicitly sends to
-        Anki. Any analytics or crash reporting added later shall stay off unless the learner turns it on.
+  \item[PR1.] The initial release shall not send any data off the device,
+        other than notes the learner explicitly sends to Anki and error reports
+        the learner chooses to share (AU1). Any analytics or crash reporting
+        added later shall stay off unless the learner turns it on.
         \emph{(H7.2)}
   \item[PR2.] The learner app shall request the AnkiDroid permission only when
         the learner first sends a word, with an explanation of why it is
@@ -772,11 +819,13 @@ that mitigate it (SRS Appendix B, \emph{Hazards to Requirements}).
 \subsection{Audit Requirements}
 
 \begin{itemize}
-  \item[AU1.] The learner app shall let a learner report a suspected error on
-        any lyric line. The report shall contain the map identifier, map
-        version, line, and the learner's comment, and shall be sent only when
-        the learner chooses to send it (for example, through the project's
-        issue tracker). \emph{(H3.1)}
+  \item[AU1.] The learner app shall let a learner prepare a report of a
+        suspected error on any lyric line. The report shall contain the map
+        identifier, map version, line, and the learner's comment. The app
+        shall pass the report to the operating system's share sheet, so that
+        the learner decides whether and where to send it (for example, by
+        email or to the project's issue tracker), and shall not send it
+        itself. \emph{(H3.1)}
   \item[AU2.] Each song map shall record a version number and, for every
         export, the date and the creator who exported it. \emph{(H3.1, H5.2)}
 \end{itemize}
@@ -804,36 +853,153 @@ that mitigate it (SRS Appendix B, \emph{Hazards to Requirements}).
 
 \section{Roadmap} \label{SecRoadmap}
 
-Every high priority failure mode in Table~\ref{TblPriority} has at least one
-mitigating requirement that will be implemented within the capstone timeline,
-and all requirements needed for the goals in the Problem Statement will be
-implemented within that timeline:
+The requirements in Section~\ref{SecRequirements} have been written to the
+scope that the team plans to implement in the capstone timeline. Every one of
+them will be implemented within that timeline, so every high priority failure
+mode in Table~\ref{TblPriority} is mitigated by all of its requirements, not
+only by some of them:
 
 \begin{itemize}
-  \item \textbf{Capstone timeline:} HS1, HS2, HS4, HS5, HS6, HS7, AC1, IN1 to IN4,
-        IN6, IN8 to IN12, PR1, PR2, IM1, IM2, LG1, and AU2. HS7 and PR1 constrain
-        the design rather than add features, so they are met by not adding
-        engagement mechanics or analytics.
+  \item \textbf{Capstone timeline:} HS1 to HS9, AC1, IN1 to IN12, PR1, PR2,
+        AU1, AU2, IM1, IM2, and LG1. HS7 and PR1 constrain the design rather
+        than add features, so they are met by not adding engagement mechanics
+        or analytics.
   \item \textbf{Depends on the Proof of Concept:} AC2 applies only if
-        AnkiConnect is chosen for the Anki handoff (PoC risk R3). The detailed
-        behaviour of IN8 to IN10 and PR2 will be confirmed once the handoff
-        method is decided.
-  \item \textbf{Partially implemented during the capstone:} IN5 will be met
-        for the acceptance suite by a second team member reviewing each
-        annotation, with the review status recorded in the map. Enforcing it
-        in the editor is planned but may move to future work. IN7 will
-        provide a manual offset. Automatic calibration is future work. HS3
-        will provide the notice on first launch. A full listening mode
-        depends on usability testing results.
-  \item \textbf{Future work:} AU1 (error reporting in the app) requires a way to
-        deliver reports, which the initial release, with no backend, does not
-        have. Until then, reports are collected manually during usability
-        testing.
+        AnkiConnect is chosen for the Anki handoff (PoC risk R3), and will be
+        implemented in the capstone timeline if it is. The detailed behaviour
+        of IN8 to IN10 and PR2 will be confirmed once the handoff method is
+        decided.
 \end{itemize}
+
+Three requirements were narrowed so that they can be met in the capstone
+timeline. The parts removed are future work, and the risk they would have
+reduced is accepted in Table~\ref{TblResidual}:
+
+\begin{itemize}
+  \item \textbf{HS3} requires that a started lesson can be followed by
+        listening alone, with the screen locked, and the notice on first
+        launch. A separate listening mode designed for use while moving (for
+        example, larger controls or spoken line translations) is future work.
+        Whether it is needed will be decided from usability testing.
+  \item \textbf{IN5} enforces in the editor that each annotation names a
+        reviewer other than its author. Because the initial release has no
+        user accounts, the names are entered by the creator and cannot be
+        verified. Verified reviewer identities need accounts and are future
+        work.
+  \item \textbf{AU1} prepares the error report in the app and hands it to the
+        operating system's share sheet. The product has no backend to receive
+        reports, so delivering them automatically to creators is future work.
+\end{itemize}
+
+IN7 requires a latency offset entered by the creator or measured by tapping
+along to a click track. Calibration that measures output latency without the
+creator's help is not required.
+
+\subsection{Residual Risk}
+
+Table~\ref{TblResidual} lists, for each high priority failure mode, the risk
+that remains once its requirements are implemented and the reason the team
+accepts it. The remaining risks will be rated again, with the requirements in
+place, when the hazard analysis is reviewed.
+
+{\small
+\begin{longtable}{@{}lP{0.42\textwidth}P{0.42\textwidth}@{}}
+\caption{Residual risk accepted for each high priority failure mode}
+\label{TblResidual}\\
+\toprule
+\textbf{Ref.} & \textbf{Residual risk} & \textbf{Reason for accepting it}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Ref.} & \textbf{Residual risk} & \textbf{Reason for accepting it}\\
+\midrule
+\endhead
+H1.4 & A learner may still look at the screen while walking, cycling, or
+driving. The app cannot detect this. & The lesson can be followed by
+listening alone (HS3), and nothing in the app demands attention under time
+pressure (HS7). The decision to look at the screen is the learner's.\\
+H1.2 & The learner may set a harmful volume. Pausing on disconnection depends
+on the operating system reporting the event. A creator may ignore the loudness
+warning. & The overall volume is the learner's choice and is covered by the
+operating system's hearing protection features (Section~\ref{SecFMEA}). The
+fade in (HS8) still prevents a sudden start.\\
+H3.1 & A reviewer may miss an error. Reviewer names cannot be verified (IN5).
+Reports reach creators only if learners send them (AU1). & In the initial
+release, all lessons are made and reviewed by the team, so the reviewer is
+known. AU2 lets a corrected map be traced.\\
+H6.4 & Queued items are lost if the app is uninstalled or the device's storage
+fails. & These events are outside the app's control. The learner can export
+queued items to a file at any time (IN8).\\
+H2.2, H2.1 & A creator may confirm a wrong segmentation or reading. & Each
+value is checked by a person once (IN4). The acceptance suite is compared
+against a reference checked by the team, and learners can report errors
+(AU1).\\
+H3.2 & A creator may fail to set the explicit content flag or the register
+note. & The flag is a required field (HS6), the reviewer checks annotations
+(IN5), and learners can report errors (AU1).\\
+H5.4 & A creator may enter false source or licence information. The product
+cannot verify it. & The initial release distributes only content that the
+team has checked is created by the team, in the public domain, or licensed
+(BR3 in the SRS).\\
+H5.2 & A bulk operation that the creator confirmed may still be wrong. &
+Undo, the confirmation, and the preview make the error visible and
+reversible (IN6). AU2 records each export.\\
+H5.3 & Output latency that changes during a session (for example, with
+Bluetooth) is not corrected by a single offset. & The preview (IN7) shows the
+error before export, and the creator can calibrate again.\\
+H6.5 & The learner may change the AnkiConnect configuration themselves, for
+example by allowing all origins. & The product's instructions never ask for
+this (AC2), and the API key still protects the collection. Applies only if
+AnkiConnect is chosen.\\
+H2.4 & Flash limits are measured on the acceptance suite. A faster song may
+still exceed them. & The highlight style does not change large areas (HS4),
+so a fast song produces small changes rather than large flashes.\\
+H7.2 & An updated dependency may add network traffic. A shared error report
+contains what the learner writes. & The dependency review and network capture of
+the PR1 fit criterion are repeated before each release. The learner chooses whether to share a report
+and where to send it (AU1).\\
+H4.3 & A defect in the JSON parser library may still be exploitable. & Size
+and depth limits are applied before parsing, and map text is never
+interpreted as HTML (IM1), which limits what a defect can do.\\
+H4.4 & A defect in the validator may accept a remote URL. & The validator rule
+is tested with maps containing absolute paths and URLs (IM2), and the app has no other code that
+fetches resources from the network.\\
+\bottomrule
+\end{longtable}
+}
 
 The hazard analysis will be reviewed after the Proof of Concept and again
 before the final demonstration to confirm which hazards have been mitigated
 and which remain open.
+
+\section*{References}
+\addcontentsline{toc}{section}{References}
+
+\begingroup
+\renewcommand{\section}[2]{}
+\begin{thebibliography}{99}
+\bibitem{Leveson2011} N.~G. Leveson, \emph{Engineering a Safer World: Systems
+  Thinking Applied to Safety}. Cambridge, MA: MIT Press, 2011.
+  doi:\href{https://doi.org/10.7551/mitpress/8179.001.0001}{10.7551/mitpress/8179.001.0001}.
+\bibitem{WCAG21} World Wide Web Consortium, \emph{Web Content Accessibility
+  Guidelines (WCAG) 2.1}, W3C Recommendation.
+  \url{https://www.w3.org/TR/WCAG21/}
+\bibitem{WCAG231} World Wide Web Consortium, \emph{Understanding Success
+  Criterion 2.3.1: Three Flashes or Below Threshold}.
+  \url{https://www.w3.org/WAI/WCAG21/Understanding/three-flashes-or-below-threshold.html}
+\bibitem{JSONSchema2020} JSON Schema, \emph{Draft 2020-12}.
+  \url{https://json-schema.org/draft/2020-12}
+\bibitem{BS1770} International Telecommunication Union, \emph{Recommendation
+  ITU-R BS.1770: Algorithms to Measure Audio Programme Loudness and True-Peak
+  Audio Level}. \url{https://www.itu.int/rec/R-REC-BS.1770}
+\bibitem{AnkiDroidAPI} AnkiDroid, \emph{AnkiDroid API} (project wiki).
+  \url{https://github.com/ankidroid/Anki-Android/wiki/AnkiDroid-API}
+\bibitem{AnkiConnect} A.~Yatskov (FooSoft), \emph{AnkiConnect} (add-on
+  documentation). \url{https://git.sr.ht/~foosoft/anki-connect}
+\end{thebibliography}
+\endgroup
+
+All web sources were accessed on October 18, 2026.
 
 \newpage{}
 
@@ -853,12 +1019,44 @@ hazard analyses from previous capstone projects. It was used to:
 
 \begin{itemize}
 
-  \item Review the first draft of the document for grammatic errors and
-        compare the document to previous student work and the checklist to 
-        identify any missing sections or details.
-  \item ensure the SRS was reviewed so the Hazard analysis did not miss any 
-        relevant requirements 
+  \item Review the first draft of the document for grammatical errors, and
+        compare it with previous student work and the checklist to identify
+        missing sections or details.
+  \item Compare the document with the SRS so that the hazard analysis did not
+        miss any relevant requirements.
+  \item Address the review comments on the first draft: check every rating
+        against the rating scales, add requirements HS8 and HS9 for the
+        actions recommended in H1.2, narrow HS3, IN5, IN7, and AU1 to the
+        capstone scope, write the residual risk table, and add references for
+        external claims.
+\end{itemize}
 
+\subsection{Verification of AI-Generated Content}
+
+Content written or changed with Claude was checked as follows:
+
+\begin{itemize}
+  \item \textbf{Ratings:} each severity, occurrence, and detection rating in
+        Table~\ref{TblFMEA} was compared with the definitions in
+        Table~\ref{TblScales}, using the rules stated with the table (the most
+        severe possible loss sets the severity, and checks that are part of
+        the recommended action do not lower the detection rating). Each RPN
+        was recalculated, and Table~\ref{TblPriority} was rebuilt from the
+        recalculated values.
+  \item \textbf{External claims:} statements about Anki, AnkiDroid,
+        AnkiConnect, WCAG, JSON Schema, and ITU-R BS.1770 were checked against
+        the primary sources in the References section. This check found that
+        AnkiConnect supports an API key and listens only on
+        \texttt{127.0.0.1} by default, and H6.5 and AC2 were revised to match.
+  \item \textbf{Consistency with the SRS:} a script checked that every RPN
+        equals $S \times O \times D$, that Table~\ref{TblPriority} and
+        Table~\ref{TblResidual} contain exactly the failure modes that meet the
+        high priority rule, that every requirement in this document exists in
+        the SRS and traces to the same FMEA rows, and that the SRS table
+        \emph{Hazards to Requirements} matches the SR column of
+        Table~\ref{TblFMEA}. The wording of each requirement was also
+        compared. It matches, except that the SRS writes numeric values as
+        symbolic constants.
 \end{itemize}
 
 

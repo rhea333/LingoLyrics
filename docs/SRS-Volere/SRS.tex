@@ -13,7 +13,13 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{positioning,fit,arrows.meta}
 \usepackage{hyperref}
+% Do not split words across lines with a hyphen
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\emergencystretch=3em
 % Let long URLs and identifiers break at dots, slashes, and underscores
 \def\UrlBreaks{\do\.\do\/\do\_\do\-}
 \hypersetup{
@@ -34,6 +40,10 @@
 \newcommand{\rat}[1]{\\\textit{Rationale:} #1}
 \newcommand{\fit}[1]{\\\textit{Fit criterion:} #1}
 \newcommand{\trace}[1]{\\\textit{Traces to:} #1}
+\newcommand{\usedby}[1]{\\\textit{Referenced by:} #1}
+% Requirement identifiers: \reqdef marks where one is defined, \req links to it
+\newcommand{\reqdef}[1]{\hypertarget{req:#1}{#1}}
+\newcommand{\req}[1]{\hyperlink{req:#1}{#1}}
 % Ragged-right fixed-width column
 \newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
 
@@ -53,6 +63,12 @@
 
 ~\newpage
 
+\listoftables
+
+\listoffigures
+
+~\newpage
+
 \section*{Revision History}
 
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
@@ -68,6 +84,14 @@ HS9 (loudness reporting), narrowed HS3, IN5, IN7, and AU1 to the capstone
 scope, revised AC2 and PR1, replaced the privacy legislation statement,
 corrected the product comparisons, added references, and completed the
 verification of AI-generated content.\\
+October 19, 2026 & 1.3 & Matched the Hazard Analysis revision: extended IM2
+to reject paths that leave the map package (H4.5), added IM3 for third party
+libraries (H7.3), and added both hazards to the traceability table.\\
+October 19, 2026 & 1.4 & Revised against the grading rubric: added the
+intended audience, notation and conventions, the list of acronyms, user
+characteristics, a third persona, the context diagram legend, links to every
+requirement and \emph{Referenced by} lines, the phase in plan with priorities
+and dates, the reflection answers, and tool versions in the AI disclosure.\\
 \bottomrule
 \end{tabularx}
 
@@ -79,13 +103,23 @@ verification of AI-generated content.\\
 
 \section*{About This Document}
 
-This document specifies the requirements for \progname{}. It follows the
-Volere template, with the following changes:
+This document specifies the requirements for \progname{}, a language
+learning product based on songs. It is written for the development team, who
+will design, build, and test the product from it, for new team members who
+need to get up to speed, and for the supervisor, teaching staff, and peer
+reviewers who assess it. A reader outside the team should be able to design
+and test the product from this document, the Problem Statement, and the
+Hazard Analysis alone.
+
+\subsection*{Template and Changes}
+
+The document follows the Volere template~\cite{Volere}, with the following
+changes:
 
 \begin{itemize}
   \item The \emph{Risks} section is removed because project risks are covered by
-        the Development Plan (PoC risks R1 to R3) and hazards are covered by the
-        Hazard Analysis.
+        the Development Plan (Proof of Concept (PoC) risks R1 to R3) and
+        hazards are covered by the Hazard Analysis.
   \item Section~\ref{SecFormal} (\emph{Formal Specification}) is added. It
         defines a valid song map, the line that must be highlighted at a given
         playback time, and the learner app's playback modes.
@@ -97,17 +131,52 @@ Volere template, with the following changes:
         Numeric values are written as symbolic constants such as
         \cn{SYNC\_TOL}. Their values and the reason for each value are in
         Appendix~\ref{SecConstants}.
+  \item Section~\ref{SecAcronyms} (\emph{Abbreviations and Acronyms}) is
+        added after the glossary.
+  \item Section~\ref{SecPhaseIn} (\emph{Requirement Priorities and Phase In
+        Plan}) is added under \emph{Tasks}.
 \end{itemize}
 
-Requirement identifiers use the following prefixes: MC (mandated
-constraint), FR (functional), LF (look
-and feel), UH (usability and humanity), SL (speed and latency), PA (precision
-or accuracy), RB (robustness), CP (capacity), SC (scalability), LO
-(longevity), OE (operational and environmental), MS (maintainability and
-support), CU (cultural), and ST (standards). The prefixes HS (health and
-safety), AC (access), IN (integrity), PR (privacy), AU (audit), IM (immunity),
-and LG (legal) are shared with the Hazard Analysis so that each safety or
-security requirement has the same identifier in both documents.
+\subsection*{Notation and Conventions}
+
+\begin{itemize}
+  \item \textbf{Requirement identifiers.} Every requirement has a unique
+        identifier made of a prefix and a number. The prefixes are MC
+        (mandated constraint), FR (functional), LF (look and feel), UH
+        (usability and humanity), SL (speed and latency), PA (precision or
+        accuracy), RB (robustness), CP (capacity), SC (scalability), LO
+        (longevity), OE (operational and environmental), MS (maintainability
+        and support), CU (cultural), and ST (standards). The prefixes HS
+        (health and safety), AC (access), IN (integrity), PR (privacy), AU
+        (audit), IM (immunity), and LG (legal) are shared with the Hazard
+        Analysis, so each safety or security requirement has the same
+        identifier in both documents. Goals are G1 to G6, assumptions A1 to
+        A4, business rules BR1 to BR3, likely changes LC, and unlikely
+        changes UC. Rows of the Failure Mode and Effects Analysis (FMEA) in
+        the Hazard Analysis are written H1.1 to H7.3.
+  \item \textbf{Requirement entries.} Each requirement is a statement using
+        \emph{shall}, followed by its \emph{Rationale}, a \emph{Fit
+        criterion} that says how it will be tested, \emph{Traces to} (the
+        goals, use cases, hazards, and requirements it depends on or refines),
+        and \emph{Referenced by} (the requirements that trace to it). Every
+        requirement identifier in a trace is a link to that requirement, so
+        each dependency can be followed in both directions.
+  \item \textbf{Symbolic constants} are written in \cn{TYPEWRITER} type and
+        defined only in Appendix~\ref{SecConstants}. Field names of the song
+        map are also in \texttt{typewriter} type and are defined in the data
+        dictionary (Section~\ref{SecDataModel}).
+  \item \textbf{Mathematical notation} in Section~\ref{SecFormal}:
+        $\langle \ldots \rangle$ is a sequence, $[1..n]$ is the integers from
+        1 to $n$, $\mathbb{R}^{+}$ is the positive real numbers, $\varepsilon$
+        is the empty string, $\bot$ means \emph{no value}, and $\forall$,
+        $\wedge$, $\neg$, and $\equiv$ are \emph{for all}, \emph{and},
+        \emph{not}, and \emph{is defined as}. Times are in seconds from the
+        start of the audio.
+  \item \textbf{Terms} with a specific meaning in this document are defined
+        in the glossary (Section~\ref{SecGlossary}), and acronyms are written
+        out on first use and listed in Section~\ref{SecAcronyms}.
+  \item \textbf{Diagrams} have a legend that explains each shape and arrow.
+\end{itemize}
 
 \section{Purpose of the Project}
 \subsection{User Business}
@@ -184,16 +253,70 @@ want a tool for preparing synchronized song lessons.
           language well and to be able to work with audio and text files.
 \end{itemize}
 
+Table~\ref{TblUserChars} summarizes the characteristics of each user group
+that affect the requirements.
+
+\begin{table}[h!]
+\caption{User characteristics} \label{TblUserChars}
+\small
+\begin{tabularx}{\textwidth}{P{0.2\textwidth}XX}
+\toprule
+\textbf{Characteristic} & \textbf{Learners} & \textbf{Creators}\\
+\midrule
+Age and setting & Adults and older teenagers studying on their own &
+Adult tutors, teachers, and advanced learners\\
+Language level & Early intermediate to intermediate in the target language
+& Reads the target language well, often a native speaker\\
+Device & iOS or Android phone, usually with headphones & Laptop or desktop
+computer with a current browser\\
+Technical skill & Comfortable with common phone apps. May already use Anki.
+No knowledge of linguistic terms or file formats & Comfortable with audio and
+text files. No programming or JSON knowledge assumed\\
+Session length & Short sessions of 5 to 15 minutes, often in transit &
+Longer sessions at a desk, 30 to 60 minutes per song\\
+Accessibility needs & May have low vision, colour vision deficiency, or
+photosensitivity, and may use a screen reader & May have the same needs, and
+may work with Bluetooth headphones that add audio latency\\
+Motivation & Enjoys music and wants to understand it, but gives up when
+lookups break the flow & Wants to share lessons without preparing the same
+context again by hand\\
+Requirements driven & UH1, UH3, UH5, UH7, HS3 to HS7, RB2, OE1 & FR9 to
+FR15, UH2, IN6, IN7, MS3\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
 \subsection{Personas}
+Each persona describes a user's goal, what frustrates them today, and how
+they feel about it, and names the requirements that respond to them.
 \begin{itemize}
-    \item \textbf{Kenji (learner):} a Japanese learner at early intermediate level who
-          listens to Japanese pop music but cannot read kanji at singing speed.
-          He follows the romanized lyrics in the app and sends unfamiliar words
-          to his Anki deck.
+    \item \textbf{Kenji (learner):} a Japanese learner at early intermediate
+          level who listens to Japanese pop music on the train but cannot read
+          kanji at singing speed. Today he pauses the song, copies a word into a
+          dictionary, and types it into Anki, and by then the line has passed.
+          He feels the song stops being fun as soon as it becomes study. He
+          needs to follow the romanized lyrics (FR6), tap a word without
+          stopping the music (FR7), and send it to Anki in one tap with the
+          lyric line attached (FR8), knowing it was saved (IN8).
     \item \textbf{Elena (creator):} a language tutor who prepares song lessons
-          for her students. She uses the web editor to load audio, time the
-          lyric lines, and add usage notes.
+          for her students. Today she builds them in slides with no timing,
+          and every student has to search the song again. She worries about
+          spending an evening on a lesson and losing it, and about using
+          songs she does not have the right to share. She needs fast timing by
+          tapping along (FR10), autosave and undo (IN6), checks that catch
+          mistakes before export (FR14), and licence fields that remind her
+          what she may share (LG1).
+    \item \textbf{Amara (learner with low vision):} studies Japanese with large
+          system text and sometimes uses VoiceOver. Most lyric apps mark the
+          current line only with a colour change she cannot see well, and she
+          feels excluded by apps that ignore her text size. She needs the
+          active line marked by more than colour and text that follows her
+          settings (HS5), labelled controls (UH7), and sufficient contrast
+          (ST1).
 \end{itemize}
+
+The value of \progname{} compared with the products that learners use today is
+described in Section~\ref{SecReadyMade}.
 
 \subsection{Priorities Assigned to Users}
 Learners have first priority because they are the users of the lessons:
@@ -213,24 +336,31 @@ technicians.
 
 \section{Mandated Constraints}
 \subsection{Solution Constraints}
+The requirements in this document say \emph{what} the product must do and
+avoid choosing a design. The few design decisions that are already fixed are
+recorded here as constraints, each with its reason. MC1 and MC2 were agreed in
+the Development Plan and reviewed by the supervisor before this document was
+written. MC3 follows from goal G3.
 \begin{itemize}
-    \item[MC1] All application code and the shared song map types shall be
+    \item[\reqdef{MC1}] All application code and the shared song map types shall be
     written in TypeScript.
     \\\textit{Rationale:} one language for the app, editor, and shared code
     lets all three use the same song map types and validator.
-    \item[MC2] The learner app shall be built with React Native and Expo. The
+    \item[\reqdef{MC2}] The learner app shall be built with React Native and Expo. The
     editor shall be built with React.
     \\\textit{Rationale:} one code base covers iOS and Android, and the editor
     can reuse the app's TypeScript code (Development Plan, Expected
     Technology).
-    \item[MC3] Lessons shall be stored and exchanged as song maps that conform
-    to one versioned JSON Schema.
+    \item[\reqdef{MC3}] Lessons shall be stored and exchanged as song maps that conform
+    to one versioned JSON Schema (a schema for JavaScript Object Notation
+    files).
     \\\textit{Rationale:} required by goal G3.
 \end{itemize}
 
-\subsection{Implementation Environment of the Current System}
+\subsection{Implementation Environment of the Current System} \label{SecImplEnv}
 There is no current system. The learner app will run on iOS and Android phones
-that meet the minimum operating system versions of the Expo SDK release used.
+that meet the minimum operating system versions of the Expo software
+development kit (SDK) release used.
 The editor will run in current desktop versions of Chrome, Firefox, Safari, and
 Edge.
 
@@ -270,12 +400,12 @@ The project follows the capstone deadlines in the Development Plan:
 No budget is allocated. The project uses free and open source tools and team
 members' own devices. Costs that may arise are listed in Section~\ref{SecCosts}.
 
-\subsection{Enterprise Constraints}
+\subsection{Enterprise Constraints} \label{SecEnterprise}
 Code and documentation are released under the MIT License and hosted publicly
 on GitHub.
 
 \section{Naming Conventions and Terminology}
-\subsection{Glossary of All Terms, Including Acronyms, Used by Stakeholders involved in the Project}
+\subsection{Glossary of All Terms, Including Acronyms, Used by Stakeholders involved in the Project} \label{SecGlossary}
 \begin{longtable}{@{}P{0.27\textwidth}P{0.68\textwidth}@{}}
 \toprule
 \textbf{Term} & \textbf{Meaning}\\
@@ -295,7 +425,7 @@ Creator & A person who prepares song maps with the editor.\\
 Editor & The song map editor, which runs in a web browser.\\
 Explicit content & Lyrics containing profanity, slurs, or sexual or violent
 content.\\
-JSON Schema & A language for describing and validating the structure of JSON
+JSON Schema & A language for describing and validating the structure of JavaScript Object Notation (JSON)
 data~\cite{JSONSchema2020}.\\
 LUFS & Loudness units relative to full scale, the unit of integrated loudness
 defined in ITU-R BS.1770~\cite{BS1770}. LU is a difference in loudness.\\
@@ -322,8 +452,52 @@ in the editor.\\
 \bottomrule
 \end{longtable}
 
+\subsection{Abbreviations and Acronyms} \label{SecAcronyms}
+Table~\ref{TblAcronyms} gives the full form of every acronym in this document
+and links to where it is defined or first explained.
+
+{\small
+\begin{longtable}{@{}P{0.16\textwidth}P{0.5\textwidth}P{0.28\textwidth}@{}}
+\caption{Abbreviations and acronyms} \label{TblAcronyms}\\
+\toprule
+\textbf{Acronym} & \textbf{Full form} & \textbf{Defined in}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Acronym} & \textbf{Full form} & \textbf{Defined in}\\
+\midrule
+\endhead
+API & Application programming interface & Section~\ref{SecFacts}\\
+BR & Business rule & Section~\ref{SecRules}\\
+BUC & Business use case & Section~\ref{SecBUC}\\
+CI & Continuous integration, the automated checks run on every pull request
+& Section~\ref{SecFunctional}\\
+FMEA & Failure Mode and Effects Analysis & Hazard Analysis\\
+JSON & JavaScript Object Notation & Section~\ref{SecGlossary}\\
+LC, UC & Likely change, unlikely change & Section~\ref{SecChanges}\\
+LRC & Lyric file format with timed lines & Section~\ref{SecCopied}\\
+LU, LUFS & Loudness unit, loudness units relative to full scale &
+Section~\ref{SecGlossary}\\
+MIT & The MIT License, an open source licence & Section~\ref{SecEnterprise}\\
+OS & Operating system & Section~\ref{SecContext}\\
+PoC & Proof of Concept & Section~\ref{SecGlossary}\\
+PUC & Product use case & Section~\ref{SecPUC}\\
+RFC & Request for Comments, a standard published by the IETF (Internet
+Engineering Task Force) & Section~\ref{SecStandards}\\
+SDK & Software development kit & Section~\ref{SecImplEnv}\\
+SRS & Software Requirements Specification & Section~\ref{SecGlossary}\\
+URL & Uniform resource locator, a web address & Section~\ref{SecDataModel}\\
+UTF-8 & Unicode Transformation Format, 8 bit, the text encoding used for
+song maps & Section~\ref{SecStandards}\\
+V\&V & Verification and validation & Section~\ref{SecUH}\\
+W3C & World Wide Web Consortium & Section~\ref{SecStandards}\\
+WCAG & Web Content Accessibility Guidelines & Section~\ref{SecStandards}\\
+\bottomrule
+\end{longtable}
+}
+
 \section{Relevant Facts And Assumptions}
-\subsection{Relevant Facts}
+\subsection{Relevant Facts} \label{SecFacts}
 \begin{itemize}
     \item Japanese is written without spaces between words and mixes kanji,
           hiragana, and katakana. Many kanji have more than one reading, and
@@ -334,7 +508,7 @@ in the editor.\\
     \item AnkiConnect is an add-on for desktop Anki. By default it accepts
           requests only on \texttt{127.0.0.1}, port 8765, and it can be
           configured to require an API key~\cite{AnkiConnect}.
-    \item AnkiDroid provides an API that other Android apps can use to add
+    \item AnkiDroid provides an application programming interface (API) that other Android apps can use to add
           notes. It requires a permission that Android asks the user to
           grant at runtime~\cite{AnkiDroidAPI}:\\
           \nolinkurl{com.ichi2.anki.permission.READ_WRITE_DATABASE}.
@@ -346,7 +520,7 @@ in the editor.\\
           when background apps are suspended.
 \end{itemize}
 
-\subsection{Business Rules}
+\subsection{Business Rules} \label{SecRules}
 \begin{itemize}
     \item \textbf{BR1 (Open Access):} no user account or payment is required to
           open a song map.
@@ -390,7 +564,7 @@ useful words into Anki. Creators who want to share a song lesson have no
 common format, so each lesson is prepared by hand in documents or slides, and
 timing is not recorded.
 
-\subsection{The Context of the Work}
+\subsection{The Context of the Work} \label{SecContext}
 Figure~\ref{FigContext} shows the work context. Creators supply audio, lyrics,
 translations, and annotations to the editor, which produces a song map.
 Learners open song maps in the learner app, which plays the audio, shows the
@@ -405,7 +579,10 @@ $\xrightarrow{\text{vocabulary notes}}$ & \fbox{Anki}\\[4pt]
  & & $\Big\updownarrow$ \small{lesson view, selections} & & \\[4pt]
  & & \fbox{Learner} & & \\
 \end{tabular}
-\caption{Context of the work} \label{FigContext}
+\caption{Context of the work. Each box is a person or system, and each arrow
+shows data flowing in the direction it points, labelled with what flows. The
+two way arrow means the learner both sends selections and receives the lesson
+view.} \label{FigContext}
 \end{figure}
 
 \subsection{Work Partitioning}
@@ -442,7 +619,7 @@ The product is divided into three parts:
           and shared TypeScript types.
 \end{itemize}
 
-\subsection{Specifying a Business Use Case (BUC)}
+\subsection{Specifying a Business Use Case (BUC)} \label{SecBUC}
 \begin{itemize}
     \item \textbf{BUC1 (Author a song map):} the creator loads audio and
           lyrics, sets line timings, reviews segmentation and readings, adds
@@ -537,7 +714,7 @@ exported (FR9 to FR16).\\
 \bottomrule
 \end{tabularx}
 
-\subsection{Individual Product Use Cases (PUC's)}
+\subsection{Individual Product Use Cases (PUC's)} \label{SecPUC}
 \begin{itemize}
     \item \textbf{PUC1 (Play synchronized lesson):} the learner opens a
           song map package. The app validates it and shows the lesson. The
@@ -559,135 +736,149 @@ exported (FR9 to FR16).\\
 \end{itemize}
 
 \section{Functional Requirements}
-\subsection{Functional Requirements}
+\subsection{Functional Requirements} \label{SecFunctional}
 
 \subsubsection*{Learner app}
 \begin{description}
-\item[FR1] The learner app shall let the learner open a song map package from
+\item[\reqdef{FR1}] The learner app shall let the learner open a song map package from
 the device's storage and shall validate it (Section~\ref{SecFormal}) before
 showing the lesson.
 \rat{Learners receive lessons as files in the initial release. Only valid maps
 can be played correctly.}
 \fit{Every map in the acceptance suite opens. Every map in a set of invalid
 test maps is rejected with a message naming the failed rule.}
-\trace{G3, PUC1, IN2, IN3, IN11.}
+\trace{G3, PUC1, \req{IN2}, \req{IN3}, \req{IN11}.}
+\usedby{\req{RB1}, \req{SL1}, \req{UH6}.}
 
-\item[FR2] The learner app shall list the lessons it has opened, showing each
+\item[\reqdef{FR2}] The learner app shall list the lessons it has opened, showing each
 lesson's title, artist, language, difficulty, and explicit content flag.
 \rat{Learners choose lessons by song and by level.}
 \fit{All listed fields match the song map metadata for every acceptance suite
 map.}
-\trace{G3, PUC1, HS6, HS7.}
+\trace{G3, PUC1, \req{HS6}, \req{HS7}.}
+\usedby{\req{CP2}.}
 
-\item[FR3] The learner app shall provide play, pause, and seek controls, and
+\item[\reqdef{FR3}] The learner app shall provide play, pause, and seek controls, and
 a control that restarts the current line.
 \rat{Learners replay short sections to catch words.}
 \fit{After each control is used, the reported audio position equals the
 expected position within \cn{SYNC\_TOL}.}
-\trace{G1, PUC1, HS1.}
+\trace{G1, PUC1, \req{HS1}.}
 
-\item[FR4] During playback, the learner app shall highlight the line that is
+\item[\reqdef{FR4}] During playback, the learner app shall highlight the line that is
 active at the current audio position, as defined by \textit{active} in
 Section~\ref{SecFormal}.
 \rat{This is the main function of the lesson player.}
 \fit{In the acceptance suite, at least \cn{SYNC\_PASS} of line transitions
 occur within \cn{SYNC\_TOL} of their mapped start times.}
-\trace{G1, PUC1, IN1, PA1.}
+\trace{G1, PUC1, \req{IN1}, \req{PA1}.}
+\usedby{\req{PA1}.}
 
-\item[FR5] When the active line has word timings, the learner app shall also
+\item[\reqdef{FR5}] When the active line has word timings, the learner app shall also
 highlight the active word.
 \rat{Word timing helps learners match syllables to sounds, especially in fast
 songs.}
 \fit{As FR4, applied to word start times.}
 \trace{G1, PUC1.}
 
-\item[FR6] The learner app shall display each line in its original script with
+\item[\reqdef{FR6}] The learner app shall display each line in its original script with
 the stored segmentation, and shall let the learner show or hide the
 transliteration and the line translation.
 \rat{Learners at different levels need different amounts of support.}
 \fit{For every line in the acceptance suite, the displayed words and readings
 match the song map, and each layer can be turned on and off.}
-\trace{G5, PUC2, IN4, IN12.}
+\trace{G5, PUC2, \req{IN4}, \req{IN12}.}
+\usedby{\req{CU1}, \req{UH3}.}
 
-\item[FR7] When the learner selects a word or line, the learner app shall
+\item[\reqdef{FR7}] When the learner selects a word or line, the learner app shall
 display its translation, reading, and contextual annotation, if present,
 without stopping playback.
 \rat{Meaning is clearer when shown next to the lyric (G2).}
 \fit{Every annotated target in the acceptance suite shows its translation and
 annotation when selected.}
-\trace{G2, PUC2, SL2.}
+\trace{G2, PUC2, \req{SL2}.}
+\usedby{\req{SL2}.}
 
-\item[FR8] When the learner sends a selected word to Anki, the learner app
+\item[\reqdef{FR8}] When the learner sends a selected word to Anki, the learner app
 shall create a note in the \progname{} deck whose \emph{Term},
 \emph{Translation}, and \emph{Context} fields contain the word, its
 translation, and the line it appears in.
 \rat{Connects song study to spaced repetition review (G6).}
 \fit{For each acceptance suite language, a sent word appears in the test deck
 with all three fields correct.}
-\trace{G6, PUC3, IN8, IN9, IN10, AC1.}
+\trace{G6, PUC3, \req{IN8}, \req{IN9}, \req{IN10}, \req{AC1}.}
+\usedby{\req{OE2}, \req{SL3}.}
 \end{description}
 
 \subsubsection*{Editor}
 \begin{description}
-\item[FR9] The editor shall let the creator load an audio file and lyric text,
+\item[\reqdef{FR9}] The editor shall let the creator load an audio file and lyric text,
 and open an existing song map for editing.
 \rat{Creators start from material they already have, and correct maps later.}
 \fit{The test track's audio and lyrics load, and a previously exported map
 reopens with no data lost.}
 \trace{G4, PUC4.}
+\usedby{\req{UH2}.}
 
-\item[FR10] The editor shall let the creator mark the start time of each line
+\item[\reqdef{FR10}] The editor shall let the creator mark the start time of each line
 while the audio plays, and adjust start and end times by hand.
 \rat{Marking times while listening is faster than typing them (G4).}
 \fit{Measured by G4 in usability testing.}
-\trace{G1, G4, PUC4, IN7.}
+\trace{G1, G4, PUC4, \req{IN7}.}
+\usedby{\req{UH2}.}
 
-\item[FR11] For a supported language without spaces between words, the editor
+\item[\reqdef{FR11}] For a supported language without spaces between words, the editor
 shall suggest a segmentation and readings for each line and let the creator
 accept or correct them.
 \rat{Automatic suggestions reduce work. Creator review corrects errors in lyric
 text that tokenizers handle poorly (PoC risk R2).}
 \fit{At least \cn{SEG\_ACC} of suggested word boundaries in
 \cn{SEG\_SAMPLE} test lines match a segmentation checked by the team.}
-\trace{G4, G5, PUC4, IN4, PA3.}
+\trace{G4, G5, PUC4, \req{IN4}, \req{PA3}.}
+\usedby{\req{UH2}.}
 
-\item[FR12] The editor shall let the creator enter a translation for each line
+\item[\reqdef{FR12}] The editor shall let the creator enter a translation for each line
 and word, contextual annotations for words and lines, and the lesson metadata
 listed in Section~\ref{SecDataModel}.
 \rat{These are the contents of a lesson.}
 \fit{Each field in the data dictionary can be entered and appears in the
 exported map.}
-\trace{G2, G4, PUC4, HS6, LG1.}
+\trace{G2, G4, PUC4, \req{HS6}, \req{LG1}.}
+\usedby{\req{UH2}.}
 
-\item[FR13] The editor shall provide a preview that plays the song map as the
+\item[\reqdef{FR13}] The editor shall provide a preview that plays the song map as the
 learner app will show it.
 \rat{Creators find timing and display errors before export.}
 \fit{For the acceptance suite, the preview's line changes match the learner
 app's within \cn{SYNC\_TOL}.}
-\trace{G1, G4, PUC4, IN7.}
+\trace{G1, G4, PUC4, \req{IN7}.}
+\usedby{\req{UH2}.}
 
-\item[FR14] The editor shall export a song map package only if the map is valid,
+\item[\reqdef{FR14}] The editor shall export a song map package only if the map is valid,
 and shall list every rule a map fails.
 \rat{Learners must receive only valid maps (G3, BR2).}
 \fit{Export is refused for every invalid test map, and the listed rules match
 the rules the map breaks.}
-\trace{G3, PUC4, IN2, IN4, IN5.}
+\trace{G3, PUC4, \req{IN2}, \req{IN4}, \req{IN5}.}
+\usedby{\req{RB1}, \req{UH2}, \req{UH6}.}
 
-\item[FR15] The creator shall be able to complete FR9 to FR14 without editing
+\item[\reqdef{FR15}] The creator shall be able to complete FR9 to FR14 without editing
 the song map file directly.
 \rat{G4 requires that creators do not edit the file by hand.}
 \fit{Measured by G4 in usability testing.}
 \trace{G4, PUC4.}
+\usedby{\req{UH2}.}
 \end{description}
 
 \subsubsection*{Shared core}
 \begin{description}
-\item[FR16] The editor and the learner app shall use the same validation code
+\item[\reqdef{FR16}] The editor and the learner app shall use the same validation code
 and schema version to decide whether a song map is valid.
 \rat{If the two disagree, the editor could export a map the app rejects (G3).}
-\fit{The validator is a single shared module. CI validates every example map
+\fit{The validator is a single shared module. Continuous integration (CI) validates every example map
 with it.}
-\trace{G3, IN2, IN3.}
+\trace{G3, \req{IN2}, \req{IN3}.}
+\usedby{\req{MS1}, \req{MS2}.}
 \end{description}
 
 \section{Formal Specification} \label{SecFormal}
@@ -722,7 +913,8 @@ $s_i \le s_{i,j} < e_{i,j} \le e_i$.
 \item[V6] (segmentation verified) $\forall i, j : \mathit{ver}_{i,j}$ (IN4).
 \item[V7] (annotations complete) $\forall a \in N : a.\mathit{tr} \neq
 \varepsilon \wedge a.\mathit{note} \neq \varepsilon$.
-\item[V8] (audio reference and limits) the audio path is relative (IM2),
+\item[V8] (audio reference and limits) the audio path is relative and
+resolves inside the package (IM2),
 $|d - d_{\mathit{audio}}| \le \cn{AUDIO\_DUR\_TOL}$ (IN11), the map size is
 at most \cn{MAX\_MAP\_SIZE}, and its nesting depth is at most
 \cn{MAX\_NESTING} (IM1).
@@ -796,15 +988,15 @@ background is not an event, so it leaves \textit{Playing} unchanged (HS3).
 \section{Look and Feel Requirements}
 \subsection{Appearance Requirements}
 \begin{description}
-\item[LF1] The active line and word shall be distinguishable from the other
+\item[\reqdef{LF1}] The active line and word shall be distinguishable from the other
 lines by a cue other than colour alone.
 \rat{Learners with colour vision deficiency must be able to follow the lesson
 (Hazard Analysis H2.5).}
 \fit{The active line can be identified in a greyscale screenshot and in a
 colour blindness simulation.}
-\trace{G1, HS5.}
+\trace{G1, \req{HS5}.}
 
-\item[LF2] In the lesson view, the lyric area shall take up more of the screen
+\item[\reqdef{LF2}] In the lesson view, the lyric area shall take up more of the screen
 than the playback controls and menus.
 \rat{The lyrics are the content the learner studies.}
 \fit{Measured on screenshots of the lesson view on a phone screen.}
@@ -813,41 +1005,43 @@ than the playback controls and menus.
 
 \subsection{Style Requirements}
 \begin{description}
-\item[LF3] The learner app shall follow the platform's interface conventions
+\item[\reqdef{LF3}] The learner app shall follow the platform's interface conventions
 for controls and navigation on iOS and Android.
 \rat{Learners already know these conventions, which reduces learning time
 (UH3).}
 \fit{Usability test participants operate the controls without instruction.}
-\trace{UH3.}
+\trace{\req{UH3}.}
 \end{description}
 
 \section{Usability and Humanity Requirements}
-\subsection{Ease of Use Requirements}
+\subsection{Ease of Use Requirements} \label{SecUH}
 \begin{description}
-\item[UH1] A learner shall be able to open a lesson that has already been
+\item[\reqdef{UH1}] A learner shall be able to open a lesson that has already been
 imported and start playback in at most \cn{MAX\_TAPS\_PLAY} taps from the
 app's home screen.
 \rat{Learners use the app in short sessions.}
 \fit{Counted on the release build.}
 \trace{G1, PUC1.}
 
-\item[UH2] At least \cn{CREATE\_PASS} test creators shall produce a complete,
+\item[\reqdef{UH2}] At least \cn{CREATE\_PASS} test creators shall produce a complete,
 valid map for the test track within \cn{CREATE\_TIME}, without editing the map
 file by hand.
 \rat{Goal G4.}
 \fit{Measured in the usability study described in the V\&V Plan.}
-\trace{G4, PUC4, FR9 to FR15.}
+\trace{G4, PUC4, \req{FR9} to \req{FR15}.}
+\usedby{\req{MS3}.}
 \end{description}
 
 \subsection{Personalization and Internationalization Requirements}
 \begin{description}
-\item[UH3] The learner shall be able to show or hide the transliteration and
+\item[\reqdef{UH3}] The learner shall be able to show or hide the transliteration and
 translation layers, and the app shall remember the choice between sessions.
 \rat{Learners reduce support as they improve.}
 \fit{Settings persist after the app is closed and reopened.}
-\trace{G5, FR6.}
+\trace{G5, \req{FR6}.}
+\usedby{\req{LF3}.}
 
-\item[UH4] The user interface of the learner app and the editor shall be in
+\item[\reqdef{UH4}] The user interface of the learner app and the editor shall be in
 English in the initial release. Lesson content shall support at least
 \cn{LANG\_COUNT} target languages.
 \rat{The team and the test users work in English. G5 requires
@@ -859,33 +1053,34 @@ English in the initial release. Lesson content shall support at least
 
 \subsection{Learning Requirements}
 \begin{description}
-\item[UH5] A learner using the app for the first time shall be able to open a lesson, play it,
+\item[\reqdef{UH5}] A learner using the app for the first time shall be able to open a lesson, play it,
 display a word's annotation, and send the word to Anki within
 \cn{LEARN\_TIME} without help.
 \rat{Learners use the app on their own, without training.}
 \fit{At least \cn{CREATE\_PASS} of usability test participants succeed.}
 \trace{G1, G2, G6.}
+\usedby{\req{MS3}.}
 \end{description}
 
 \subsection{Understandability and Politeness Requirements}
 \begin{description}
-\item[UH6] Every error message shall state what failed and what the user can
+\item[\reqdef{UH6}] Every error message shall state what failed and what the user can
 do next, in plain language and without blaming the user.
 \rat{Learners and creators are not expected to know the song map format or
 Anki internals.}
 \fit{Review of every error message string against this rule.}
-\trace{FR1, FR14, IN3, IN8.}
+\trace{\req{FR1}, \req{FR14}, \req{IN3}, \req{IN8}.}
 \end{description}
 
 \subsection{Accessibility Requirements}
 \begin{description}
-\item[UH7] Every control in the learner app shall have a label read by the
+\item[\reqdef{UH7}] Every control in the learner app shall have a label read by the
 platform screen reader, and lyric text shall scale with the device's text size
 setting.
 \rat{Learners with low vision must be able to use the app.}
 \fit{Each control is announced by VoiceOver and TalkBack. Lyrics remain
 readable at the largest system text size.}
-\trace{HS5.}
+\trace{\req{HS5}.}
 \end{description}
 
 The accessibility requirements HS4 (flashing) and HS5 (colour and text size)
@@ -894,24 +1089,25 @@ are listed under Safety-Critical Requirements.
 \section{Performance Requirements}
 \subsection{Speed and Latency Requirements}
 \begin{description}
-\item[SL1] A lesson shall be ready to play within \cn{LOAD\_TIME} of the
+\item[\reqdef{SL1}] A lesson shall be ready to play within \cn{LOAD\_TIME} of the
 learner opening it.
 \rat{Taken from the PoC pass criterion for risk R2.}
 \fit{Measured on the test phone for each acceptance suite lesson.}
-\trace{G1, G5, FR1.}
+\trace{G1, G5, \req{FR1}.}
 
-\item[SL2] The translation and annotation of a selected word or line shall be
+\item[\reqdef{SL2}] The translation and annotation of a selected word or line shall be
 displayed within \cn{SELECT\_RESPONSE} of the selection.
 \rat{The learner reads the meaning while the line is still playing.}
 \fit{Measured on the test phone with instrumented timestamps.}
-\trace{G2, FR7.}
+\trace{G2, \req{FR7}.}
+\usedby{\req{FR7}.}
 
-\item[SL3] The learner app shall report the result of sending a word to Anki
+\item[\reqdef{SL3}] The learner app shall report the result of sending a word to Anki
 within \cn{ANKI\_TIMEOUT}. If Anki has not confirmed by then, the item shall
 be treated as failed and queued (IN8).
 \rat{The learner should not wait without feedback.}
 \fit{Tested with Anki available and unavailable.}
-\trace{G6, FR8, IN8.}
+\trace{G6, \req{FR8}, \req{IN8}.}
 \end{description}
 
 \subsection{Safety-Critical Requirements}
@@ -919,21 +1115,22 @@ These requirements come from the Hazard Analysis. The FMEA row each one
 mitigates is given in brackets.
 
 \begin{description}
-\item[HS1] The learner app shall not start audio playback without an explicit
+\item[\reqdef{HS1}] The learner app shall not start audio playback without an explicit
 action by the learner.
 \rat{Unexpected audio can cause hearing discomfort with headphones.}
 \fit{Opening, resuming, and returning to a lesson never starts audio
 (Table~\ref{TblModes}).}
 \trace{Hazard H1.2.}
+\usedby{\req{FR3}.}
 
-\item[HS2] The learner app shall pause playback within \cn{DISCONNECT\_PAUSE}
+\item[\reqdef{HS2}] The learner app shall pause playback within \cn{DISCONNECT\_PAUSE}
 when the active audio output device is disconnected.
 \rat{Prevents audio from playing aloud through the phone speaker.}
 \fit{Tested by unplugging wired and disconnecting Bluetooth headphones during
 playback on iOS and Android.}
 \trace{Hazard H1.2.}
 
-\item[HS3] Once a lesson has been started, the learner app shall continue
+\item[\reqdef{HS3}] Once a lesson has been started, the learner app shall continue
 playing it to the end, with no interaction required, while the screen is
 locked or the app is in the background. The app shall show a notice on first
 launch advising against using the screen while driving, cycling, or crossing
@@ -945,23 +1142,27 @@ designed for use while moving is future work (Hazard Analysis, Roadmap).}
 the screen locked after the learner presses play. The notice appears on the
 first launch after installation and not on later launches.}
 \trace{Hazard H1.4.}
+\usedby{\req{OE1}.}
 
-\item[HS4] Lyric highlighting shall not produce more than \cn{MAX\_FLASHES}
+\item[\reqdef{HS4}] Lyric highlighting shall not produce more than \cn{MAX\_FLASHES}
 large area flashes in any period of one second, and shall follow the operating
 system's reduce motion setting.
-\rat{Rapid flashing can trigger seizures in photosensitive people (WCAG 2.1,
+\rat{Rapid flashing can trigger seizures in photosensitive people (Web Content
+Accessibility Guidelines (WCAG) 2.1,
 Success Criterion 2.3.1~\cite{WCAG21, WCAG231}).}
 \fit{Count of highlight changes per second in the fastest acceptance suite
 song, and a check with reduce motion turned on.}
 \trace{Hazard H2.4.}
+\usedby{\req{ST1}.}
 
-\item[HS5] The learner app shall indicate the active line and word with a cue
+\item[\reqdef{HS5}] The learner app shall indicate the active line and word with a cue
 other than colour alone, and shall respect the device's text size setting.
 \rat{See LF1 and UH7.}
 \fit{As LF1 and UH7.}
 \trace{Hazard H2.5.}
+\usedby{\req{LF1}, \req{ST1}, \req{UH7}.}
 
-\item[HS6] Each song map shall include an explicit content flag. Lessons
+\item[\reqdef{HS6}] Each song map shall include an explicit content flag. Lessons
 flagged as explicit shall show a warning before opening and can be hidden
 through a learner setting. Annotations of vulgar or offensive terms shall
 include a note describing their register.
@@ -969,15 +1170,17 @@ include a note describing their register.
 \fit{Schema requires the flag. A flagged test lesson shows the warning and is
 hidden when the setting is on.}
 \trace{Hazard H3.2.}
+\usedby{\req{FR2}, \req{FR12}.}
 
-\item[HS7] The learner app shall not use streak loss penalties, countdown
+\item[\reqdef{HS7}] The learner app shall not use streak loss penalties, countdown
 timers, or unsolicited push notifications to encourage use, and shall show each
 lesson's difficulty level before it is opened.
 \rat{Avoids stress and compulsive use.}
 \fit{Design review of the release build.}
 \trace{Hazards H1.4, H3.3.}
+\usedby{\req{FR2}.}
 
-\item[HS8] When playback starts or resumes, the learner app shall raise the
+\item[\reqdef{HS8}] When playback starts or resumes, the learner app shall raise the
 playback volume from silence to its set level over \cn{FADE\_IN}.
 \rat{A sudden start at full level is uncomfortable with headphones, and a
 short fade gives the learner time to lower the volume.}
@@ -986,7 +1189,7 @@ each resume rises from silence to the set level over \cn{FADE\_IN}, within
 0.1\,s, on iOS and Android.}
 \trace{Hazard H1.2.}
 
-\item[HS9] The editor shall measure the integrated loudness of each track's
+\item[\reqdef{HS9}] The editor shall measure the integrated loudness of each track's
 audio, as defined in ITU-R BS.1770~\cite{BS1770}, and display it to the
 creator. Before export, it shall warn the creator when the loudness differs
 from \cn{TARGET\_LOUDNESS} by more than \cn{LOUDNESS\_TOL}. The measured value
@@ -1001,35 +1204,37 @@ the warning before export.}
 
 \subsection{Precision or Accuracy Requirements}
 \begin{description}
-\item[PA1] Song map times shall be stored with a resolution of \cn{TIME\_RES}
+\item[\reqdef{PA1}] Song map times shall be stored with a resolution of \cn{TIME\_RES}
 or finer.
 \rat{Storage resolution must be much finer than \cn{SYNC\_TOL} so that
 rounding does not use up the timing tolerance.}
 \fit{Schema check on the time fields.}
-\trace{G1, FR4.}
+\trace{G1, \req{FR4}.}
+\usedby{\req{FR4}.}
 
-\item[PA2] Line highlighting accuracy shall meet the fit criterion of FR4.
+\item[\reqdef{PA2}] Line highlighting accuracy shall meet the fit criterion of FR4.
 \rat{Goal G1.}
 \fit{As FR4.}
 \trace{G1.}
 
-\item[PA3] Automatically suggested segmentation shall meet the fit criterion of
+\item[\reqdef{PA3}] Automatically suggested segmentation shall meet the fit criterion of
 FR11.
 \rat{Taken from the PoC pass criterion for risk R2.}
 \fit{As FR11.}
 \trace{G5.}
+\usedby{\req{FR11}.}
 \end{description}
 
 \subsection{Robustness or Fault-Tolerance Requirements}
 \begin{description}
-\item[RB1] The learner app and the editor shall not crash when given an invalid
+\item[\reqdef{RB1}] The learner app and the editor shall not crash when given an invalid
 or malformed song map. They shall reject it with a message (UH6).
 \rat{Song maps are files that can be damaged or altered.}
 \fit{A set of malformed test maps (truncated, wrong types, oversized, deeply
 nested) is rejected without a crash.}
-\trace{FR1, FR14, IM1.}
+\trace{\req{FR1}, \req{FR14}, \req{IM1}.}
 
-\item[RB2] The learner app shall play lessons that are already on the device
+\item[\reqdef{RB2}] The learner app shall play lessons that are already on the device
 without a network connection.
 \rat{The product has no server, and learners use the app in transit.}
 \fit{All acceptance suite lessons play in airplane mode.}
@@ -1038,46 +1243,47 @@ without a network connection.
 
 \subsection{Capacity Requirements}
 \begin{description}
-\item[CP1] The learner app and the editor shall support songs up to
+\item[\reqdef{CP1}] The learner app and the editor shall support songs up to
 \cn{MAX\_AUDIO\_LENGTH} long with up to \cn{MAX\_LESSON\_LINES} lines.
 \rat{Covers typical popular songs.}
 \fit{A test map at both limits opens, plays, and meets FR4.}
 \trace{G1, G4.}
 
-\item[CP2] The learner app shall keep at least \cn{LIBRARY\_SIZE} lessons.
+\item[\reqdef{CP2}] The learner app shall keep at least \cn{LIBRARY\_SIZE} lessons.
 \rat{Learners keep several songs in progress.}
 \fit{\cn{LIBRARY\_SIZE} lessons imported and listed on the test phone.}
-\trace{FR2.}
+\trace{\req{FR2}.}
 \end{description}
 
 \subsection{Scalability or Extensibility Requirements}
 \begin{description}
-\item[SC1] Adding a further target language shall not require a change to the
+\item[\reqdef{SC1}] Adding a further target language shall not require a change to the
 major version of the song map schema.
 \rat{The stretch goal of a third language. Existing maps must remain valid.}
 \fit{The schema's fields that are specific to a language are optional and keyed by language
 code. Reviewed when the design is complete.}
-\trace{G5, LO1.}
+\trace{G5, \req{LO1}.}
 \end{description}
 
 \subsection{Longevity Requirements}
 \begin{description}
-\item[LO1] A learner app version shall open every valid song map whose major
+\item[\reqdef{LO1}] A learner app version shall open every valid song map whose major
 schema version it supports, regardless of minor or patch version.
 \rat{Lessons made earlier must keep working.}
 \fit{CI opens maps of every released minor version with the current app.}
-\trace{G3, IN3.}
+\trace{G3, \req{IN3}.}
+\usedby{\req{OE5}, \req{SC1}.}
 \end{description}
 
 \section{Operational and Environmental Requirements}
 \subsection{Expected Physical Environment}
 \begin{description}
-\item[OE1] The learner app shall be usable on a phone held in one hand, with
+\item[\reqdef{OE1}] The learner app shall be usable on a phone held in one hand, with
 headphones, in indoor and outdoor lighting.
 \rat{Learners study in short sessions in varied places.}
 \fit{All lesson controls reachable with one hand. Checked during usability
 testing.}
-\trace{HS3.}
+\trace{\req{HS3}.}
 \end{description}
 
 \subsection{Wider Environment Requirements}
@@ -1086,77 +1292,78 @@ infrastructure.
 
 \subsection{Requirements for Interfacing with Adjacent Systems} \label{SecAdjacent}
 \begin{description}
-\item[OE2] The learner app shall send vocabulary to Anki using at least one
+\item[\reqdef{OE2}] The learner app shall send vocabulary to Anki using at least one
 of: the AnkiDroid API on Android, AnkiConnect with desktop Anki, or an export
 file that the learner imports into Anki.
 \rat{No single method works on every platform. The PoC (risk R3) selects the
 method. The export file is the fallback in the Development Plan.}
 \fit{FR8's fit criterion is met with the selected method.}
-\trace{G6, FR8, AC1, AC2, PR2.}
+\trace{G6, \req{FR8}, \req{AC1}, \req{AC2}, \req{PR2}.}
 
-\item[OE3] The editor shall read audio in at least one format that the learner
+\item[\reqdef{OE3}] The editor shall read audio in at least one format that the learner
 app can play on both iOS and Android, and shall export only such formats.
 \rat{A map whose audio cannot play on one platform fails G3.}
 \fit{Each acceptance suite package plays on an iOS and an Android test device.}
-\trace{G3, IN11.}
+\trace{G3, \req{IN11}.}
 \end{description}
 
 \subsection{Productization Requirements}
 \begin{description}
-\item[OE4] The learner app shall be installable on iOS and Android test
+\item[\reqdef{OE4}] The learner app shall be installable on iOS and Android test
 devices as an Expo development or preview build, and the editor shall run from
 a URL without installation.
 \rat{Store publication is not required for the capstone.}
 \fit{Installed and run on one iOS and one Android device. Editor opened in each
 supported browser.}
-\trace{MC2.}
+\trace{\req{MC2}.}
+\usedby{\req{MS4}.}
 \end{description}
 
 \subsection{Release Requirements}
 \begin{description}
-\item[OE5] Each release shall be tagged on the \texttt{main} branch and shall
+\item[\reqdef{OE5}] Each release shall be tagged on the \texttt{main} branch and shall
 state the song map schema version it supports.
 \rat{Creators and learners need to know which maps a release can open
 (LO1).}
 \fit{Check of release tags and notes.}
-\trace{LO1.}
+\trace{\req{LO1}.}
 \end{description}
 
 \section{Maintainability and Support Requirements}
-\subsection{Maintenance Requirements}
+\subsection{Maintenance Requirements} \label{SecMaintenance}
 \begin{description}
-\item[MS1] Every example song map in the repository shall be validated in CI on
+\item[\reqdef{MS1}] Every example song map in the repository shall be validated in CI on
 each pull request.
 \rat{Detects schema changes that break existing maps.}
 \fit{CI configuration and run history.}
-\trace{G3, FR16.}
+\trace{G3, \req{FR16}.}
 
-\item[MS2] The shared core shall have statement coverage by unit tests of at least
+\item[\reqdef{MS2}] The shared core shall have statement coverage by unit tests of at least
 \cn{COVERAGE}.
 \rat{The validator decides what learners can open. Errors there affect every
 lesson.}
 \fit{Coverage report from CI.}
-\trace{FR16, IN2.}
+\trace{\req{FR16}, \req{IN2}.}
 \end{description}
 
 \subsection{Supportability Requirements}
 \begin{description}
-\item[MS3] The project shall provide written instructions for learners
+\item[\reqdef{MS3}] The project shall provide written instructions for learners
 (importing lessons, setting up Anki) and for creators (using the editor,
 licence fields).
 \rat{There is no support staff.}
 \fit{Usability test participants complete their tasks using only the
 instructions (UH2, UH5).}
-\trace{UH2, UH5, AC2.}
+\trace{\req{UH2}, \req{UH5}, \req{AC2}.}
 \end{description}
 
 \subsection{Adaptability Requirements}
 \begin{description}
-\item[MS4] The learner app shall run on both iOS and Android from one code
+\item[\reqdef{MS4}] The learner app shall run on both iOS and Android from one code
 base.
 \rat{MC2. Learners use both platforms.}
 \fit{The same release build runs on one device of each platform.}
-\trace{MC2, OE4.}
+\trace{\req{MC2}, \req{OE4}.}
 \end{description}
 
 \section{Security Requirements}
@@ -1165,15 +1372,16 @@ mitigates is given in brackets.
 
 \subsection{Access Requirements}
 \begin{description}
-\item[AC1] The learner app shall only add notes, and only to the \progname{}
+\item[\reqdef{AC1}] The learner app shall only add notes, and only to the \progname{}
 deck. It shall not edit or delete existing notes, decks, or note types in the
 learner's Anki collection.
 \rat{The learner's existing study data must not be damaged.}
 \fit{Code review of every Anki call. An integration test confirms the test
 collection is unchanged apart from added notes.}
 \trace{Hazard H6.3.}
+\usedby{\req{FR8}, \req{OE2}.}
 
-\item[AC2] If AnkiConnect is used, the product and its setup instructions shall
+\item[\reqdef{AC2}] If AnkiConnect is used, the product and its setup instructions shall
 allow only the specific origin the product requires, never a wildcard origin,
 and shall require AnkiConnect's API key (\texttt{apiKey}~\cite{AnkiConnect}).
 The setup instructions shall warn the learner before any step that makes
@@ -1185,34 +1393,38 @@ requests.}
 \fit{Review of the setup instructions and default configuration. A request
 without the API key is refused.}
 \trace{Hazard H6.5.}
+\usedby{\req{MS3}, \req{OE2}.}
 \end{description}
 
 \subsection{Integrity Requirements}
 \begin{description}
-\item[IN1] The learner app shall drive lyric highlighting from the audio
+\item[\reqdef{IN1}] The learner app shall drive lyric highlighting from the audio
 player's reported position and shall realign the highlight after every seek,
 pause, resume, and return from the background.
 \rat{A separate timer drifts from the audio.}
 \fit{FR4's fit criterion holds after seeks and after returning from the
 background.}
 \trace{Hazard H1.1.}
+\usedby{\req{FR4}.}
 
-\item[IN2] The song map validator shall check, in addition to the schema, the
+\item[\reqdef{IN2}] The song map validator shall check, in addition to the schema, the
 conditions of $\mathit{valid}$ in Section~\ref{SecFormal}. The editor shall run
 it before export and the learner app shall run it on import.
 \rat{Schema validation alone accepts maps with overlapping times or times outside the audio.}
 \fit{One invalid test map per condition is rejected by both the editor and the
 app.}
 \trace{Hazards H1.1, H4.1.}
+\usedby{\req{FR1}, \req{FR14}, \req{FR16}, \req{MS2}.}
 
-\item[IN3] Each song map shall declare its format version. The learner app
+\item[\reqdef{IN3}] Each song map shall declare its format version. The learner app
 shall refuse to open a map with an unsupported major version and shall tell
 the learner why.
 \rat{Prevents fields from being ignored or misread.}
 \fit{A map with an unsupported major version is rejected with a message.}
 \trace{Hazard H4.2.}
+\usedby{\req{FR1}, \req{FR16}, \req{LO1}, \req{UH6}.}
 
-\item[IN4] Song maps shall store word segmentation and transliteration
+\item[\reqdef{IN4}] Song maps shall store word segmentation and transliteration
 explicitly, and the learner app shall display the stored values without segmenting again at runtime. The editor shall mark automatically generated values
 as unverified until the creator confirms them, and shall not export a map
 containing unverified lines.
@@ -1220,8 +1432,9 @@ containing unverified lines.
 \fit{The app contains no tokenizer. Export of a map with an unverified line is
 refused.}
 \trace{Hazards H2.1, H2.2.}
+\usedby{\req{FR6}, \req{FR11}, \req{FR14}.}
 
-\item[IN5] Each annotation shall record the name of its author and the name
+\item[\reqdef{IN5}] Each annotation shall record the name of its author and the name
 of its reviewer. The editor shall not mark a map as published while any
 annotation has no reviewer or has its author as its reviewer
 ($\mathit{publishable}$, Section~\ref{SecFormal}).
@@ -1231,8 +1444,9 @@ in the Hazard Analysis.}
 \fit{A map with an annotation that has no reviewer, or whose reviewer is its
 author, cannot be marked published.}
 \trace{Hazard H3.1.}
+\usedby{\req{CU2}, \req{FR14}.}
 
-\item[IN6] The editor shall autosave the current draft at least every
+\item[\reqdef{IN6}] The editor shall autosave the current draft at least every
 \cn{AUTOSAVE\_INT}, offer to restore it when reopened, warn before closing with
 unsaved changes, provide undo and redo for all edits, and ask for confirmation
 before any operation that changes more than one line.
@@ -1241,15 +1455,16 @@ before any operation that changes more than one line.
 bulk operation asks for confirmation.}
 \trace{Hazards H5.1, H5.2.}
 
-\item[IN7] The editor shall let the creator set an audio latency offset,
+\item[\reqdef{IN7}] The editor shall let the creator set an audio latency offset,
 either by entering it or by tapping along to a test click track, and shall
 apply it to recorded timestamps. It shall also provide a preview that plays
 the map as the learner app will (FR13).
 \rat{Browser and Bluetooth output latency shifts every recorded time.}
 \fit{With calibration applied, preview line changes meet FR4's fit criterion.}
 \trace{Hazard H5.3.}
+\usedby{\req{FR10}, \req{FR13}.}
 
-\item[IN8] The learner app shall report a vocabulary item as sent only after
+\item[\reqdef{IN8}] The learner app shall report a vocabulary item as sent only after
 Anki confirms that the note was created. Items that have not been confirmed
 shall be stored on the device, kept across app restarts, and available to retry
 or export to a file.
@@ -1257,41 +1472,46 @@ or export to a file.
 \fit{With Anki unavailable, sent items remain queued after the app restarts and
 are delivered on retry.}
 \trace{Hazards H6.4, H7.1.}
+\usedby{\req{FR8}, \req{SL3}, \req{UH6}.}
 
-\item[IN9] Before adding a note, the learner app shall check the \progname{}
+\item[\reqdef{IN9}] Before adding a note, the learner app shall check the \progname{}
 deck for an existing note with the same term and context, and shall disable the
 send control while a request is in progress.
 \rat{Prevents duplicate cards.}
 \fit{Sending the same word twice creates one note.}
 \trace{Hazard H6.1.}
+\usedby{\req{FR8}.}
 
-\item[IN10] The learner app shall fill Anki note fields by field name, shall
+\item[\reqdef{IN10}] The learner app shall fill Anki note fields by field name, shall
 stop with a message if the note type lacks the \emph{Term},
 \emph{Translation}, or \emph{Context} field, and shall send all text as UTF-8.
 \rat{Prevents misplaced or garbled fields.}
 \fit{Japanese test words appear correctly in the right fields. A note type
 missing a field produces the message.}
 \trace{Hazard H6.2.}
+\usedby{\req{FR8}.}
 
-\item[IN11] On import, the learner app shall check that the audio file
+\item[\reqdef{IN11}] On import, the learner app shall check that the audio file
 referenced by a map exists, can be decoded, and has a duration within
 \cn{AUDIO\_DUR\_TOL} of the map's \texttt{audioDuration}, and shall reject the
 lesson with a message if not.
 \rat{Finds broken packages before playback.}
 \fit{Packages with a missing, corrupt, or mismatched audio file are rejected.}
 \trace{Hazard H1.3.}
+\usedby{\req{FR1}, \req{OE3}.}
 
-\item[IN12] The learner app shall include fonts covering every script used by
+\item[\reqdef{IN12}] The learner app shall include fonts covering every script used by
 its supported languages, and all song maps shall be read and written as UTF-8.
 \rat{Device fonts may not cover every script.}
 \fit{Every acceptance suite line renders with no boxes for missing glyphs on both
 platforms.}
 \trace{Hazard H2.3.}
+\usedby{\req{FR6}.}
 \end{description}
 
 \subsection{Privacy Requirements}
 \begin{description}
-\item[PR1] The initial release shall not send any data off the device, other
+\item[\reqdef{PR1}] The initial release shall not send any data off the device, other
 than notes the learner explicitly sends to Anki and error reports the learner
 chooses to share (AU1). Any analytics or crash reporting added later shall
 stay off unless the learner turns it on.
@@ -1300,17 +1520,18 @@ stay off unless the learner turns it on.
 outbound traffic.}
 \trace{Hazard H7.2.}
 
-\item[PR2] The learner app shall request the AnkiDroid permission only when the
+\item[\reqdef{PR2}] The learner app shall request the AnkiDroid permission only when the
 learner first sends a word, with an explanation of why it is needed, and shall
 request no other sensitive permissions.
 \rat{Learners should understand what they grant.}
 \fit{Review of the app manifest and the permission prompt sequence.}
 \trace{Hazard H6.6.}
+\usedby{\req{OE2}.}
 \end{description}
 
 \subsection{Audit Requirements}
 \begin{description}
-\item[AU1] The learner app shall let a learner prepare a report of a suspected
+\item[\reqdef{AU1}] The learner app shall let a learner prepare a report of a suspected
 error on any lyric line. The report shall contain the map identifier, map
 version, line, and the learner's comment. The app shall pass the report to the
 operating system's share sheet, so that the learner decides whether and where
@@ -1323,7 +1544,7 @@ the share sheet on iOS and Android. Network capture shows that the app sends
 nothing when the learner cancels the share sheet.}
 \trace{Hazard H3.1.}
 
-\item[AU2] Each song map shall record a version number and, for every export,
+\item[\reqdef{AU2}] Each song map shall record a version number and, for every export,
 the date and the creator who exported it.
 \rat{Allows changes to a lesson to be traced.}
 \fit{Exporting a map twice adds two entries to \texttt{exports}.}
@@ -1332,7 +1553,7 @@ the date and the creator who exported it.
 
 \subsection{Immunity Requirements}
 \begin{description}
-\item[IM1] The song map parser in both the editor and the learner app shall
+\item[\reqdef{IM1}] The song map parser in both the editor and the learner app shall
 reject a map whose size exceeds \cn{MAX\_MAP\_SIZE} or whose nesting depth
 exceeds \cn{MAX\_NESTING} before parsing it fully, and both shall display all
 map text as plain text, never as HTML.
@@ -1340,32 +1561,50 @@ map text as plain text, never as HTML.
 \fit{Oversized, deeply nested, and test maps containing script are rejected or
 shown as plain text.}
 \trace{Hazard H4.3.}
+\usedby{\req{RB1}.}
 
-\item[IM2] Song maps shall refer to audio and other resources only by relative
-paths inside the map package. The validator shall reject absolute and remote
-URLs.
-\rat{Prevents the app from contacting unknown servers.}
-\fit{Maps with absolute paths or URLs are rejected.}
-\trace{Hazards H4.4, H7.2.}
+\item[\reqdef{IM2}] Song maps shall refer to audio and other resources only by relative
+paths that resolve inside the map package. The validator shall reject absolute
+paths, remote URLs, and any path that leaves the package, such as one
+containing a \texttt{..} segment. The learner app shall extract each imported
+package only into a new folder that it owns.
+\rat{Prevents the app from contacting unknown servers and stops a crafted
+package from reading or writing files outside its own folder.}
+\fit{Maps with absolute paths, URLs, or paths that leave the package are
+rejected, and test packages with such paths change no file outside a new
+folder owned by the app.}
+\trace{Hazards H4.4, H4.5, H7.2.}
+
+\item[\reqdef{IM3}] The project shall pin the exact version of every library from other
+vendors in a committed lock file. CI shall run an automated vulnerability check
+on every pull request and fail when a high or critical vulnerability is
+reported. Every new dependency and every major version change shall be
+reviewed by a team member other than the one who added it before it is merged.
+\rat{The app and the editor depend on many npm packages, and a compromised or
+vulnerable package runs with full access to their data.}
+\fit{Both projects have a committed lock file, the CI log shows the
+vulnerability check on every pull request, and every pull request that changes
+dependencies has an approval from a second team member.}
+\trace{Hazard H7.3.}
 \end{description}
 
 \section{Cultural Requirements}
 \subsection{Cultural Requirements}
 \begin{description}
-\item[CU1] Japanese romanization shall follow modified Hepburn
+\item[\reqdef{CU1}] Japanese romanization shall follow modified Hepburn
 romanization.
 \rat{A single standard makes readings consistent across lessons. Hepburn is
 the system most used in learning material written in English.}
 \fit{Romanization of the Japanese acceptance suite map matches Hepburn for every
 word.}
-\trace{G5, FR6.}
+\trace{G5, \req{FR6}.}
 
-\item[CU2] Contextual annotations for culturally specific references (for
+\item[\reqdef{CU2}] Contextual annotations for culturally specific references (for
 example, place names, holidays, or idioms) shall explain the reference rather
 than only translate it.
 \rat{A literal translation can hide the meaning.}
 \fit{Review of the acceptance suite annotations.}
-\trace{G2, IN5.}
+\trace{G2, \req{IN5}.}
 \end{description}
 
 The explicit content requirement HS6 also addresses cultural sensitivity.
@@ -1373,7 +1612,7 @@ The explicit content requirement HS6 also addresses cultural sensitivity.
 \section{Compliance Requirements}
 \subsection{Legal Requirements}
 \begin{description}
-\item[LG1] The editor shall require source and licence information for the
+\item[\reqdef{LG1}] The editor shall require source and licence information for the
 audio and lyrics before a map can be exported, and the learner app shall show
 these credits for each lesson.
 \rat{Distributing unlicensed lyrics or recordings creates legal liability
@@ -1381,6 +1620,7 @@ these credits for each lesson.
 \fit{Export is refused when licence fields are empty. Credits appear in each
 acceptance suite lesson.}
 \trace{Hazard H5.4.}
+\usedby{\req{FR12}.}
 \end{description}
 
 \subsubsection*{Intended Data Flow and Privacy Obligations}
@@ -1411,24 +1651,24 @@ confirm this, including Canadian privacy law and the privacy disclosures
 required by the Apple App Store and Google Play, and shall check it again
 whenever the data flow changes (see Open Issues).
 
-\subsection{Standards Compliance Requirements}
+\subsection{Standards Compliance Requirements} \label{SecStandards}
 \begin{description}
-\item[ST1] The learner app's text and highlight colours shall meet WCAG 2.1
+\item[\reqdef{ST1}] The learner app's text and highlight colours shall meet WCAG 2.1
 level AA contrast (Success Criterion 1.4.3~\cite{WCAG143}), and highlighting
 shall meet Success Criterion 2.3.1~\cite{WCAG231} (HS4).
 \rat{WCAG~\cite{WCAG21} is the W3C's accessibility standard for web content,
 and the W3C publishes guidance on applying it to software that is not web
 content, such as mobile apps (WCAG2ICT~\cite{WCAG2ICT}).}
 \fit{Contrast checker on every text and highlight colour pair.}
-\trace{HS4, HS5.}
+\trace{\req{HS4}, \req{HS5}.}
 
-\item[ST2] The song map schema shall be written in JSON Schema Draft
+\item[\reqdef{ST2}] The song map schema shall be written in JSON Schema Draft
 2020-12~\cite{JSONSchema2020}, and song maps shall be valid JSON
 (RFC~8259~\cite{RFC8259}) encoded in UTF-8.
 \rat{Standard formats allow existing validators and editors to be used.}
 \fit{The schema validates against the Draft 2020-12 metaschema
 (\url{https://json-schema.org/draft/2020-12/schema}).}
-\trace{G3, MC3.}
+\trace{G3, \req{MC3}.}
 \end{description}
 
 \section{Open Issues}
@@ -1461,7 +1701,7 @@ content, such as mobile apps (WCAG2ICT~\cite{WCAG2ICT}).}
 \end{itemize}
 
 \section{Off-the-Shelf Solutions}
-\subsection{Ready-Made Products}
+\subsection{Ready Made Products} \label{SecReadyMade}
 \begin{itemize}
     \item \textbf{LyricsTraining}~\cite{LyricsTraining}: a website and mobile
           app in which learners fill in missing words in the lyrics of music
@@ -1492,7 +1732,7 @@ listings, checked on October 18, 2026. Features may change.
     \item Anki, AnkiDroid, and AnkiConnect as the flashcard system (FR8).
 \end{itemize}
 
-\subsection{Products That Can Be Copied}
+\subsection{Products That Can Be Copied} \label{SecCopied}
 The LRC lyric file format stores lines as \texttt{[mm:ss.xx] text}, and its
 extended form adds word timestamps. The song map's timing fields can follow the
 same model, and the editor may import LRC files in a later release
@@ -1558,6 +1798,41 @@ Work is tracked on a GitHub Projects board. The phases are:
           final documentation on March 31):} fixes from usability testing,
           remaining requirements, and the EXPO demonstration.
 \end{itemize}
+
+\subsection{Requirement Priorities and Phase In Plan} \label{SecPhaseIn}
+Each requirement has one of three priorities.
+\textbf{Priority 1} requirements address a PoC risk (R1 to R3) and must work
+before anything else can be built on them. \textbf{Priority 2} requirements
+are needed to meet a goal (G1 to G6) or to mitigate a hazard. \textbf{Priority
+3} requirements improve usability, are measured in usability testing, or
+concern release and maintenance. Table~\ref{TblPhaseIn} gives the date by
+which each requirement will be implemented and tested. Stretch goals in the
+Waiting Room are not scheduled.
+
+\begin{table}[h!]
+\caption{Requirement priorities and phase in dates} \label{TblPhaseIn}
+\small
+\begin{tabularx}{\textwidth}{P{0.13\textwidth}P{0.18\textwidth}X}
+\toprule
+\textbf{Priority} & \textbf{Done by} & \textbf{Requirements}\\
+\midrule
+1 & November 23, 2026 (PoC demonstration) & MC1 to MC3, FR3, FR4, FR6, FR8
+(one handoff method), FR11, IN1, IN4, SL1, PA1 to PA3, CU1, OE2, ST2\\
+2 & February 1, 2027 (Revision 0 demonstration) & FR1, FR2, FR5, FR7, FR9,
+FR10, FR12 to FR16, HS1 to HS9, AC1, AC2 (if AnkiConnect is used), IN2, IN3,
+IN5 to IN12, PR1, PR2, AU1, AU2, IM1 to IM3, LG1, SL2, SL3, RB1, RB2, CP1,
+LO1, OE3, OE4, MS1, MS2, MS4, UH4, UH6\\
+3 & March 15, 2027 (Revision 1 demonstration) & LF1 to LF3, UH1 to UH3, UH5,
+UH7, CP2, SC1, OE1, OE5, MS3, CU2, ST1\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+If a PoC risk is not resolved by November 23, the fallback in the Development
+Plan applies, and the Priority 1 requirements it affects are revised before
+work on Priority 2 begins. Requirements measured by usability testing (UH1,
+UH2, UH5) are implemented in Phase 2 but are confirmed in Phase 3, after the
+usability study.
 
 \section{Migration to the New Product}
 \subsection{Requirements for Migration to the New Product}
@@ -1811,6 +2086,7 @@ H4.1 & Map passes schema but is inconsistent & IN2\\
 H4.2 & Format version mismatch & IN3\\
 H4.3 & Crafted or malformed map & IM1\\
 H4.4 & Map refers to external URLs & IM2\\
+H4.5 & Map path points outside the package & IM2\\
 H5.1 & Creator loses unsaved work & IN6\\
 H5.2 & Creator overwrites timings & IN6, AU2\\
 H5.3 & Editor timestamps offset & IN7\\
@@ -1823,6 +2099,7 @@ H6.5 & AnkiConnect reachable by any web page or computer & AC2\\
 H6.6 & Unneeded permissions & PR2\\
 H7.1 & Queued vocabulary lost & IN8\\
 H7.2 & Data leaves the device & PR1, IM2\\
+H7.3 & Compromised or vulnerable library & IM3\\
 \bottomrule
 \end{longtable}
 
@@ -1832,6 +2109,9 @@ H7.2 & Data leaves the device & PR1, IM2\\
 \begingroup
 \renewcommand{\section}[2]{}
 \begin{thebibliography}{99}
+\bibitem{Volere} S.~Robertson and J.~Robertson, \emph{Volere Requirements
+  Specification Template}, Atlantic Systems Guild.
+  \url{https://www.volere.org/templates/volere-requirements-specification-template/}
 \bibitem{AnkiManual} Anki, \emph{Anki Manual: Getting Started}.
   \url{https://docs.ankiweb.net/getting-started.html}
 \bibitem{AnkiDroidAPI} AnkiDroid, \emph{AnkiDroid API} (project wiki).
@@ -1877,11 +2157,21 @@ All web sources were accessed on October 18, 2026.
 \section{Appendix:  Generative AI Use Disclosure}
 
 \subsection{AI Tools Used}
-\begin{itemize}
-  \item OpenAI Codex, using the GPT-5.6 Terra model, through the Codex desktop
-        application.
-  \item Claude (Anthropic), model Claude Opus 5.5, through Claude Code.
-\end{itemize}
+\begin{table}[h!]
+\caption{AI tools used for this document} \label{TblAITools}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Tool} & \textbf{Version} & \textbf{Used for}\\
+\midrule
+OpenAI Codex desktop application & GPT 5.6 Terra model & Version 1.0
+drafting\\
+Claude Code (Anthropic) & 2.1.158 & Versions 1.1 to 1.4, inside VS Code with
+access to the repository\\
+Claude Opus (Anthropic) & 5.5 (\texttt{claude-opus-5-5}) & The model used by
+Claude Code\\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \subsection{How and Where Used}
 Codex was used to draft and structure the Volere sections from the
@@ -1900,6 +2190,17 @@ Claude was also used for Version 1.2 to address the review comments on
 Version 1.1: it drafted HS8 and HS9, the narrowed versions of HS3, IN5, IN7,
 and AU1, the revised AC2 and PR1, the description of the intended data flow
 under Compliance Requirements, and the References section.
+
+On October 19, 2026, Claude was given the course grading rubric and used for
+Versions 1.3 and 1.4. It compared the document with each rubric row and
+drafted the intended audience, notation and conventions, the list of
+acronyms, the table of user characteristics, the third persona, and the phase
+in plan. It wrote a script that turns every requirement identifier in a trace
+into a link and adds the \emph{Referenced by} lines, and it drafted the
+reflection answers from the commit history and review comments for the team
+to edit. A typical prompt was ``review the SRS against this rubric and make
+the changes needed for full marks.'' Every change was made in a branch and
+reviewed as a diff in a pull request before merging.
 
 \subsection{Verification of AI-Generated Content}
 Content from Version 1.0 was checked by team members against project
@@ -1937,7 +2238,21 @@ Content added with Claude in Versions 1.1 and 1.2 was checked as follows:
           defined in Appendix~\ref{SecConstants}. The wording was also
           compared. It matches, except that numeric values are written here as
           symbolic constants.
+    \item \textbf{Version 1.4 checks:} the trace script also checked that
+          every one of the 85 requirements appears exactly once in
+          Table~\ref{TblPhaseIn} and that every identifier it links is
+          defined. The document was compiled and the links, the table of
+          contents, and the lists of tables and figures were checked in the
+          PDF. The phase in dates were compared with the Development Plan.
+    \item \textbf{Reflection:} the drafted answers are read by each team
+          member, and anything that does not match their experience is
+          rewritten in their own words before submission.
 \end{itemize}
+
+\subsection{Limitations}
+AI was used to draft and check text, not to decide scope or priorities. The
+priorities and constant values are the team's decisions, and the values
+marked \emph{initial} will be confirmed by measurement (LC6).
 
 \newpage{}
 

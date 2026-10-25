@@ -1267,10 +1267,15 @@ code. Reviewed when the design is complete.}
 
 \subsection{Longevity Requirements}
 \begin{description}
-\item[\reqdef{LO1}] A learner app version shall open every valid song map whose major
-schema version it supports, regardless of minor or patch version.
-\rat{Lessons made earlier must keep working.}
-\fit{CI opens maps of every released minor version with the current app.}
+\item[\reqdef{LO1}] The project shall support each released major song map
+schema version for at least one calendar year after its release.
+During that period, at least one supported learner app release shall open every
+valid song map using that major version, regardless of minor or patch version.
+\rat{Creators invest time in lessons and need a predictable period in which
+learners can use them.}
+\fit{CI opens valid maps for every supported major, minor, and patch version.
+For each released major version, release records show that a compatible learner
+app remains available throughout the support period.}
 \trace{G3, \req{IN3}.}
 \usedby{\req{OE5}, \req{SC1}.}
 \end{description}

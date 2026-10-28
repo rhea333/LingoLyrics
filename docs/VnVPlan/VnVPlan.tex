@@ -2,6 +2,8 @@
 
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
 \usepackage{hyperref}
 \hypersetup{
     colorlinks,
@@ -15,6 +17,14 @@
 \input{../Comments.text}
 \input{../Common.text}
 
+% Ragged-right fixed-width column
+\newcolumntype{P}[1]{>{\raggedright\arraybackslash}p{#1}}
+% Test identifiers: \tid marks where a test is defined, \tref links to it
+\newcommand{\tid}[1]{\hypertarget{test:#1}{\textbf{#1}}}
+\newcommand{\tref}[1]{\hyperlink{test:#1}{#1}}
+% Symbolic constants (values are listed in Appendix~\ref{SecParams})
+\newcommand{\cn}[1]{\texttt{#1}}
+
 \begin{document}
 
 \title{System Verification and Validation Plan for \progname{}} 
@@ -27,454 +37,1292 @@
 
 \section*{Revision History}
 
-\begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
-\toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
+\begin{table}[hp]
+\caption{Revision History} \label{TblRevisionHistory}
+\begin{tabularx}{\textwidth}{llX}
+\toprule
+\textbf{Date} & \textbf{Developer(s)} & \textbf{Change}\\
 \midrule
-Date 1 & 1.0 & Notes\\
-Date 2 & 1.1 & Notes\\
+October 27, 2026 & Aansh Kotian & Initial Revision 0 draft\\
 \bottomrule
 \end{tabularx}
-
-~\\
-\wss{The intention of the VnV plan is to increase confidence in the software.
-However, this does not mean listing every verification and validation technique
-that has ever been devised.  The VnV plan should also be a \textbf{feasible}
-plan. Execution of the plan should be possible with the time and team available.
-If the full plan cannot be completed during the time available, it can either be
-modified to ``fake it'', or a better solution is to add a section describing
-what work has been completed and what work is still planned for the future.}
-
-\wss{The VnV plan is typically started after the requirements stage, but before
-the design stage.  This means that the sections related to unit testing cannot
-initially be completed.  The sections will be filled in after the design stage
-is complete.  the final version of the VnV plan should have all sections filled
-in.}
+\end{table}
 
 \newpage
 
 \tableofcontents
 
 \listoftables
-\wss{Remove this section if it isn't needed}
 
 \listoffigures
-\wss{Remove this section if it isn't needed}
 
 \newpage
 
 \section{Symbols, Abbreviations, and Acronyms}
 
+Requirement identifiers (for example FR4, HS2, IN8) and the symbolic constants
+(for example \cn{SYNC\_TOL}) are defined in the SRS~\citep{SRS}. The notation
+used for test identifiers and the terms used in the tests are listed below.
+
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{l l} 
+\begin{tabularx}{\textwidth}{l X} 
   \toprule		
   \textbf{symbol} & \textbf{description}\\
   \midrule 
   T & Test\\
+  FT-$n$ & Functional system test number $n$ (Section~\ref{SecFuncTests})\\
+  NT-$n$ & Nonfunctional system test number $n$
+  (Section~\ref{SecNonfuncTests})\\
+  ST-$n$ & Static test (review or inspection) number $n$
+  (Section~\ref{SecStaticTests})\\
+  G1 to G6 & Project goals defined in the Problem Statement and the SRS\\
+  R1 to R3 & Proof of Concept (PoC) risks defined in the Development Plan\\
+  CI & Continuous integration (GitHub Actions)\\
+  PoC & Proof of Concept\\
+  SRS & Software Requirements Specification\\
+  V\&V & Verification and validation\\
+  MG, MIS & Module Guide and Module Interface Specification (design documents)\\
+  LUFS, LU & Loudness units used by requirement HS9\\
   \bottomrule
-\end{tabular}\\
+\end{tabularx}
 
-\wss{symbols, abbreviations, or acronyms --- you can simply reference the SRS
-  \citep{SRS} tables, if appropriate}
+\vspace{1em}
 
-\wss{Remove this section if it isn't needed}
+\begin{tabularx}{\textwidth}{l X} 
+  \toprule		
+  \textbf{term} & \textbf{meaning in this plan}\\
+  \midrule 
+  Song map & Structured lesson file that connects an audio track with timed
+  lyrics, translations, transliterations, annotations, and language metadata\\
+  Acceptance suite & The fixed two-song suite containing one song map for each
+  demonstrated language, defined before implementation testing begins\\
+  Annotated target & A word or line with a translation and a contextual
+  annotation\\
+  Complete map & A song map containing all required audio, timing, lyric, and
+  annotation data\\
+  Test creator & A participant given the same supplied audio, lyric, and
+  annotation material, the creator guide, and no other help\\
+  Test track & The pre-defined short track of at most \cn{TEST\_TRACK\_LINES}
+  lyric lines used in the creator study\\
+  Invalid map set & A set of song maps prepared for testing, with at least one
+  map that breaks each validity condition V1 to V8 of the SRS, plus malformed
+  maps (truncated, wrong types, oversized, deeply nested)\\
+  Test deck & The Anki deck named \emph{LingoLyrics Test}\\
+  \bottomrule
+\end{tabularx}
 
 \newpage
 
 \pagenumbering{arabic}
 
-This document ... \wss{provide an introductory blurb and roadmap of the
-  Verification and Validation plan}
+This document describes how the team will verify and validate \progname{}. It
+states what is being tested and why, who is responsible, how each document and
+the code will be checked, and the system tests that show whether the goals and
+requirements in the SRS are met. Section~\ref{SecGeneral} gives general
+information. Section~\ref{SecPlan} describes the verification and validation
+plan. Section~\ref{SecSystemTests} defines the system tests and traces them to
+the requirements. Section~\ref{SecUnitTests} will describe the unit tests once
+the detailed design is complete. The appendices list the symbolic constants
+used by the tests, the tasks for the usability studies, and the generative AI
+use disclosure.
 
-\section{General Information}
+\section{General Information} \label{SecGeneral}
 
 \subsection{Summary}
 
-\wss{Say what software is being tested.  Give its name and a brief overview of
-  its general functions.}
+The software being tested is \progname{}, a song-based language-learning
+product. It has three parts:
+
+\begin{itemize}
+  \item a \textbf{learner app} for iOS and Android that plays song lessons with
+        synchronized lyric highlighting, shows translations, transliterations,
+        and annotations for selected words, and sends selected vocabulary to
+        Anki;
+  \item a web-based \textbf{song map editor} in which creators time lyrics,
+        review word segmentation and readings, enter translations and
+        annotations, preview a lesson, and export a validated song map; and
+  \item a \textbf{shared core} containing the versioned JSON Schema, the
+        validation code, and the shared TypeScript types used by both.
+\end{itemize}
 
 \subsection{Objectives}
 
-\wss{State what is intended to be accomplished.  The objective will be around
-  the qualities that are most important for your project.  You might have
-  something like: ``build confidence in the software correctness,''
-  ``demonstrate adequate usability.'' etc.  You won't list all of the qualities,
-  just those that are most important.}
+The objectives of the verification and validation effort are:
 
-\wss{You should also list the objectives that are out of scope.  You don't have 
-the resources to do everything, so what will you be leaving out.  For instance, 
-if you are not going to verify the quality of usability, state this.  It is also 
-worthwhile to justify why the objectives are left out.}
+\begin{itemize}
+  \item \textbf{Show that the six goals are met.} Goals G1 to G6 each have a
+        measurable criterion that is evaluated on the acceptance suite (or in
+        the creator study for G4). Showing that these criteria are met is the
+        main objective.
+  \item \textbf{Build confidence in the correctness of song map handling.}
+        Both the editor and the learner app must accept valid maps and reject
+        invalid, malformed, or hostile maps, because a lesson cannot be
+        correct if the map is not.
+  \item \textbf{Build confidence that the safety and security requirements
+        work.} The requirements that came from the Hazard Analysis (HS, AC,
+        IN, PR, AU, IM, and LG) are tested because they protect the learner's
+        hearing, data, and Anki collection.
+  \item \textbf{Demonstrate adequate usability} for the two user groups:
+        creators must be able to produce a lesson without editing the map
+        file by hand, and a first-time learner must be able to study a lesson
+        and send a word to Anki without help.
+  \item \textbf{Resolve the three PoC risks early} (R1 lyric synchronization on
+        a phone, R2 segmentation of lyrics, R3 sending words to Anki from a
+        phone) so that the later plan rests on measured results.
+\end{itemize}
 
-\wss{The objectives are important because they highlight that you are aware of 
-limitations in your resources for verification and validation.  You can't do everything, 
-so what are you going to prioritize?  As an example, if your system depends on an 
-external library, you can explicitly state that you will assume that external library 
-has already been verified by its implementation team.}
+The following are out of scope for verification and validation:
+
+\begin{itemize}
+  \item \textbf{Software from other vendors.} The operating systems,
+        browsers, Anki, AnkiDroid, and AnkiConnect are assumed to behave as
+        documented (assumption A4 in the SRS). The same assumption is made
+        for the libraries the project uses, such as Expo Audio, Howler.js,
+        kuromoji.js, and the JSON Schema validator. The team tests how the
+        product uses them (for example, segmentation accuracy and highlight
+        timing), not the libraries themselves. Library versions are pinned and
+        checked for known vulnerabilities (IM3).
+  \item \textbf{Stretch goals.} A third language, song map import and export,
+        collaborative review, learner progress and further accessibility
+        features, and automatic timing assistance are not required for the
+        product to be viable and are not scheduled.
+  \item \textbf{Content outside the initial release.} The initial release uses
+        only team-created, public-domain, or licensed content and does not
+        include streaming-service integration, a production music catalogue, or
+        universal language support, so none of these are tested.
+  \item \textbf{Store publication.} The learner app is installed as an Expo
+        development or preview build and store publication is not required
+        (OE4), so app store review is not tested.
+  \item \textbf{User accounts, a server, and cloud sync.} The initial release
+        has none of these.
+\end{itemize}
+
+These items are left out because the team has limited time and people, and
+because the items either are outside the control of the team or are not part
+of the minimum viable product.
 
 \subsection{Custom Documents}
 
-\wss{Summarize the CDs (Custom Documents) that were tackled by this project.  CDs 
-can include usability testing, code walkthroughs, user documentation, formal
-proof, GenderMag personas, Design Thinking, etc.  CDs should have already
-been approved by the course instructor as included in your problem statement.
-You can use a pull request to update your CDs (in TeamComposition.csv or
-Repos.csv) if your plan changes as a result of the VnV planning exercise.}
+The project has two custom documents, taken from the Problem Statement:
+
+\begin{itemize}
+  \item \textbf{Fall: Design Thinking Report or User/Stakeholder/Client
+        Interview Report.} Interviews with target learners and song map
+        creators validate the problem and the learner and creator workflows
+        before design begins.
+  \item \textbf{Winter: Usability Report.} Usability testing of the learner app
+        and the editor with representative users, measured against the goals.
+        This replaced the User Manual after instructor feedback.
+\end{itemize}
+
+Both are part of validation (Section~\ref{SecValidation}). The Usability Report
+presents the results of tests NT-10 and NT-11.
 
 \subsection{Relevant Documentation}
 
-\wss{Reference relevant documentation.  This will definitely include your SRS
-  and your other project documents (design documents, like MG, MIS, etc).  You
-  can include these even before they are written, since by the time the project
-  is done, they will be written.  You can create BibTeX entries for your
-  documents and within those entries include a hyperlink to the documents.}
+The following documents are used by this plan.
 
-\citet{SRS}
+\begin{itemize}
+  \item \textbf{SRS}~\citep{SRS}: the source of every requirement tested here.
+        Each requirement has a fit criterion that says how it will be tested,
+        and the SRS contains the symbolic constants, the formal definition of a
+        valid song map, and traceability tables. The tests in
+        Section~\ref{SecSystemTests} are written from those fit criteria.
+  \item \textbf{Problem Statement and Goals}: defines the goals G1 to G6, the
+        acceptance suite, the test creators, and the custom documents.
+  \item \textbf{Development Plan}: defines the PoC plan with its pass criteria,
+        the continuous integration checks, the tools, the review rules, the
+        team roles, and the schedule.
+  \item \textbf{Hazard Analysis}: the safety and security requirements share
+        their identifiers with the SRS, so each hazard can be traced to a
+        requirement and then to a test.
+  \item \textbf{Module Guide and Module Interface Specification} (due
+        November 16, 2026 and January 18, 2027): needed before the unit tests
+        in Section~\ref{SecUnitTests} can be written.
+\end{itemize}
 
-\wss{Don't just list the other documents.  You should explain why they are relevant and 
-how they relate to your VnV efforts.}
+\section{Plan} \label{SecPlan}
 
-\section{Plan}
+This section describes who carries out verification and validation and how
+each artifact is checked. Sections~\ref{SecTeam} to~\ref{SecDesignVer} cover the
+documents, Sections~\ref{SecImplVer} and~\ref{SecTools} cover the
+implementation, and Section~\ref{SecValidation} covers validation with users
+and the supervisor. The plan follows the course schedule: this V\&V Plan is due
+November 2, 2026, the PoC demonstration takes place between November 23 and
+December 4, 2026, the Revision 0 demonstration between February 1 and 12, 2027,
+the V\&V Report on March 8, 2027, and the final demonstration between March 15
+and 22, 2027.
 
-\wss{Introduce this section.  You can provide a roadmap of the sections to
-  come.}
+\subsection{Verification and Validation Team} \label{SecTeam}
 
-\subsection{Verification and Validation Team}
+All team members create issues, develop, test, document, and review code.
+Table~\ref{TblVnVTeam} gives each person's main responsibility for
+verification. Component owners are taken from the Development Plan.
 
-\wss{Your teammates.  Maybe your supervisor.
-  You should do more than list names.  You should say what each person's role is
-  for the project's verification.  A table is a good way to summarize this information.}
+\begin{table}[h!]
+\caption{Verification and validation responsibilities} \label{TblVnVTeam}
+\small
+\begin{tabularx}{\textwidth}{P{0.2\textwidth}P{0.27\textwidth}X}
+\toprule
+\textbf{Person} & \textbf{Component owned} & \textbf{Verification responsibility}\\
+\midrule
+Omar Bakr & Learner app: playback and lyric sync & Maintains the tests for
+playback and synchronization and for lesson display
+(Sections~\ref{SecPlaybackTests} and~\ref{SecDisplayTests}); runs the R1 part of
+the PoC.\\
+Raymond Ma & Song map editor and schema & Maintains the tests for lesson
+validation and for the editor (Sections~\ref{SecValidationTests}
+and~\ref{SecEditorTests}); owns the shared validator and its unit tests.\\
+Rhea Gokhale & Language processing (segmentation, romanization) & Maintains the
+segmentation, rendering, and romanization tests (\tref{FT-18}, \tref{FT-19},
+\tref{FT-32}); runs the R2 part of the PoC.\\
+Aansh Kotian & Anki integration and CI/CD & Maintains the Anki tests
+(Section~\ref{SecAnkiTests}) and the CI pipeline and coverage reporting; runs
+the R3 part of the PoC.\\
+Supervisor, Dr.~Angela Zavaleta Bernuy & --- & Acts as the client: reviews the
+scope and goals and accepts the deliverables at each milestone.\\
+TA and the assigned peer review team & --- & Review the documents through the
+informal presentation and GitHub issues.\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Roles that apply to everyone:
+
+\begin{itemize}
+  \item Every pull request is reviewed by a member who does not own that
+        component, and each component has a backup member who reviews its pull
+        requests.
+  \item The Content and QA Manager ticks off the deliverable checklists and
+        reviews the release pull request before each deliverable. The
+        administrative roles rotate after each major deliverable, so no member
+        reviews their own work every time.
+  \item Each component owner demonstrates the PoC risk for their component.
+\end{itemize}
 
 \subsection{SRS Verification}
 
-\wss{List any approaches you intend to use for SRS verification.  This may
-  include ad hoc feedback from reviewers, like your classmates (like your
-  primary reviewer), or you may plan for something more rigorous/systematic.}
+The SRS will be verified with the following approaches.
 
-\wss{If you have a supervisor for the project, you shouldn't just say they will
-read over the SRS.  You should explain your structured approach to the review.
-Will you have a meeting?  What will you present?  What questions will you ask?
-Will you give them instructions for a task-based inspection?  Will you use your
-issue tracker?}
+\begin{itemize}
+  \item \textbf{Peer review.} The assigned peer review team reads the SRS and
+        raises GitHub issues with the Peer-Review label. Each issue is
+        answered, and the SRS is revised or the reason for not changing it is
+        recorded in the issue.
+  \item \textbf{Informal presentation with the TA.} The team presents the
+        project and the SRS, and the TA's feedback is recorded as issues.
+  \item \textbf{Supervisor review.} The team presents the goals, the
+        personas, and the open issues listed in the SRS at a supervisor meeting
+        (Fridays, 10:00 to 10:30 on Microsoft Teams) and asks the supervisor to
+        decide the open questions that affect scope: the second language, how
+        lessons reach the learner app, and the privacy obligations. The
+        supervisor's decisions are recorded in the supervisor meeting issue.
+  \item \textbf{Checklist inspection.} Before each revision the Content and QA
+        Manager checks the SRS against the course checklist and rubric, and
+        against the following SRS checklist:
+        \begin{itemize}
+          \item every requirement has a unique identifier, a rationale for
+                every requirement that needs one, a fit criterion, and
+                \emph{Traces to} and \emph{Referenced by} entries;
+          \item every fit criterion can be tested, and every number is a
+                symbolic constant defined only in the SRS appendix with a
+                source or reason;
+          \item every goal, use case, and Hazard Analysis row appears in the
+                traceability tables, and each of them has at least one
+                requirement;
+          \item requirements describe what the product does, not how it is
+                built, and design decisions that are imposed are listed as
+                constraints;
+          \item the likely and unlikely changes are listed, and the
+                assumptions are stated.
+        \end{itemize}
+  \item \textbf{Test-derived review.} Writing the tests in
+        Section~\ref{SecSystemTests} from the fit criteria checks that each
+        requirement is verifiable. A requirement for which no test can be
+        written is raised as an issue against the SRS.
+\end{itemize}
 
-\wss{Maybe create an SRS checklist?}
+\subsection{Design Verification}\label{SecDesignVer}
 
-\subsection{Design Verification}
+The Module Guide and Module Interface Specification will be verified by:
 
-\wss{Plans for design verification}
-
-\wss{The review will include reviews by your classmates}
-
-\wss{Create a checklists?}
+\begin{itemize}
+  \item review by the classmates assigned as peer reviewers, the TA, and the
+        supervisor, with issues created for each finding;
+  \item a team review by someone who did not write the module, using a design
+        checklist; and
+  \item a check against the SRS that confirms the following, each of which
+        comes from a requirement: the editor and the learner app use the same
+        validation module and schema version (FR16); the learner app contains
+        no tokenizer and displays stored segmentation (IN4); the schema's
+        language-specific fields are optional and keyed by language code (SC1);
+        and every requirement is assigned to at least one module.
+\end{itemize}
 
 \subsection{Verification and Validation Plan Verification}
 
-\wss{The verification and validation plan is an artifact that should also be
-verified.  Techniques for this include review and mutation testing.}
+This plan is verified by:
 
-\wss{The review will include reviews by your classmates}
+\begin{itemize}
+  \item review by the classmates assigned as peer reviewers and by the TA, with
+        issues created for each finding;
+  \item a team review using the course checklist for the V\&V Plan; and
+  \item a coverage check using Table~\ref{TblTrace}: every requirement that has
+        a fit criterion appears in at least one test, and every test
+        refers to at least one requirement. A requirement that does not
+        appear is either given a test or recorded with a reason.
+\end{itemize}
 
-\wss{Create a checklists?}
+\subsection{Implementation Verification}\label{SecImplVer}
 
-\subsection{Implementation Verification}
+The implementation is verified in four ways.
 
-\wss{You should at least point to the tests listed in this document and the unit
-  testing plan.}
+\begin{itemize}
+  \item \textbf{System tests.} The tests in Section~\ref{SecSystemTests} are
+        run on the release build. The unit tests will be listed in
+        Section~\ref{SecUnitTests}.
+  \item \textbf{Static analysis.} ESLint and Prettier check every commit
+        (through Husky hooks) and every pull request against the Airbnb
+        JavaScript/TypeScript Style Guide, and the TypeScript compiler checks
+        types.
+  \item \textbf{Code review.} Every pull request needs an approving review by a
+        member who does not own the component. The pull request template asks
+        the author to confirm that tests and lint pass, to link the issue, and
+        to list any AI-assisted changes. Changes to dependencies need approval
+        from a second member (IM3), and every call to Anki is reviewed
+        (AC1).
+  \item \textbf{Code review interviews.} The PoC and final demonstrations
+        include code review interviews, so each member must be able to explain
+        the code they submit, including AI-assisted code.
+\end{itemize}
 
-\wss{In this section you would also give any details of any plans for static
-  verification of the implementation.  Potential techniques include code
-  walkthroughs, code inspection, static analyzers, etc.}
+Reviews and inspections of the product and its documentation are listed in
+Section~\ref{SecStaticTests}.
 
-\wss{The final class presentation in CAS 741 could be used as a code
-walkthrough.  There is also a possibility of using the final presentation (in
-CAS741) for a partial usability survey.}
+\subsection{Automated Testing and Verification Tools}\label{SecTools}
 
-\subsection{Automated Testing and Verification Tools}
+The tools are described in the Development Plan. Table~\ref{TblTools}
+summarizes how they are used for verification.
 
-\wss{What tools are you using for automated testing.  Likely a unit testing
-  framework and maybe a profiling tool, like ValGrind.  Other possible tools
-  include a static analyzer, make, continuous integration tools, test coverage
-  tools, etc.  Explain your plans for summarizing code coverage metrics.
-  Linters are another important class of tools.  For the programming language
-  you select, you should look at the available linters.  There may also be tools
-  that verify that coding standards have been respected, like flake9 for
-  Python.}
+\begin{table}[h!]
+\caption{Automated testing and verification tools} \label{TblTools}
+\begin{tabularx}{\textwidth}{P{0.25\textwidth}X}
+\toprule
+\textbf{Tool} & \textbf{Use}\\
+\midrule
+GitHub Actions & Runs on every pull request and on pushes to \texttt{main}. A
+pull request cannot be merged into \texttt{develop} or \texttt{main} unless all
+checks pass.\\
+Jest & Unit and integration tests, with a coverage report in CI. The shared core
+must have statement coverage of at least \cn{COVERAGE} (MS2); the coverage
+report is read from the CI run.\\
+ESLint, Prettier, Husky & Enforce the coding standard before commit and in
+CI.\\
+JSON Schema and the shared validator & CI validates every example song map in
+the repository on each pull request (MS1, FR16).\\
+Dependency lock files and an automated vulnerability check & Versions are
+pinned, and CI fails when a high or critical vulnerability is reported
+(IM3).\\
+TypeDoc & Generates API documentation from TSDoc comments.\\
+\LaTeX{} build in CI & Builds the documents to PDF so the submitted documents
+match the source.\\
+\bottomrule
+\end{tabularx}
+\end{table}
 
-\wss{If you have already done this in the development plan, you can point to
-that document.}
+The details of this section will change as the implementation grows.
 
-\wss{The details of this section will likely evolve as you get closer to the
-  implementation.}
+\subsection{Software Validation} \label{SecValidation}
 
-\subsection{Software Validation}
+Validation checks that the requirements describe the right product. It uses:
 
-\wss{If there is any external data that can be used for validation, you should
-  point to it here.  If there are no plans for validation, you should state that
-  here.}
+\begin{itemize}
+  \item \textbf{Stakeholder interviews (fall custom document).} Interviews with
+        target learners and creators check the problem and the learner and
+        creator workflows before design begins. Findings that change a
+        requirement are raised as issues against the SRS.
+  \item \textbf{The PoC demonstration.} The three PoC checks (R1 to R3) show on
+        a real phone whether the technical approach works. Their results
+        confirm or change the symbolic constants marked \emph{initial} in the
+        SRS and decide the likely changes LC1 and LC3.
+  \item \textbf{Supervisor review.} The supervisor, who acts as the client,
+        reviews and accepts the deliverables at each milestone, including the
+        Revision 0 demonstration. The team presents the working product and
+        records the supervisor's feedback as issues.
+  \item \textbf{Usability studies (winter custom document).} Tests NT-10 and
+        NT-11 measure goal G4 and the learner usability requirements with
+        representative users, using only the written instructions.
+        Requirements UH1, UH2, and UH5 are built by Revision 0 but confirmed
+        after these studies.
+\end{itemize}
 
-\wss{You might want to use review sessions with the stakeholder to check that
-the requirements document captures the right requirements.  Maybe task based
-inspection?}
+There is no external data set for validation. The acceptance suite is made of
+team-created, public-domain, or licensed songs and is defined before
+implementation testing begins.
 
-\wss{For those capstone teams with an external supervisor, the Rev 0 demo should 
-be used as an opportunity to validate the requirements.  You should plan on 
-demonstrating your project to your supervisor shortly after the scheduled Rev 0 demo.  
-The feedback from your supervisor will be very useful for improving your project.}
+\section{System Tests} \label{SecSystemTests}
 
-\wss{For teams without an external supervisor, user testing can serve the same purpose 
-as a Rev 0 demo for the supervisor.}
+The system tests are written from the fit criteria of the SRS and are grouped
+by area. Tests marked \emph{Automatic} run in CI or from a script. Tests marked
+\emph{Manual} are carried out by a team member who records the results in the
+test issue.
 
-\wss{This section might reference back to the SRS verification section.}
+\textbf{Test environment.} Unless a test says otherwise, tests run on one iOS
+device and one Android device with the same release build of the learner app
+(OE4, MS4), and the editor runs in each supported browser. The acceptance suite
+has one song map for each of the \cn{LANG\_COUNT} demonstrated languages.
+Japanese is the language with a non-Latin writing system. The second language
+has not been chosen yet (SRS, Open Issues), so tests refer to it as ``the second
+acceptance language''. A test deck named \emph{LingoLyrics Test} exists in
+Anki. Symbolic constants are defined in Appendix~\ref{SecParams}.
 
-\section{System Tests}
+\textbf{PoC checks.} Three tests are also the PoC pass criteria of the
+Development Plan. R1 is \tref{FT-8} on the test phone. R2 is \tref{FT-32} and
+\tref{NT-1} for the Japanese test song. R3 is \tref{FT-23} using at least one
+candidate method.
 
-\wss{There should be text between all headings, even if it is just a roadmap of
-the contents of the subsections.}
+\subsection{Tests for Functional Requirements} \label{SecFuncTests}
 
-\subsection{Tests for Functional Requirements}
+The functional tests cover the product use cases PUC1 to PUC4 and the safety and
+security requirements that change what the product does. They are divided into
+five areas: lesson import and validation, playback and synchronization, lesson
+display and content, the Anki handoff, and the editor.
 
-\wss{Subsets of the tests may be in related, so this section is divided into
-  different areas.  If there are no identifiable subsets for the tests, this
-  level of document structure can be removed.}
+\subsubsection{Lesson Import and Validation} \label{SecValidationTests}
 
-\wss{Include a blurb here to explain why the subsections below
-  cover the requirements.  References to the SRS would be good here.}
+These tests cover opening lessons (FR1, FR2) and the checks that decide whether
+a map is valid (IN2, IN3, IN11, IM1, IM2, FR16, RB1). The validity conditions V1
+to V8 are defined in the SRS (Formal Specification).
 
-\subsubsection{Area of Testing1}
+\begin{description}
 
-\wss{It would be nice to have a blurb here to explain why the subsections below
-  cover the requirements.  References to the SRS would be good here.  If a section
-  covers tests for input constraints, you should reference the data constraints
-  table in the SRS.}
-		
-\paragraph{Title for Test}
+\item[\tid{FT-1}] \textbf{Open valid lessons}\\
+Control: Manual.\\
+Initial State: The learner app is installed with no lessons.\\
+Input: Open each song map package in the acceptance suite from device
+storage.\\
+Output: Every lesson opens. The lesson list shows each lesson's title, artist,
+language, difficulty, and explicit content flag, and all of them match the song
+map metadata.\\
+Test Case Derivation: Fit criteria of FR1 and FR2.\\
+How test will be performed: A team member opens each package and compares the
+listed fields with the map's metadata.
 
-\begin{enumerate}
+\item[\tid{FT-2}] \textbf{Reject invalid maps}\\
+Control: Automatic.\\
+Initial State: The shared validator, the editor, and the learner app are built
+from the same commit.\\
+Input: Each map in the invalid map set that breaks one of V1 to V8, given to the
+validator, to the editor's export, and to the learner app's import.\\
+Output: Each map is rejected, and the message names the rule that was broken
+(for example, overlapping lines for V4).\\
+Test Case Derivation: IN2 requires one invalid test map per condition to be
+rejected by both the editor and the app. FR1 and FR14 require the message to name
+the failed rule.\\
+How test will be performed: A Jest test runs the validator on every map in the
+set and compares the reported rules with the expected rules. A manual run
+repeats the set through the editor and the app.
 
-\item{test-id1\\}
+\item[\tid{FT-3}] \textbf{Unsupported schema version}\\
+Control: Automatic.\\
+Initial State: The app supports the major versions in \cn{SUPPORTED\_MAJOR}.\\
+Input: A map whose major version is not in \cn{SUPPORTED\_MAJOR}.\\
+Output: The app refuses to open the map and tells the learner why. Maps that
+differ only in minor or patch version open.\\
+Test Case Derivation: IN3 and V1.\\
+How test will be performed: Jest test on the validator, and one manual import in
+the app.
 
-Control: Manual versus Automatic
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs.  Output is not how you
-are going to return the results of the test.  The output is the expected
-result.}
+\item[\tid{FT-4}] \textbf{Audio file checks on import}\\
+Control: Manual.\\
+Initial State: The app is open with no lesson loaded.\\
+Input: Packages whose audio file is missing, cannot be decoded, or has a
+duration that differs from \texttt{audioDuration} by more than
+\cn{AUDIO\_DUR\_TOL}.\\
+Output: Each package is rejected with a message, and no lesson is opened.\\
+Test Case Derivation: IN11 and V8.\\
+How test will be performed: A team member imports each package on both
+devices.
 
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-					
-How test will be performed: 
-					
-\item{test-id2\\}
+\item[\tid{FT-5}] \textbf{Malformed and hostile maps}\\
+Control: Automatic (parser), Manual (device).\\
+Initial State: The editor and the app are running.\\
+Input: (a) A truncated map, a map with wrong types, a map larger than
+\cn{MAX\_MAP\_SIZE}, and a map nested deeper than \cn{MAX\_NESTING}. (b) A map
+whose text contains HTML or script. (c) Maps whose audio path is absolute, is a
+URL, or contains a \texttt{..} segment. (d) A package with a path that leaves the
+package.\\
+Output: (a) Each map is rejected without a crash, and oversized and deeply
+nested maps are rejected before full parsing. (b) The text is shown as plain
+text. (c) Each map is rejected. (d) No file outside a new folder owned by the
+app is changed.\\
+Test Case Derivation: Fit criteria of RB1, IM1, and IM2.\\
+How test will be performed: Jest tests for the parser, then a manual import of
+the test packages on both devices, checking the app's storage before and after
+(d).
 
-Control: Manual versus Automatic
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
+\item[\tid{FT-6}] \textbf{Shared validator agreement}\\
+Control: Automatic.\\
+Initial State: CI is running on a pull request.\\
+Input: Every example song map in the repository, valid and invalid.\\
+Output: The editor and the learner app use one validator module and give the
+same verdict for every map. Valid maps open in the app without manual changes.\\
+Test Case Derivation: FR16 requires a single shared module, and G3 requires that
+an editor map opens in the app.\\
+How test will be performed: A CI job validates every example map with the shared
+module. A test exports a map from the editor and opens it with the app's import
+code.
 
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
+\end{description}
 
-How test will be performed: 
+\subsubsection{Playback and Synchronization} \label{SecPlaybackTests}
 
-\end{enumerate}
+These tests cover playback control, lyric highlighting, and the playback
+safety requirements (FR3, FR4, FR5, IN1, HS1, HS2, HS3, HS8, RB2). The mode
+transitions are defined in the SRS (Playback Modes).
 
-\subsubsection{Area of Testing2}
+\begin{description}
 
-...
+\item[\tid{FT-7}] \textbf{Playback controls}\\
+Control: Manual.\\
+Initial State: A lesson from the acceptance suite is open and paused.\\
+Input: Press play, pause, seek to a chosen time, and restart the current
+line.\\
+Output: After each control, the reported audio position equals the expected
+position within \cn{SYNC\_TOL}.\\
+Test Case Derivation: Fit criterion of FR3.\\
+How test will be performed: The app logs the audio position after each control,
+and the tester compares it with the expected position.
 
-\subsection{Tests for Nonfunctional Requirements}
+\item[\tid{FT-8}] \textbf{Line and word synchronization}\\
+Control: Manual (run), Automatic (analysis).\\
+Initial State: Each acceptance suite lesson is open on the test phone.\\
+Input: Play the lesson from start to end.\\
+Output: At least \cn{SYNC\_PASS} of line transitions occur within
+\cn{SYNC\_TOL} of their mapped start times, where a transition is on time when
+$|h_i - s_i| \le \cn{SYNC\_TOL}$. For lines with word timings, at least
+\cn{SYNC\_PASS} of word highlights are on time by the same measure. The
+relative error is reported for each song.\\
+Test Case Derivation: FR4, FR5, PA2, and the definition of the active line in the
+SRS. The thresholds are the G1 criteria.\\
+How test will be performed: The app logs the playback position at each
+highlight change, and a script compares the log with the map and reports the
+percentage that are on time.
 
-\wss{The nonfunctional requirements for accuracy will likely just reference the
-  appropriate functional tests from above.  The test cases should mention
-  reporting the relative error for these tests.  Not all projects will
-  necessarily have nonfunctional requirements related to accuracy.}
+\item[\tid{FT-9}] \textbf{Realignment after interruptions}\\
+Control: Manual.\\
+Initial State: A lesson is playing.\\
+Input: Seek, pause, resume, and send the app to the background and return to
+it.\\
+Output: The highlighted line is the active line for the current position after
+each action, and the pass rate of \tref{FT-8} still holds when it is repeated
+with these actions.\\
+Test Case Derivation: IN1 requires the highlight to be driven by the audio
+player's position and realigned after each of these actions.\\
+How test will be performed: Run \tref{FT-8} with a script of actions on both
+devices.
 
-\wss{For some nonfunctional tests, you won't be setting a target threshold for
-passing the test, but rather describing the experiment you will do to measure
-the quality for different inputs.  For instance, you could measure speed versus
-the problem size.  The output of the test isn't pass/fail, but rather a summary
-table or graph.}
+\item[\tid{FT-10}] \textbf{No unprompted audio}\\
+Control: Manual.\\
+Initial State: The app is closed, then open on the home screen, then in a
+lesson.\\
+Input: Open the app, open a lesson, resume the app from the background, and
+return to a lesson.\\
+Output: Audio does not start until the learner presses play.\\
+Test Case Derivation: HS1 and the mode table, which allows no transition to
+Playing except a learner action.\\
+How test will be performed: A tester performs each action with the volume up
+and notes whether audio starts.
 
-\wss{Tests related to usability could include conducting a usability test and
-  survey.  The survey will be in the Appendix.}
+\item[\tid{FT-11}] \textbf{Pause on audio output disconnect}\\
+Control: Manual.\\
+Initial State: A lesson is playing through wired headphones, then through
+Bluetooth headphones.\\
+Input: Unplug the wired headphones, then disconnect the Bluetooth headphones.\\
+Output: Playback pauses within \cn{DISCONNECT\_PAUSE} and no audio plays from the
+phone speaker.\\
+Test Case Derivation: HS2 and the transition from Playing on audio output
+disconnection.\\
+How test will be performed: Repeat on iOS and Android with a stopwatch or screen
+recording to measure the time to pause.
 
-\wss{Static tests, review, inspections, and walkthroughs, will not follow the
-format for the tests given below.}
+\item[\tid{FT-12}] \textbf{Fade in at start and resume}\\
+Control: Manual (recording), Automatic (analysis).\\
+Initial State: A lesson is paused with the volume at a set level.\\
+Input: Press play, then pause and press play again.\\
+Output: In a recording of the app's audio output, the volume rises from silence
+to the set level over \cn{FADE\_IN}, within 0.1\,s, at each start and resume.\\
+Test Case Derivation: Fit criterion of HS8.\\
+How test will be performed: Record the output on iOS and Android and measure the
+rise time from the waveform.
 
-\wss{If you introduce static tests in your plan, you need to provide details.
-How will they be done?  In cases like code (or document) walkthroughs, who will
-be involved? Be specific.}
+\item[\tid{FT-13}] \textbf{Playback with the screen locked}\\
+Control: Manual.\\
+Initial State: The app has just been installed, and a full acceptance suite
+lesson is ready.\\
+Input: Launch the app for the first time, press play, and lock the screen. Later,
+launch the app a second time.\\
+Output: The lesson plays to the end with the screen locked. The notice advising
+against using the screen while driving, cycling, or crossing traffic appears on
+the first launch after installation and not on the second.\\
+Test Case Derivation: Fit criterion of HS3.\\
+How test will be performed: Run on iOS and Android and listen to the end of the
+lesson.
 
-\subsubsection{Area of Testing1}
-		
-\paragraph{Title for Test}
+\item[\tid{FT-14}] \textbf{Offline playback}\\
+Control: Manual.\\
+Initial State: All acceptance suite lessons are on the device and the device is
+in airplane mode.\\
+Input: Open and play each lesson.\\
+Output: Every lesson plays without a network connection.\\
+Test Case Derivation: Fit criterion of RB2.\\
+How test will be performed: Play each lesson on both devices in airplane mode.
 
-\begin{enumerate}
+\end{description}
 
-\item{test-id1\\}
+\subsubsection{Lesson Display and Content} \label{SecDisplayTests}
 
-Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input/Condition: 
-					
-Output/Result: 
-					
-How test will be performed: 
-					
-\item{test-id2\\}
+These tests cover what the learner sees for each line and word (FR6, FR7, UH3,
+IN12, CU1, HS6, LG1, AU1).
 
-Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input: 
-					
-Output: 
-					
-How test will be performed: 
+\begin{description}
 
-\end{enumerate}
+\item[\tid{FT-15}] \textbf{Display layers}\\
+Control: Manual.\\
+Initial State: An acceptance suite lesson is open in each language.\\
+Input: For every line, view the original script and stored segmentation, then
+turn the transliteration and the line translation on and off.\\
+Output: The displayed words and readings match the song map, and each layer can
+be turned on and off.\\
+Test Case Derivation: Fit criterion of FR6 (G5).\\
+How test will be performed: A team member compares each line with the map
+file, and a script checks the displayed word list against the stored words.
 
-\subsubsection{Area of Testing2}
+\item[\tid{FT-16}] \textbf{Select a word or line}\\
+Control: Manual.\\
+Initial State: A lesson is playing.\\
+Input: Select every annotated target in the acceptance suite.\\
+Output: The translation, reading, and annotation (if present) are shown and
+playback does not stop.\\
+Test Case Derivation: Fit criterion of FR7 (G2).\\
+How test will be performed: A team member selects each annotated target while
+the lesson plays and checks that the audio continues.
 
-...
+\item[\tid{FT-17}] \textbf{Display settings persist}\\
+Control: Manual.\\
+Initial State: Transliteration and translation are turned off.\\
+Input: Close and reopen the app.\\
+Output: The settings are unchanged.\\
+Test Case Derivation: Fit criterion of UH3.\\
+How test will be performed: Change the settings, close the app completely, and
+reopen it.
 
-\subsection{Traceability Between Test Cases and Requirements}
+\item[\tid{FT-18}] \textbf{Script rendering}\\
+Control: Manual.\\
+Initial State: Each acceptance suite lesson is open on both devices.\\
+Input: View every line.\\
+Output: Every line renders with no boxes for missing glyphs, and the maps are
+read and written as UTF-8.\\
+Test Case Derivation: Fit criterion of IN12.\\
+How test will be performed: Compare screenshots of every line with the map text
+on iOS and Android.
 
-\wss{Provide a table that shows which test cases are supporting which
-  requirements.}
+\item[\tid{FT-19}] \textbf{Hepburn romanization}\\
+Control: Manual.\\
+Initial State: The Japanese acceptance suite lesson is open.\\
+Input: View the transliteration of every word.\\
+Output: Each word's romanization matches modified Hepburn romanization.\\
+Test Case Derivation: Fit criterion of CU1.\\
+How test will be performed: A team member checks every word against a Hepburn
+reference.
 
-\section{Unit Test Description}
+\item[\tid{FT-20}] \textbf{Explicit content handling}\\
+Control: Manual.\\
+Initial State: A test lesson with the explicit content flag set and an annotation
+for a vulgar term are loaded.\\
+Input: Open the lesson with the hide-explicit setting off, then on. Also try to
+load a map without the flag.\\
+Output: A warning is shown before the lesson opens, and the lesson is hidden
+when the setting is on. The map without the flag is rejected by the schema. The
+vulgar term's annotation includes a note on its register.\\
+Test Case Derivation: Fit criterion of HS6.\\
+How test will be performed: A team member runs the steps on both devices and
+checks the schema rejection with a Jest test.
 
-\wss{This section should not be filled in until after the MIS (detailed design
-  document) has been completed.}
+\item[\tid{FT-21}] \textbf{Credits shown}\\
+Control: Manual.\\
+Initial State: Each acceptance suite lesson is open.\\
+Input: Open the credits for each lesson.\\
+Output: The source and licence information for the audio and lyrics is shown.\\
+Test Case Derivation: Fit criterion of LG1, learner side.\\
+How test will be performed: A team member compares the credits with the map's
+\texttt{source} fields.
 
-\wss{Reference your MIS (detailed design document) and explain your overall
-philosophy for test case selection.}  
+\item[\tid{FT-22}] \textbf{Error report}\\
+Control: Manual.\\
+Initial State: A test lesson is open.\\
+Input: Prepare a report for a lyric line, then complete it and, in a second
+attempt, cancel the share sheet.\\
+Output: The report contains the map identifier, map version, line, and the
+learner's comment, and opens in the share sheet. When the share sheet is
+cancelled, nothing is sent by the app.\\
+Test Case Derivation: Fit criterion of AU1.\\
+How test will be performed: Run on both devices, and capture network traffic
+during the cancelled attempt.
 
-\wss{To save space and time, it may be an option to provide less detail in this section.  
-For the unit tests you can potentially layout your testing strategy here.  That is, you 
-can explain how tests will be selected for each module.  For instance, your test building 
-approach could be test cases for each access program, including one test for normal behaviour 
-and as many tests as needed for edge cases.  Rather than create the details of the input 
-and output here, you could point to the unit testing code.  For this to work, you code 
-needs to be well-documented, with meaningful names for all of the tests.}
+\end{description}
+
+\subsubsection{Anki Handoff} \label{SecAnkiTests}
+
+These tests cover sending vocabulary to Anki (FR8, OE2, SL3, IN8 to IN10, AC1,
+AC2, PR2). They are run with the method selected by the PoC (risk R3). If
+more than one method is selected, they are run for each.
+
+\begin{description}
+
+\item[\tid{FT-23}] \textbf{Send a word to Anki}\\
+Control: Manual.\\
+Initial State: The test deck is empty and Anki is available.\\
+Input: Select one word in each acceptance suite language and send it to Anki.\\
+Output: A note appears in the test deck with the \emph{Term}, \emph{Translation},
+and \emph{Context} fields containing the word, its translation, and the line
+it appears in.\\
+Test Case Derivation: Fit criteria of FR8 and OE2 (G6).\\
+How test will be performed: A tester sends the word and inspects the note in
+Anki.
+
+\item[\tid{FT-24}] \textbf{Anki unavailable}\\
+Control: Manual.\\
+Initial State: Anki is not available.\\
+Input: Send a word, wait, close and reopen the app, then make Anki available and
+retry.\\
+Output: Within \cn{ANKI\_TIMEOUT} the app reports that sending failed and the
+item is queued. It is not reported as sent. The item is still queued after the
+restart and is delivered on retry. The learner can also export the queue to a
+file.\\
+Test Case Derivation: Fit criteria of IN8 and SL3.\\
+How test will be performed: A tester times the failure message and checks the
+queue after the restart. The test is also run with Anki available to check that
+the result is reported within \cn{ANKI\_TIMEOUT}.
+
+\item[\tid{FT-25}] \textbf{Duplicate send}\\
+Control: Manual.\\
+Initial State: The test deck is empty.\\
+Input: Send the same word twice, once by tapping the send control twice in quick
+succession.\\
+Output: One note is created, and the send control is disabled while a request is
+in progress.\\
+Test Case Derivation: Fit criterion of IN9.\\
+How test will be performed: A tester sends the word twice and counts the notes in
+the test deck.
+
+\item[\tid{FT-26}] \textbf{Field names and encoding}\\
+Control: Manual.\\
+Initial State: A note type that lacks the \emph{Term}, \emph{Translation}, or
+\emph{Context} field, and a correct note type, are available.\\
+Input: Send Japanese test words with each note type.\\
+Output: With the correct note type, the Japanese text appears correctly in the
+right fields. With the incomplete note type, the app stops with a message and no
+note is created.\\
+Test Case Derivation: Fit criterion of IN10.\\
+How test will be performed: A tester inspects the notes in Anki after each send.
+
+\item[\tid{FT-27}] \textbf{Anki collection unchanged}\\
+Control: Automatic (integration test).\\
+Initial State: A test Anki collection with existing decks, notes, and note
+types.\\
+Input: Send several words.\\
+Output: The test collection is unchanged apart from the added notes in the
+\progname{} deck.\\
+Test Case Derivation: Fit criterion of AC1.\\
+How test will be performed: Compare the collection before and after the test.
+Every Anki call is also reviewed (\tref{ST-4}).
+
+\item[\tid{FT-28}] \textbf{AnkiConnect protection}\\
+Control: Manual. Applies only if AnkiConnect is used.\\
+Initial State: AnkiConnect is configured as the setup instructions say.\\
+Input: Send a request without the API key. Also inspect the allowed origin.\\
+Output: The request is refused, and the allowed origin is the specific origin the
+product requires, never a wildcard.\\
+Test Case Derivation: Fit criterion of AC2.\\
+How test will be performed: Send the request from a script and read the
+configuration. The instructions are also reviewed (\tref{ST-3}).
+
+\item[\tid{FT-29}] \textbf{Permission request}\\
+Control: Manual. Applies on Android if the AnkiDroid API is used.\\
+Initial State: The app is freshly installed.\\
+Input: Use the app without sending a word, then send the first word.\\
+Output: The AnkiDroid permission is requested only at the first send, with an
+explanation, and no other sensitive permission is requested.\\
+Test Case Derivation: Fit criterion of PR2.\\
+How test will be performed: A tester follows the prompt sequence and reviews the
+app manifest (\tref{ST-5}).
+
+\end{description}
+
+\subsubsection{Editor} \label{SecEditorTests}
+
+These tests cover the editor use case PUC4 and the editor's safety and security
+requirements (FR9 to FR14, HS9, IN4 to IN7, LG1, AU2, OE3).
+
+\begin{description}
+
+\item[\tid{FT-30}] \textbf{Load material and reopen a map}\\
+Control: Manual.\\
+Initial State: The editor is open with no project.\\
+Input: Load the test track's audio and lyrics. Export a map, close the editor,
+and reopen the exported map.\\
+Output: The audio and lyrics load, and the reopened map has no data lost.\\
+Test Case Derivation: Fit criterion of FR9.\\
+How test will be performed: A tester compares the reopened map with the exported
+map field by field using a script.
+
+\item[\tid{FT-31}] \textbf{Timing, latency offset, and preview}\\
+Control: Manual (run), Automatic (analysis).\\
+Initial State: The test track is loaded, and a latency offset has been set by
+tapping along to the test click track.\\
+Input: Mark the start time of each line while the audio plays, adjust times by
+hand, and play the preview. Also play the same map in the learner app.\\
+Output: With the offset applied, the preview's line changes meet the pass rate of
+\tref{FT-8}, and the preview's line changes match the learner app's within
+\cn{SYNC\_TOL}.\\
+Test Case Derivation: Fit criteria of FR10, FR13, and IN7.\\
+How test will be performed: Log the highlight times in the preview and in the app
+and compare them. Run once with wired and once with Bluetooth headphones.
+
+\item[\tid{FT-32}] \textbf{Segmentation suggestions}\\
+Control: Manual (review), Automatic (comparison).\\
+Initial State: The Japanese test song is loaded in the editor.\\
+Input: Request suggested segmentation and readings for \cn{SEG\_SAMPLE} test
+lines.\\
+Output: At least \cn{SEG\_ACC} of the suggested word boundaries match a
+segmentation checked by the team. Suggestions are shown for review and can be
+accepted or corrected. Together with \tref{NT-1}, this is the R2 PoC check.\\
+Test Case Derivation: Fit criteria of FR11 and PA3, and the R2 pass criterion in
+the Development Plan.\\
+How test will be performed: The team prepares and checks a reference
+segmentation before the test. A script computes the percentage of matching
+boundaries.
+
+\item[\tid{FT-33}] \textbf{Enter lesson content}\\
+Control: Manual.\\
+Initial State: The test track is loaded.\\
+Input: Enter every field of the data dictionary: line and word translations,
+annotations, and the lesson metadata.\\
+Output: Each field can be entered and appears in the exported map.\\
+Test Case Derivation: Fit criterion of FR12.\\
+How test will be performed: Compare the exported map with the entered values.
+
+\item[\tid{FT-34}] \textbf{Export gating}\\
+Control: Automatic (rules), Manual (editor).\\
+Initial State: A valid map is open in the editor.\\
+Input: Try to export (a) each map in the invalid map set, (b) a map with an
+unverified segmentation line, (c) a map with empty licence fields, and (d) try
+to mark as published a map with an annotation that has no reviewer or whose
+reviewer is its author.\\
+Output: Export is refused for (a) to (c), and the rules that fail are listed and
+match the rules the map breaks. (d) cannot be marked published. A valid map with
+verified lines, licence fields, and reviewed annotations exports.\\
+Test Case Derivation: Fit criteria of FR14, IN4, IN5, and LG1, and the
+definitions of valid and publishable in the SRS.\\
+How test will be performed: Run the maps through the editor's export and compare
+the listed rules with the expected rules.
+
+\item[\tid{FT-35}] \textbf{Loudness measurement and warning}\\
+Control: Manual (editor), Automatic (comparison).\\
+Initial State: Test tracks with known integrated loudness are available,
+including one outside \cn{TARGET\_LOUDNESS} $\pm$ \cn{LOUDNESS\_TOL}.\\
+Input: Load each track, then try to export.\\
+Output: The displayed loudness is within 1\,LU of the known value and is stored
+in the map's \texttt{loudness} field. The track outside the tolerance produces a
+warning before export.\\
+Test Case Derivation: Fit criterion of HS9.\\
+How test will be performed: Compare the displayed and stored values with the
+known values.
+
+\item[\tid{FT-36}] \textbf{Autosave, restore, undo, and confirmation}\\
+Control: Manual.\\
+Initial State: A draft is open in the editor.\\
+Input: Make an edit, wait at least \cn{AUTOSAVE\_INT}, close the tab, and reopen
+the editor. Use undo and redo for several edits, and perform an operation that
+changes more than one line. Also try to close with unsaved changes.\\
+Output: The draft is restored. Undo and redo work for all edits. A warning
+appears before closing with unsaved changes, and the multiple-line operation asks
+for confirmation.\\
+Test Case Derivation: Fit criterion of IN6.\\
+How test will be performed: A tester follows the steps and checks the restored
+draft.
+
+\item[\tid{FT-37}] \textbf{Export history}\\
+Control: Automatic.\\
+Initial State: A valid map is open.\\
+Input: Export the map twice.\\
+Output: The map's \texttt{exports} list has two entries, each with the date, the
+creator, and the map version.\\
+Test Case Derivation: Fit criterion of AU2.\\
+How test will be performed: Jest test on the export function.
+
+\item[\tid{FT-38}] \textbf{Audio format on both platforms}\\
+Control: Manual.\\
+Initial State: Each acceptance suite package has been exported by the editor.\\
+Input: Open and play each package on an iOS and an Android device.\\
+Output: Every package plays on both platforms, and the editor exports only audio
+formats that the learner app plays on both.\\
+Test Case Derivation: Fit criterion of OE3 (G3).\\
+How test will be performed: A tester plays each package on both devices.
+
+\end{description}
+
+\subsection{Tests for Nonfunctional Requirements} \label{SecNonfuncTests}
+
+The nonfunctional requirements for accuracy (PA2, PA3) are tested by
+\tref{FT-8} and \tref{FT-32}, which report the percentage of matching results
+and the relative error. The tests below cover speed, accessibility, capacity,
+compatibility, installability, privacy, and usability. Reviews and inspections
+that do not follow the test format are in Section~\ref{SecStaticTests}.
+
+\subsubsection{Performance} \label{SecPerfTests}
+
+\begin{description}
+
+\item[\tid{NT-1}] \textbf{Lesson load time}\\
+Type: Dynamic, Manual, performance.\\
+Initial State: The test phone has the acceptance suite lessons and the app is
+closed.\\
+Input/Condition: Open each lesson.\\
+Output/Result: Each lesson is ready to play within \cn{LOAD\_TIME}. The measured
+times are reported for each lesson.\\
+How test will be performed: The app logs the time from opening to ready, and
+the test is repeated several times to show the spread.\\
+Requirements: SL1 (also the R2 PoC criterion).
+
+\item[\tid{NT-2}] \textbf{Selection response time}\\
+Type: Dynamic, Manual, performance.\\
+Initial State: A lesson is playing on the test phone.\\
+Input/Condition: Select annotated words and lines.\\
+Output/Result: The translation and annotation appear within
+\cn{SELECT\_RESPONSE} of each selection.\\
+How test will be performed: Instrumented timestamps record the time from
+selection to display.\\
+Requirements: SL2.
+
+\end{description}
+
+\subsubsection{Accessibility and Appearance} \label{SecAccessTests}
+
+\begin{description}
+
+\item[\tid{NT-3}] \textbf{Flashing and reduced motion}\\
+Type: Dynamic, Manual and Automatic.\\
+Initial State: The fastest acceptance suite song is open, first with the reduce
+motion setting off and then on.\\
+Input/Condition: Play the song.\\
+Output/Result: The highlighting produces no more than \cn{MAX\_FLASHES} large area
+flashes in any period of one second, and the app follows the reduce motion
+setting.\\
+How test will be performed: Count the highlight changes per second from the
+position log, and check the behaviour with reduce motion turned on.\\
+Requirements: HS4, ST1.
+
+\item[\tid{NT-4}] \textbf{Contrast}\\
+Type: Static analysis, Manual.\\
+Initial State: The release build is installed.\\
+Input/Condition: Every text colour and highlight colour pair used in the
+learner app.\\
+Output/Result: Each pair meets WCAG 2.1 level AA contrast.\\
+How test will be performed: Check each pair with a contrast checker.\\
+Requirements: ST1.
+
+\item[\tid{NT-5}] \textbf{Non-colour cue, layout, and assistive technology}\\
+Type: Manual.\\
+Initial State: The release build is installed, with large system text and
+VoiceOver or TalkBack available.\\
+Input/Condition: (a) Take greyscale and colour blindness simulations of a
+playing lesson. (b) Take screenshots of the lesson view on a phone screen. (c)
+Use the largest system text size. (d) Operate every control with VoiceOver on
+iOS and TalkBack on Android.\\
+Output/Result: (a) The active line and word can be identified. (b) The lyric
+area takes up more of the screen than the playback controls and menus. (c) The
+lyrics remain readable and scale with the text size setting. (d) Each control is
+announced.\\
+How test will be performed: A team member carries out the steps on both devices
+and records the screenshots.\\
+Requirements: LF1, LF2, HS5, UH7.
+
+\end{description}
+
+\subsubsection{Capacity} \label{SecCapacityTests}
+
+\begin{description}
+
+\item[\tid{NT-6}] \textbf{Capacity}\\
+Type: Dynamic, Manual.\\
+Initial State: The test phone has no lessons.\\
+Input/Condition: (a) A test map at \cn{MAX\_AUDIO\_LENGTH} and
+\cn{MAX\_LESSON\_LINES}. (b) Import \cn{LIBRARY\_SIZE} lessons.\\
+Output/Result: (a) The map opens in the app and the editor, plays, and meets the
+pass rate of \tref{FT-8}. (b) All lessons are imported and listed.\\
+How test will be performed: Run \tref{FT-8} on the limit map, then import the
+lessons and view the list.\\
+Requirements: CP1, CP2.
+
+\end{description}
+
+\subsubsection{Compatibility, Installability, and Privacy} \label{SecCompatTests}
+
+\begin{description}
+
+\item[\tid{NT-7}] \textbf{Schema version compatibility}\\
+Type: Automatic.\\
+Initial State: CI has example maps for every released minor version of the
+schema.\\
+Input/Condition: Open each map with the current app.\\
+Output/Result: Every valid map of a supported major version opens.\\
+How test will be performed: A CI job opens each map with the current app code.\\
+Requirements: LO1.
+
+\item[\tid{NT-8}] \textbf{Installation and platforms}\\
+Type: Manual.\\
+Initial State: One iOS device, one Android device, and each supported browser.\\
+Input/Condition: Install the Expo development or preview build of the learner
+app on each device. Open the editor from its URL in each supported browser.\\
+Output/Result: The same release build runs on both platforms from one code
+base, and the editor runs with no installation.\\
+How test will be performed: A team member follows the installation steps in the
+user documentation on a clean device.\\
+Requirements: OE4, MS4.
+
+\item[\tid{NT-9}] \textbf{No other outbound data}\\
+Type: Dynamic, Manual.\\
+Initial State: A test session on the release build, with network capture
+running.\\
+Input/Condition: Open and play lessons, send words to Anki, and prepare an error
+report that is cancelled.\\
+Output/Result: The only outbound traffic is the notes sent to Anki. The app
+sends nothing when the share sheet is cancelled.\\
+How test will be performed: Review the network capture together with a review of
+the dependencies.\\
+Requirements: PR1, AU1.
+
+\end{description}
+
+\subsubsection{Usability Studies} \label{SecUsabilityTests}
+
+Both studies are part of the Usability Report. The tasks are in
+Appendix~\ref{SecUsabilityTasks}.
+
+\begin{description}
+
+\item[\tid{NT-10}] \textbf{Creator study}\\
+Type: Manual, usability.\\
+Initial State: Three test creators receive the same supplied audio, lyric, and
+annotation material for the test track (at most \cn{TEST\_TRACK\_LINES} lines),
+the creator guide, and no other help.\\
+Input/Condition: Each creator produces a complete map with the editor.\\
+Output/Result: At least \cn{CREATE\_PASS} creators finish within
+\cn{CREATE\_TIME} without editing the map file by hand, and each resulting map
+validates and plays in the learner app. The completion time and any difficulties
+are recorded.\\
+How test will be performed: A team member observes each session and times it.
+The result map is checked with the validator and played in the app.\\
+Requirements: UH2, FR10, FR15, MS3 (G4).
+
+\item[\tid{NT-11}] \textbf{Learner study}\\
+Type: Manual, usability.\\
+Initial State: Representative learners use the release build for the first
+time, with only the written learner instructions.\\
+Input/Condition: Each learner opens a lesson, plays it, displays a word's
+annotation, and sends the word to Anki. Taps from the home screen to playback
+are counted, and the controls are used with one hand.\\
+Output/Result: At least \cn{CREATE\_PASS} of the participants complete the tasks
+within \cn{LEARN\_TIME} without help. Playback starts within \cn{MAX\_TAPS\_PLAY}
+taps from the home screen. The participants operate the controls without
+instruction, and all lesson controls can be reached with one hand.\\
+How test will be performed: A team member observes each session and records the
+times, the taps, and any difficulties.\\
+Requirements: UH5, UH1, LF3, OE1, MS3.
+
+\end{description}
+
+\subsubsection{Static Tests} \label{SecStaticTests}
+
+The following requirements are verified by review, inspection, or inspection of CI
+output rather than by running the product. Each review is carried out by at least
+one team member other than the person who wrote the item being reviewed, and
+findings are recorded as issues.
+
+\begin{longtable}{@{}P{0.08\textwidth}P{0.34\textwidth}P{0.2\textwidth}P{0.3\textwidth}@{}}
+\caption{Static tests} \label{TblStatic}\\
+\toprule
+\textbf{ID} & \textbf{What is reviewed and how} & \textbf{Who} &
+\textbf{Requirements}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{ID} & \textbf{What is reviewed and how} & \textbf{Who} &
+\textbf{Requirements}\\
+\midrule
+\endhead
+\tid{ST-1} & Every error message string in the app and the editor is read against
+the rule that it says what failed and what the user can do next, in plain
+language and without blame. All interface text is checked to be in English. &
+Content and QA Manager and one other member & UH6, UH4\\
+\tid{ST-2} & Design review of the release build: no streak loss penalties,
+countdown timers, or unsolicited push notifications, and each lesson's
+difficulty is shown before it is opened. & QA Manager and a member who does not
+own the learner app & HS7\\
+\tid{ST-3} & Review of the AnkiConnect setup instructions and default
+configuration for the specific origin, the API key requirement, and the warning
+before any step that opens AnkiConnect to another address. & Anki owner and a
+reviewer & AC2\\
+\tid{ST-4} & Code review of every Anki call to confirm that notes are only
+added, and only to the \progname{} deck. & Anki owner's backup & AC1\\
+\tid{ST-5} & Review of the app manifest and the permission prompt sequence. &
+Anki owner's backup & PR2\\
+\tid{ST-6} & Inspection of the CI configuration and run history: example maps
+are validated on each pull request, the coverage report shows at least
+\cn{COVERAGE} for the shared core, lock files are committed, the vulnerability
+check runs, and every pull request that changes dependencies has a second
+approval. & DevOps manager and a reviewer & MS1, MS2, IM3\\
+\tid{ST-7} & Check of release tags and notes: each release is tagged on
+\texttt{main} and states the schema version it supports. & QA Manager & OE5\\
+\tid{ST-8} & The schema is validated against the JSON Schema Draft 2020-12
+metaschema, maps are valid UTF-8 JSON, and the time fields are checked for a
+resolution of \cn{TIME\_RES} or finer. & Editor and schema owner and a
+reviewer & ST2, PA1\\
+\tid{ST-9} & Review of the acceptance suite annotations: annotations of
+culturally specific references explain the reference rather than only translate
+it, and each annotation has a reviewer other than its author. & Language
+processing owner and a second member & CU2, IN5\\
+\tid{ST-10} & Review that the learner and creator instructions exist and cover
+importing lessons, setting up Anki, using the editor, and the licence fields.
+Their use is checked in \tref{NT-10} and \tref{NT-11}. & QA Manager & MS3\\
+\tid{ST-11} & Review when the design is complete: the learner app contains no
+tokenizer, the editor and app share one validation module, and language-specific
+schema fields are optional and keyed by language code. & Team review of the
+Module Guide & IN4, FR16, SC1\\
+\bottomrule
+\end{longtable}
+
+\subsection{Traceability Between Test Cases and Requirements} \label{SecTrace}
+
+Table~\ref{TblTrace} shows which tests support which requirements. Requirements
+are defined in the SRS, where each requirement also lists the goals, use cases,
+and hazards it traces to. The SRS Priority 1 requirements are tested first, in
+the PoC.
+
+\begin{longtable}{@{}P{0.12\textwidth}P{0.84\textwidth}@{}}
+\caption{Tests and the requirements they support} \label{TblTrace}\\
+\toprule
+\textbf{Test} & \textbf{Requirements}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Test} & \textbf{Requirements}\\
+\midrule
+\endhead
+\tref{FT-1} & FR1, FR2\\
+\tref{FT-2} & FR1, FR14, IN2, FR16\\
+\tref{FT-3} & IN3, LO1\\
+\tref{FT-4} & IN11\\
+\tref{FT-5} & RB1, IM1, IM2\\
+\tref{FT-6} & FR16, MS1\\
+\tref{FT-7} & FR3\\
+\tref{FT-8} & FR4, FR5, PA2\\
+\tref{FT-9} & IN1\\
+\tref{FT-10} & HS1\\
+\tref{FT-11} & HS2\\
+\tref{FT-12} & HS8\\
+\tref{FT-13} & HS3\\
+\tref{FT-14} & RB2\\
+\tref{FT-15} & FR6\\
+\tref{FT-16} & FR7\\
+\tref{FT-17} & UH3\\
+\tref{FT-18} & IN12\\
+\tref{FT-19} & CU1\\
+\tref{FT-20} & HS6\\
+\tref{FT-21} & LG1\\
+\tref{FT-22} & AU1\\
+\tref{FT-23} & FR8, OE2\\
+\tref{FT-24} & IN8, SL3\\
+\tref{FT-25} & IN9\\
+\tref{FT-26} & IN10\\
+\tref{FT-27} & AC1\\
+\tref{FT-28} & AC2\\
+\tref{FT-29} & PR2\\
+\tref{FT-30} & FR9\\
+\tref{FT-31} & FR10, FR13, IN7\\
+\tref{FT-32} & FR11, PA3\\
+\tref{FT-33} & FR12\\
+\tref{FT-34} & FR14, IN4, IN5, LG1\\
+\tref{FT-35} & HS9\\
+\tref{FT-36} & IN6\\
+\tref{FT-37} & AU2\\
+\tref{FT-38} & OE3\\
+\tref{NT-1} & SL1\\
+\tref{NT-2} & SL2\\
+\tref{NT-3} & HS4, ST1\\
+\tref{NT-4} & ST1\\
+\tref{NT-5} & LF1, LF2, HS5, UH7\\
+\tref{NT-6} & CP1, CP2\\
+\tref{NT-7} & LO1\\
+\tref{NT-8} & OE4, MS4\\
+\tref{NT-9} & PR1, AU1\\
+\tref{NT-10} & UH2, FR10, FR15, MS3\\
+\tref{NT-11} & UH5, UH1, LF3, OE1, MS3\\
+\tref{ST-1} & UH6, UH4\\
+\tref{ST-2} & HS7\\
+\tref{ST-3} & AC2\\
+\tref{ST-4} & AC1\\
+\tref{ST-5} & PR2\\
+\tref{ST-6} & MS1, MS2, IM3\\
+\tref{ST-7} & OE5\\
+\tref{ST-8} & ST2, PA1\\
+\tref{ST-9} & CU2, IN5\\
+\tref{ST-10} & MS3\\
+\tref{ST-11} & IN4, FR16, SC1\\
+\bottomrule
+\end{longtable}
+
+The goals are covered as follows: G1 by \tref{FT-8}, \tref{FT-9}, \tref{FT-31}, and
+\tref{NT-6}; G2 by \tref{FT-16} and \tref{NT-2}; G3 by \tref{FT-1}, \tref{FT-2},
+\tref{FT-6}, and \tref{FT-38}; G4 by \tref{NT-10}; G5 by \tref{FT-15},
+\tref{FT-18}, \tref{FT-19}, and \tref{FT-32}; and G6 by \tref{FT-23} and
+\tref{FT-24}.
+
+\section{Unit Test Description} \label{SecUnitTests}
+
+This section will be completed after the Module Interface Specification is
+finished (Design Document Revision $-1$ is due November 16, 2026). It will refer
+to the MIS and explain how test cases are chosen for each module.
 
 \subsection{Unit Testing Scope}
 
-\wss{What modules are outside of the scope.  If there are modules that are
-  developed by someone else, then you would say here if you aren't planning on
-  verifying them.  There may also be modules that are part of your software, but
-  have a lower priority for verification than others.  If this is the case,
-  explain your rationale for the ranking of module importance.}
+The following is already known. The shared core (the schema, the validator, and
+the shared types) has the highest priority because it decides which lessons can
+be opened, and it must have statement coverage of at least \cn{COVERAGE} (MS2).
+The libraries from other vendors are not unit tested (Section~\ref{SecGeneral}).
+The remaining modules and their priorities will be listed once the Module Guide
+is complete.
 
 \subsection{Tests for Functional Requirements}
 
-\wss{Most of the verification will be through automated unit testing.  If
-  appropriate specific modules can be verified by a non-testing based
-  technique.  That can also be documented in this section.}
-
-\subsubsection{Module 1}
-
-\wss{Include a blurb here to explain why the subsections below cover the module.
-  References to the MIS would be good.  You will want tests from a black box
-  perspective and from a white box perspective.  Explain to the reader how the
-  tests were selected.}
-
-\begin{enumerate}
-
-\item{test-id1\\}
-
-Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
-  be automatic}
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
-  be automatic}
-					
-Initial State: 
-					
-Input: 
-					
-Output: \wss{The expected result for the given inputs}
-
-Test Case Derivation: \wss{Justify the expected value given in the Output field}
-
-How test will be performed: 
-
-\item{...\\}
-    
-\end{enumerate}
-
-\subsubsection{Module 2}
-
-...
+Unit tests will use Jest and run in CI on every pull request. For the validator,
+there will be at least one invalid test map for each of the conditions V1 to V8
+(IN2). The tests for each module will be written from black box and white box
+perspectives and listed here by module once the MIS exists.
 
 \subsection{Tests for Nonfunctional Requirements}
 
-\wss{If there is a module that needs to be independently assessed for
-  performance, those test cases can go here.  In some projects, planning for
-  nonfunctional tests of units will not be that relevant.}
-
-\wss{These tests may involve collecting performance data from previously
-  mentioned functional tests.}
-
-\subsubsection{Module ?}
-		
-\begin{enumerate}
-
-\item{test-id1\\}
-
-Type: \wss{Functional, Dynamic, Manual, Automatic, Static etc. Most will
-  be automatic}
-					
-Initial State: 
-					
-Input/Condition: 
-					
-Output/Result: 
-					
-How test will be performed: 
-					
-\item{test-id2\\}
-
-Type: Functional, Dynamic, Manual, Static etc.
-					
-Initial State: 
-					
-Input: 
-					
-Output: 
-					
-How test will be performed: 
-
-\end{enumerate}
-
-\subsubsection{Module ?}
-
-...
+Modules that need to be assessed independently for performance will be listed
+here once the design is complete. Performance data may also be taken from the
+system tests \tref{NT-1} and \tref{NT-2}.
 
 \subsection{Traceability Between Test Cases and Modules}
 
-\wss{Provide evidence that all modules have been considered.}
-				
+This table will be provided once the modules are defined. It will show that every
+module has been considered.
+
 \bibliographystyle{plainnat}
 
 \bibliography{../../refs/References}
@@ -483,57 +1331,120 @@ How test will be performed:
 
 \section{Appendix}
 
-This is where you can place additional information.
+\subsection{Symbolic Parameters} \label{SecParams}
 
-\subsection{Symbolic Parameters}
+The definition of the test cases calls for symbolic constants. Their values are
+defined in Table~\ref{TblParams} for easy maintenance and must stay consistent with
+the SRS appendix on symbolic constants. Values marked \emph{initial} will be
+confirmed during the PoC or usability testing.
 
-The definition of the test cases will call for SYMBOLIC\_CONSTANTS.
-Their values are defined in this section for easy maintenance.
+{\small
+\begin{longtable}{@{}P{0.28\textwidth}P{0.18\textwidth}P{0.5\textwidth}@{}}
+\caption{Symbolic parameters used by the tests} \label{TblParams}\\
+\toprule
+\textbf{Constant} & \textbf{Value} & \textbf{Used by}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Constant} & \textbf{Value} & \textbf{Used by}\\
+\midrule
+\endhead
+\cn{SYNC\_TOL} & 0.5\,s & \tref{FT-7}, \tref{FT-8}, \tref{FT-31}\\
+\cn{SYNC\_PASS} & 95\,\% & \tref{FT-8}\\
+\cn{CREATE\_TIME} & 45\,min & \tref{NT-10}\\
+\cn{CREATE\_PASS} & 2 of 3 & \tref{NT-10}, \tref{NT-11}\\
+\cn{TEST\_TRACK\_LINES} & 12 lines & \tref{NT-10}\\
+\cn{LANG\_COUNT} & 2 & Test environment\\
+\cn{LOAD\_TIME} & 3\,s & \tref{NT-1}\\
+\cn{SEG\_ACC} & 90\,\% & \tref{FT-32}\\
+\cn{SEG\_SAMPLE} & 20 lines & \tref{FT-32}\\
+\cn{SELECT\_RESPONSE} & 0.5\,s (initial) & \tref{NT-2}\\
+\cn{ANKI\_TIMEOUT} & 5\,s (initial) & \tref{FT-24}\\
+\cn{TIME\_RES} & 0.01\,s & \tref{ST-8}\\
+\cn{AUDIO\_DUR\_TOL} & 1\,s (initial) & \tref{FT-4}\\
+\cn{DISCONNECT\_PAUSE} & 1\,s & \tref{FT-11}\\
+\cn{MAX\_FLASHES} & 3 per second & \tref{NT-3}\\
+\cn{FADE\_IN} & 0.5\,s (initial) & \tref{FT-12}\\
+\cn{TARGET\_LOUDNESS} & $-16$\,LUFS (initial) & \tref{FT-35}\\
+\cn{LOUDNESS\_TOL} & 2\,LU (initial) & \tref{FT-35}\\
+\cn{AUTOSAVE\_INT} & 60\,s & \tref{FT-36}\\
+\cn{MAX\_MAP\_SIZE} & 5\,MB, excluding audio (initial) & \tref{FT-5}\\
+\cn{MAX\_NESTING} & 32 levels (initial) & \tref{FT-5}\\
+\cn{SUPPORTED\_MAJOR} & $\{1\}$ & \tref{FT-3}\\
+\cn{MAX\_TAPS\_PLAY} & 3 (initial) & \tref{NT-11}\\
+\cn{LEARN\_TIME} & 10\,min (initial) & \tref{NT-11}\\
+\cn{MAX\_AUDIO\_LENGTH} & 10\,min (initial) & \tref{NT-6}\\
+\cn{MAX\_LESSON\_LINES} & 150 lines (initial) & \tref{NT-6}\\
+\cn{LIBRARY\_SIZE} & 20 lessons (initial) & \tref{NT-6}\\
+\cn{COVERAGE} & 80\,\% (initial) & \tref{ST-6}\\
+\bottomrule
+\end{longtable}
+}
 
-\subsection{Usability Survey Questions?}
+\subsection{Usability Survey Questions?} \label{SecUsabilityTasks}
 
-\wss{This is a section that would be appropriate for some projects.}
+The tasks below come from the requirements UH2 and UH5. The survey questions
+that follow the tasks will be written for the Usability Report.
+
+\textbf{Creator study (\tref{NT-10}).} Using the creator guide and the supplied
+material for the test track, the creator:
+\begin{enumerate}
+  \item loads the audio and lyric text;
+  \item marks the start time of each line while the audio plays and adjusts times
+        as needed;
+  \item reviews the suggested segmentation and readings, if the language needs
+        them;
+  \item enters the translations, annotations, and the source and licence
+        information; and
+  \item previews the lesson and exports the song map.
+\end{enumerate}
+
+\textbf{Learner study (\tref{NT-11}).} Using the learner instructions, the
+learner:
+\begin{enumerate}
+  \item opens a lesson that has been imported;
+  \item plays the lesson;
+  \item displays the annotation of a word; and
+  \item sends the word to Anki.
+\end{enumerate}
 
 \newpage{}
 
 \section{Appendix --- Generative AI Use Disclosure}
 
-\wss{ChatGPT (version 5) was used to brainstorm ideas for the template for this disclose section.}
-
 \subsection{AI Tools Used}
 
-\wss{Give the name of the AI tool(s) used and the version.}
+Claude Sonnet 5.5 (Anthropic), used in the Claude chat interface (claude.ai).
 
 \subsection{How and Where Used}
 
-\wss{Explain what the tool(s) were used for.  Examples include: brainstorming,
-explaining a technical concept, reviewing the document, generating or modifying
-text, generating or modifying diagrams, identifying errors or omissions or
-inconsistencies.}
+Claude was given the blank V\&V Plan template together with the Problem
+Statement, the Development Plan, and the SRS, and was used to draft the text of
+Sections 1 to 3 and Appendix A and B of this document, including the tests, the
+static tests, and the traceability table. The tests were derived from the fit
+criteria of the SRS, and the constants and thresholds were taken from the SRS
+appendix.
 
-\wss{For each of the uses, identify which parts of the document were affected.}
-
-\wss{You do not need to report every interaction, but you should disclose the 
-uses that materially contributed to your work}
+\wss{Team to confirm and extend: list any other uses (for example, review of the
+document against the rubric) and the sections they affected. Sections 4 and the
+reflection were not drafted by the tool.}
 
 \subsection{Verification of AI-Generated Content}
 
-\wss{\begin{itemize}
-    \item Describe how the team checked AI-generated or AI-assisted material
-    before including it in the document.
-    \item In particular, verify factual claims, technical assertions,
-    requirements, calculations, references, and other information for which an
-    AI system may produce incorrect or fabricated results.
-    \item \textbf{The team is responsible for the accuracy, completeness,
-consistency, and appropriateness of the submitted document, regardless of
-whether material was generated by a human or an AI system.}
-\end{itemize}}
+\wss{Team to complete with the checks that were actually carried out before this
+document was submitted. Checks that fit this document are: confirming that every
+requirement identifier, fit criterion, and symbolic constant used in a test
+matches the SRS; confirming that every tool, date, and role matches the
+Development Plan; confirming that the acceptance suite, the PoC pass criteria,
+and the goals match the Problem Statement; checking that every test is feasible
+with the time, devices, and people available; and a final team review of the
+whole document. Each member remains responsible for the accuracy, completeness,
+consistency, and appropriateness of the submitted document, whether it was
+written by a person or an AI system.}
 
 \newpage{}
 
 \section{Appendix --- Reflection}
-
-\wss{This section is not required for CAS 741}
 
 The information in this section will be used to evaluate the team members on the
 graduate attribute of Lifelong Learning.
@@ -542,17 +1453,25 @@ graduate attribute of Lifelong Learning.
 
 \begin{enumerate}
   \item What went well while writing this deliverable? 
+
+  \wss{Team to answer.}
   \item What pain points did you experience during this deliverable, and how
     did you resolve them?
+
+  \wss{Team to answer.}
   \item What knowledge and skills will the team collectively need to acquire to
   successfully complete the verification and validation of your project?
   Examples of possible knowledge and skills include dynamic testing knowledge,
   static testing knowledge, specific tool usage, Valgrind etc.  You should look to
   identify at least one item for each team member.
+
+  \wss{Team to answer.}
   \item For each of the knowledge areas and skills identified in the previous
   question, what are at least two approaches to acquiring the knowledge or
   mastering the skill?  Of the identified approaches, which will each team
   member pursue, and why did they make this choice?
+
+  \wss{Team to answer.}
 \end{enumerate}
 
 \end{document}

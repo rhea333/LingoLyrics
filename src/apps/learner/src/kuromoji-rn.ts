@@ -7,7 +7,17 @@ import DictionaryLoader from 'kuromoji/src/loader/DictionaryLoader';
 import KuromojiTokenizer from 'kuromoji/src/Tokenizer';
 // real file name, the package has no index
 // eslint-disable-next-line import/extensions
-import { Zlib } from 'zlibjs/bin/gunzip.min.js';
+import * as zlibExports from 'zlibjs/bin/gunzip.min.js';
+
+type ZlibApi = zlibExports.ZlibApi;
+
+// zlibjs sets Zlib on `this`. in node thats module.exports, under metro its
+// the global object, so the export comes back empty on the phone
+function getZlib(): ZlibApi {
+  const zlib = zlibExports.Zlib ?? (globalThis as { Zlib?: ZlibApi }).Zlib;
+  if (!zlib?.Gunzip) throw new Error('zlibjs loaded but Zlib.Gunzip is missing');
+  return zlib;
+}
 
 /* eslint-disable global-require */
 const DICT_FILES: Record<string, number> = {
@@ -38,6 +48,8 @@ export interface DictTimings {
 
 /** loads kuromoji from bundled assets, returns a lang segmenter */
 export async function loadRnSegmenter(): Promise<{ segmenter: Segmenter; timings: DictTimings }> {
+  // inside the async fn so a failure shows on screen, not as a crash
+  const { Gunzip } = getZlib();
   const t0 = performance.now();
   const names = Object.keys(DICT_FILES);
   const assets = await Asset.loadAsync(Object.values(DICT_FILES));
@@ -57,7 +69,7 @@ export async function loadRnSegmenter(): Promise<{ segmenter: Segmenter; timings
     new File(uri).bytes().then(
       (bytes) => {
         const g0 = performance.now();
-        const out = new Zlib.Gunzip(bytes).decompress();
+        const out = new Gunzip(bytes).decompress();
         gunzipMs += performance.now() - g0;
         callback(null, out.buffer as ArrayBuffer);
       },

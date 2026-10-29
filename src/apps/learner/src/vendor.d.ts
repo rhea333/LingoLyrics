@@ -20,8 +20,10 @@ declare module 'kuromoji/src/Tokenizer' {
   export = Tokenizer;
 }
 
+// zlibjs puts Zlib on `this`, so the export may be missing, see kuromoji-rn.ts
 declare module 'zlibjs/bin/gunzip.min.js' {
-  export const Zlib: {
+  export interface ZlibApi {
     Gunzip: new (data: Uint8Array) => { decompress(): Uint8Array };
-  };
+  }
+  export const Zlib: ZlibApi | undefined;
 }

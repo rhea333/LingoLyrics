@@ -17,12 +17,12 @@ future web editor. The Expo app only wires those packages to a screen.
 | Path                 | Purpose                                                                                     | Status  |
 | -------------------- | ------------------------------------------------------------------------------------------- | ------- |
 | `packages/song-map/` | JSON Schema, TS types and validator for song maps. Shared by the app and the future editor. | done    |
-| `packages/lang/`     | `segment(line)` returns tokens with surface, reading and romaji (R2).                       | phase 3 |
+| `packages/lang/`     | `segment(line)` returns tokens with surface, reading and romaji (R2).                       | done    |
 | `packages/sync/`     | Maps a playback position to the active line, and analyzes timing logs (R1).                 | phase 4 |
 | `packages/anki/`     | One interface with AnkiMobile URL scheme, AnkiConnect and export-file adapters (R3).        | phase 5 |
 | `apps/learner/`      | Expo app with one demo screen per risk. PoC only, may be thrown out.                        | phase 4 |
 | `fixtures/songs/`    | The Japanese test song and its song map (lyrics are placeholders).                          | done    |
-| `fixtures/gold/`     | Gold segmentation for the 20 R2 test lines.                                                 | phase 3 |
+| `fixtures/gold/`     | Gold segmentation for the 20 R2 test lines (placeholder).                                   | done    |
 | `scripts/`           | Command-line tools: map validation and the PoC measurement scripts.                         |         |
 
 Tests live in [`../test`](../test/README.md), mirroring `packages/`.
@@ -43,14 +43,15 @@ Prettier on staged files under `src/`.
 
 Run from `src/`:
 
-| Command                           | What it does                                                          |
-| --------------------------------- | --------------------------------------------------------------------- |
-| `npm run lint`                    | ESLint (Airbnb TypeScript rules) on `src/` and `test/`                |
-| `npm run format` / `format:check` | Prettier write / check                                                |
-| `npm run typecheck`               | `tsc` in strict mode, no output                                       |
-| `npm test` / `test:coverage`      | Jest, with coverage                                                   |
-| `npm run validate:maps`           | Validates every `fixtures/songs/**/*.songmap.json` against the schema |
-| `npm run docs:api`                | TypeDoc API docs into `docs-api/`                                     |
+| Command                           | What it does                                                                 |
+| --------------------------------- | ---------------------------------------------------------------------------- |
+| `npm run lint`                    | ESLint (Airbnb TypeScript rules) on `src/` and `test/`                       |
+| `npm run format` / `format:check` | Prettier write / check                                                       |
+| `npm run typecheck`               | `tsc` in strict mode, no output                                              |
+| `npm test` / `test:coverage`      | Jest, with coverage                                                          |
+| `npm run validate:maps`           | Validates every `fixtures/songs/**/*.songmap.json` against the schema        |
+| `npm run poc:r2 [-- gold.json]`   | R2: scores segmentation against the gold set, prints PASS / FAIL / NOT FINAL |
+| `npm run docs:api`                | TypeDoc API docs into `docs-api/`                                            |
 
 CI (`.github/workflows/code-ci.yml`) runs lint, format check, type-check, Jest
 and map validation on changes to `src/` or `test/`.
@@ -63,3 +64,14 @@ and map validation on changes to `src/` or `test/`.
 - ESLint 8 no longer receives updates. Moving to ESLint 9 would mean replacing
   `eslint-config-airbnb-typescript`, for example with
   `eslint-config-airbnb-extended`.
+
+## PoC measurements
+
+Each script prints a short summary for the demo and exits `0` on PASS, `1` on
+FAIL, or `2` when the result can't be final yet (placeholder or unverified data).
+
+- `npm run poc:r2`: scores the segmenter against
+  `fixtures/gold/ja-20-lines.json`. Pass needs at least 90% of gold words
+  matched exactly, with the gold set `verified` (see
+  `fixtures/gold/GUIDELINE.md`). It also prints dictionary load time on this
+  computer; the 3 s phone check is in the learner app.

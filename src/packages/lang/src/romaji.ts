@@ -16,8 +16,10 @@ export function morphemeReading(m: Morpheme): string {
 function fixedRomaji(m: Morpheme): string | undefined {
   if (m.pos === '助詞' && PARTICLE_ROMAJI[m.surface_form]) return PARTICLE_ROMAJI[m.surface_form];
   if (!morphemeReading(m)) {
-    // latin like "Baby" stays as is, anything else unknown gets nothing
-    return /^[\x20-\x7e]+$/.test(m.surface_form) ? m.surface_form : '';
+    // latin like "Baby" stays as is, full-width Ｂａｂｙ too
+    // anything else unknown gets nothing
+    const ascii = m.surface_form.normalize('NFKC');
+    return /^[\x20-\x7e]+$/.test(ascii) ? ascii : '';
   }
   return undefined;
 }

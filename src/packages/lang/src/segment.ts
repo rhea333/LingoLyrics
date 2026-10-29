@@ -13,7 +13,8 @@ function toToken(group: Morpheme[]): Token {
     surface: group.map((m) => m.surface_form).join(''),
     start,
     end,
-    reading: group.map(morphemeReading).join(''),
+    // all or nothing, a half reading like ニン for 2人 is worse than none
+    reading: group.every((m) => morphemeReading(m)) ? group.map(morphemeReading).join('') : '',
     romaji: wordRomaji(group),
     pos: head.pos,
     // unknown words have basic_form '*'
@@ -21,10 +22,23 @@ function toToken(group: Morpheme[]): Token {
   };
 }
 
+// kuromoji word_position counts code points and drops emoji, so slice()
+// offsets drift. find each surface in the line instead, utf-16 like js strings
+function withUtf16Positions(line: string, morphemes: Morpheme[]): Morpheme[] {
+  let cursor = 0;
+  return morphemes.map((m) => {
+    const at = line.indexOf(m.surface_form, cursor);
+    const start = at === -1 ? cursor : at;
+    cursor = start + m.surface_form.length;
+    return { ...m, word_position: start + 1 };
+  });
+}
+
 /** wraps any tokenizer, handy for tests and other loaders */
 export function createSegmenter(tokenizer: Tokenizer): Segmenter {
   return {
-    segment: (line) => mergeMorphemes(tokenizer.tokenize(line)).map(toToken),
+    segment: (line) =>
+      mergeMorphemes(withUtf16Positions(line, tokenizer.tokenize(line))).map(toToken),
   };
 }
 

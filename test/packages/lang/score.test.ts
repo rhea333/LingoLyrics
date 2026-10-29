@@ -20,6 +20,10 @@ describe('goldSpans', () => {
     expect(() => goldSpans('猫が好き', ['犬', 'が'])).toThrow('not found');
   });
 
+  it('throws on an empty gold word', () => {
+    expect(() => goldSpans('猫が好き', ['猫', '', 'が', '好き'])).toThrow('empty');
+  });
+
   it('throws when real text is skipped, catches typos', () => {
     expect(() => goldSpans('猫が好き', ['猫', '好き'])).toThrow('skip');
     expect(() => goldSpans('猫が好き', ['猫', 'が'])).toThrow('cover');

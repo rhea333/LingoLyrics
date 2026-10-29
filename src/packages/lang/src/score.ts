@@ -37,6 +37,8 @@ const SKIPPABLE = /[\s\p{P}\p{S}]/u;
 export function goldSpans(text: string, words: string[]): Span[] {
   let pos = 0;
   const spans = words.map((word) => {
+    // "" would match anywhere and never score
+    if (word === '') throw new Error(`empty gold word after offset ${pos}`);
     const start = text.indexOf(word, pos);
     if (start === -1) throw new Error(`gold word "${word}" not found after offset ${pos}`);
     const gap = text.slice(pos, start);

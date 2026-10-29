@@ -1,0 +1,28 @@
+{
+  "name": "@lingolyrics/learner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "PoC learner app, one demo screen per risk (POC ONLY, may be thrown out)",
+  "license": "MIT",
+  "main": "index.ts",
+  "scripts": {
+    "start": "npm run gen:audio --prefix ../.. && expo start",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "expo": "~58.0.21",
+    "expo-asset": "~58.0.19",
+    "expo-audio": "~58.0.10",
+    "expo-file-system": "~58.0.13",
+    "expo-sharing": "~58.0.21",
+    "expo-status-bar": "~58.0.4",
+    "kuromoji": "^0.1.2",
+    "path-browserify": "^1.0.1",
+    "react": "^19.3.0",
+    "react-native": "^0.88.1",
+    "zlibjs": "^0.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2"
+  }
+}

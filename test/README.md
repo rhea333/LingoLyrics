@@ -3,12 +3,12 @@
 Jest tests for the packages in [`../src/packages`](../src/README.md). The
 folders here mirror `src/packages/`:
 
-| Folder               | Tests for                                            |
-| -------------------- | ---------------------------------------------------- |
-| `packages/song-map/` | schema and validator                                 |
-| `packages/lang/`     | segmentation, romanization and R2 scoring            |
-| `packages/sync/`     | active-line lookup and timing-log analysis (phase 4) |
-| `packages/anki/`     | note building and adapters (phase 5)                 |
+| Folder               | Tests for                                  |
+| -------------------- | ------------------------------------------ |
+| `packages/song-map/` | schema and validator                       |
+| `packages/lang/`     | segmentation, romanization and R2 scoring  |
+| `packages/sync/`     | active-line lookup and timing-log analysis |
+| `packages/anki/`     | note building and adapters (phase 5)       |
 
 Tests are written in TypeScript and named `*.test.ts`. Import package code by
 its workspace name, for example `import { activeLineAt } from '@lingolyrics/sync'`.

@@ -1,0 +1,7 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPointStrategy": "packages",
+  "entryPoints": [],
+  "out": "docs-api",
+  "name": "LingoLyrics PoC"
+}

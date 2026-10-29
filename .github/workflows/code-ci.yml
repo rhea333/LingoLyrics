@@ -1,0 +1,54 @@
+name: code-ci
+
+# only code changes, docs have latex-pages.yml
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.github/workflows/code-ci.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'test/**'
+      - '.github/workflows/code-ci.yml'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    working-directory: src
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    env:
+      # no git hooks in ci
+      HUSKY: 0
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: src/package-lock.json
+
+      - run: npm ci
+
+      - name: lint
+        run: npm run lint
+
+      - name: format
+        run: npm run format:check
+
+      - name: type-check
+        run: npm run typecheck
+
+      - name: test
+        run: npm run test:coverage
+
+      - name: song-map schema
+        run: npm run validate:maps

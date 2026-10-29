@@ -1,0 +1,76 @@
+{
+  "description": "Developer sample, NOT the R2 gold set. Sentences written for testing by the PoC author, segmented per fixtures/gold/GUIDELINE.md, unchecked.",
+  "status": "sample",
+  "checkedBy": null,
+  "checkedOn": null,
+  "reviewedBy": null,
+  "reviewedOn": null,
+  "guideline": "../../../src/fixtures/gold/GUIDELINE.md",
+  "lines": [
+    {
+      "lineId": "s01",
+      "text": "今日は雨が降っている",
+      "words": ["今日", "は", "雨", "が", "降っている"]
+    },
+    {
+      "lineId": "s02",
+      "text": "君に会いたかった",
+      "words": ["君", "に", "会いたかった"]
+    },
+    {
+      "lineId": "s03",
+      "text": "私たちは走り出した",
+      "words": ["私たち", "は", "走り出した"]
+    },
+    {
+      "lineId": "s04",
+      "text": "コーヒーを飲みませんか",
+      "words": ["コーヒー", "を", "飲みません", "か"]
+    },
+    {
+      "lineId": "s05",
+      "text": "東京の夜は綺麗だね",
+      "words": ["東京", "の", "夜", "は", "綺麗", "だ", "ね"]
+    },
+    {
+      "lineId": "s06",
+      "text": "忘れられない",
+      "words": ["忘れられない"]
+    },
+    {
+      "lineId": "s07",
+      "text": "もう一度、笑って",
+      "words": ["もう一度", "笑って"]
+    },
+    {
+      "lineId": "s08",
+      "text": "お弁当を食べよう",
+      "words": ["お弁当", "を", "食べよう"]
+    },
+    {
+      "lineId": "s09",
+      "text": "勉強しなければならない",
+      "words": ["勉強", "しなければならない"]
+    },
+    {
+      "lineId": "s10",
+      "text": "Babyずっと一緒にいようよ",
+      "words": ["Baby", "ずっと", "一緒", "に", "いよう", "よ"]
+    },
+    {
+      "lineId": "s11",
+      "text": "夢を見ていたんだ",
+      "words": ["夢", "を", "見ていた", "ん", "だ"]
+    },
+    {
+      "lineId": "s12",
+      "text": "星へ向かって",
+      "words": ["星", "へ", "向かって"]
+    },
+    {
+      "lineId": "s13",
+      "text": "愛を叫べ",
+      "words": ["愛", "を", "叫べ"]
+    }
+  ]
+}

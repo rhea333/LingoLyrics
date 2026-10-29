@@ -1,0 +1,60 @@
+{
+  "name": "lingolyrics",
+  "version": "0.0.0",
+  "private": true,
+  "description": "LingoLyrics proof of concept workspace",
+  "license": "MIT",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "prepare": "cd .. && husky src/.husky",
+    "lint": "eslint --max-warnings 0 --resolve-plugins-relative-to . --no-error-on-unmatched-pattern --ext .ts,.tsx . ../test",
+    "format": "prettier --config .prettierrc --ignore-path .prettierignore --write . ../test",
+    "format:check": "prettier --config .prettierrc --ignore-path .prettierignore --check . ../test",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p apps/learner/tsconfig.json --noEmit",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "validate:maps": "tsx scripts/validate-maps.ts",
+    "gen:audio": "tsx scripts/gen-audio.ts",
+    "poc:r1": "tsx scripts/poc-r1.ts",
+    "poc:r2": "tsx scripts/poc-r2.ts",
+    "docs:api": "typedoc"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --max-warnings 0 --resolve-plugins-relative-to .",
+      "prettier --config .prettierrc --write"
+    ],
+    "*.{json,md,yml}": "prettier --config .prettierrc --write"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/kuromoji": "^0.1.3",
+    "@types/node": "^24.19.2",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "eslint": "^8.57.1",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-config-airbnb-typescript": "^18.0.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-import-resolver-typescript": "^4.4.5",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "husky": "^9.1.7",
+    "jest": "^30.5.2",
+    "lint-staged": "^17.6.0",
+    "prettier": "^3.9.10",
+    "ts-jest": "^29.4.15",
+    "tsx": "^4.23.15",
+    "typedoc": "^0.28.20",
+    "typescript": "~5.5.4"
+  }
+}

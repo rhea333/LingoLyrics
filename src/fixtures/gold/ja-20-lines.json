@@ -1,0 +1,112 @@
+{
+  "description": "Gold segmentation for the 20 R2 test lines (the lines of the PoC test song). Words follow GUIDELINE.md.",
+  "status": "placeholder",
+  "checkedBy": "Rhea Gokhale",
+  "checkedOn": null,
+  "reviewedBy": "Raymond Ma",
+  "reviewedOn": null,
+  "guideline": "GUIDELINE.md",
+  "songMap": "../songs/ja/poc-test-song.songmap.json",
+  "lines": [
+    {
+      "lineId": "l01",
+      "text": "PLACEHOLDER line 1: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l02",
+      "text": "PLACEHOLDER line 2: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l03",
+      "text": "PLACEHOLDER line 3: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l04",
+      "text": "PLACEHOLDER line 4: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l05",
+      "text": "PLACEHOLDER line 5: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l06",
+      "text": "PLACEHOLDER line 6: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l07",
+      "text": "PLACEHOLDER line 7: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l08",
+      "text": "PLACEHOLDER line 8: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l09",
+      "text": "PLACEHOLDER line 9: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l10",
+      "text": "PLACEHOLDER line 10: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l11",
+      "text": "PLACEHOLDER line 11: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l12",
+      "text": "PLACEHOLDER line 12: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l13",
+      "text": "PLACEHOLDER line 13: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l14",
+      "text": "PLACEHOLDER line 14: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l15",
+      "text": "PLACEHOLDER line 15: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l16",
+      "text": "PLACEHOLDER line 16: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l17",
+      "text": "PLACEHOLDER line 17: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l18",
+      "text": "PLACEHOLDER line 18: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l19",
+      "text": "PLACEHOLDER line 19: team-written lyrics go here",
+      "words": []
+    },
+    {
+      "lineId": "l20",
+      "text": "PLACEHOLDER line 20: team-written lyrics go here",
+      "words": []
+    }
+  ]
+}

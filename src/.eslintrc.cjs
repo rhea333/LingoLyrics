@@ -17,6 +17,8 @@ module.exports = {
   settings: {
     // let import plugin follow the tsconfig paths
     'import/resolver': { typescript: { project: `${__dirname}/tsconfig.json` } },
+    // workspace packages are ours, not npm deps
+    'import/internal-regex': '^@lingolyrics/',
   },
   rules: {
     // named exports only, easier to grep

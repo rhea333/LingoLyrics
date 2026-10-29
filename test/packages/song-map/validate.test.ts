@@ -67,8 +67,29 @@ describe('validateSongMap', () => {
       expect(errorPaths({ ...validMap(), schemaVersion: '2.0.0' })).toContain('/schemaVersion');
     });
 
-    it('rejects unknown fields', () => {
-      expect(validateSongMap({ ...validMap(), tempo: 120 }).ok).toBe(false);
+    it('rejects unknown fields and names them', () => {
+      const result = validateSongMap({ ...validMap(), tempo: 120 });
+      expect(result.ok).toBe(false);
+      if (!result.ok) expect(result.errors[0]?.message).toContain('tempo');
+    });
+
+    it('rejects licenses outside the allowlist', () => {
+      const map = validMap();
+      const bad = {
+        ...map,
+        rights: { ...map.rights, lyrics: { license: 'All rights reserved', source: 'x' } },
+      };
+      expect(errorPaths(bad)).toContain('/rights/lyrics/license');
+    });
+
+    it('accepts a placeholder license while content is pending', () => {
+      const map = validMap();
+      map.rights.audio.license = 'PLACEHOLDER';
+      expect(validateSongMap(map).ok).toBe(true);
+    });
+
+    it('accepts bcp 47 tags with singleton subtags', () => {
+      expect(validateSongMap({ ...validMap(), language: 'ja-x-kana' }).ok).toBe(true);
     });
 
     it('rejects fractional timestamps', () => {
@@ -134,7 +155,7 @@ describe('validateSongMap', () => {
     });
   });
 
-  it('reports every problem, not just the first', () => {
+  it('reports every timing problem, not just the first', () => {
     const map = validMap();
     map.lines[1]!.id = 'l1';
     map.lines[1]!.endMs = 12000;

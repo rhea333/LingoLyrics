@@ -5,8 +5,7 @@
     "baseUrl": ".",
     "types": ["node", "jest"],
     "paths": {
-      "@lingolyrics/song-map": ["packages/song-map/src"],
-      "@lingolyrics/song-map/*": ["packages/song-map/src/*"]
+      "@lingolyrics/*": ["packages/*/src"]
     }
   },
   "include": ["packages/*/src/**/*", "scripts/**/*", "../test/**/*"],

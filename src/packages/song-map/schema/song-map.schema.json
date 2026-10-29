@@ -7,7 +7,9 @@
   "additionalProperties": false,
   "required": ["schemaVersion", "id", "title", "artist", "language", "audio", "rights", "lines"],
   "properties": {
-    "$schema": { "type": "string" },
+    "$schema": {
+      "type": "string"
+    },
     "schemaVersion": {
       "description": "Semantic version of this schema. Readers accept any 1.x.y.",
       "type": "string",
@@ -18,12 +20,18 @@
       "type": "string",
       "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
     },
-    "title": { "type": "string", "minLength": 1 },
-    "artist": { "type": "string", "minLength": 1 },
+    "title": {
+      "type": "string",
+      "minLength": 1
+    },
+    "artist": {
+      "type": "string",
+      "minLength": 1
+    },
     "language": {
       "description": "BCP 47 language tag of the lyrics, e.g. ja.",
       "type": "string",
-      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$"
+      "pattern": "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$"
     },
     "audio": {
       "type": "object",
@@ -35,23 +43,32 @@
           "type": "string",
           "minLength": 1
         },
-        "durationMs": { "type": "integer", "minimum": 1 }
+        "durationMs": {
+          "type": "integer",
+          "minimum": 1
+        }
       }
     },
     "rights": {
-      "description": "Where the lyrics and audio come from and under what license. Required so no unlicensed content enters the repo.",
+      "description": "Where the lyrics and audio come from and under what license.",
       "type": "object",
       "additionalProperties": false,
       "required": ["lyrics", "audio"],
       "properties": {
-        "lyrics": { "$ref": "#/$defs/rightsEntry" },
-        "audio": { "$ref": "#/$defs/rightsEntry" }
+        "lyrics": {
+          "$ref": "#/$defs/rightsEntry"
+        },
+        "audio": {
+          "$ref": "#/$defs/rightsEntry"
+        }
       }
     },
     "lines": {
       "type": "array",
       "minItems": 1,
-      "items": { "$ref": "#/$defs/line" }
+      "items": {
+        "$ref": "#/$defs/line"
+      }
     }
   },
   "$defs": {
@@ -61,11 +78,13 @@
       "required": ["license", "source"],
       "properties": {
         "license": {
-          "description": "SPDX id (e.g. MIT, CC0-1.0), PUBLIC-DOMAIN, or PLACEHOLDER while content is pending.",
+          "description": "Allowed licenses only, so unlicensed or all-rights-reserved content fails validation. PLACEHOLDER marks content still pending. Add an SPDX id here only after the team checks it allows redistribution in this MIT repo.",
+          "enum": ["MIT", "CC0-1.0", "CC-BY-4.0", "CC-BY-SA-4.0", "PUBLIC-DOMAIN", "PLACEHOLDER"]
+        },
+        "source": {
           "type": "string",
           "minLength": 1
-        },
-        "source": { "type": "string", "minLength": 1 }
+        }
       }
     },
     "line": {
@@ -73,15 +92,31 @@
       "additionalProperties": false,
       "required": ["id", "startMs", "endMs", "text"],
       "properties": {
-        "id": { "type": "string", "pattern": "^[A-Za-z0-9_-]+$" },
-        "startMs": { "type": "integer", "minimum": 0 },
-        "endMs": { "type": "integer", "minimum": 1 },
-        "text": { "type": "string", "minLength": 1 },
-        "translation": { "type": "string" },
+        "id": {
+          "type": "string",
+          "pattern": "^[A-Za-z0-9_-]+$"
+        },
+        "startMs": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "endMs": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "translation": {
+          "type": "string"
+        },
         "words": {
           "description": "Optional pre-computed segmentation (the R2 fallback: computed in the editor and checked by the creator).",
           "type": "array",
-          "items": { "$ref": "#/$defs/word" }
+          "items": {
+            "$ref": "#/$defs/word"
+          }
         }
       }
     },
@@ -100,10 +135,19 @@
           "type": "integer",
           "minimum": 1
         },
-        "surface": { "type": "string", "minLength": 1 },
-        "reading": { "type": "string" },
-        "romaji": { "type": "string" },
-        "gloss": { "type": "string" }
+        "surface": {
+          "type": "string",
+          "minLength": 1
+        },
+        "reading": {
+          "type": "string"
+        },
+        "romaji": {
+          "type": "string"
+        },
+        "gloss": {
+          "type": "string"
+        }
       }
     }
   }

@@ -1,4 +1,4 @@
-import Ajv2020, { type ErrorObject } from 'ajv/dist/2020';
+import Ajv2020, { type ErrorObject, type ValidateFunction } from 'ajv/dist/2020';
 import schema from '../schema/song-map.schema.json';
 import type { SongMap } from './types';
 
@@ -10,14 +10,22 @@ export interface SongMapError {
 }
 
 /** result of validateSongMap, map only set when ok */
-export type ValidationResult =
-  { ok: true; map: SongMap; errors: [] } | { ok: false; errors: SongMapError[] };
+export type ValidationResult = { ok: true; map: SongMap } | { ok: false; errors: SongMapError[] };
 
-const ajv = new Ajv2020({ allErrors: true });
-const checkSchema = ajv.compile<SongMap>(schema);
+// compiled on first use, so importing just the types costs nothing
+let checkSchema: ValidateFunction<SongMap> | undefined;
+function getCheckSchema(): ValidateFunction<SongMap> {
+  checkSchema ??= new Ajv2020({ allErrors: true }).compile<SongMap>(schema);
+  return checkSchema;
+}
 
 function fromAjv(e: ErrorObject): SongMapError {
-  return { path: e.instancePath || '/', message: e.message ?? 'invalid' };
+  const path = e.instancePath || '/';
+  // name the unknown field, ajv leaves it in params
+  if (e.keyword === 'additionalProperties') {
+    return { path, message: `unknown field "${String(e.params.additionalProperty)}"` };
+  }
+  return { path, message: e.message ?? 'invalid' };
 }
 
 // rules json schema cant express: ordering, overlap, offsets
@@ -67,12 +75,14 @@ function checkSemantics(map: SongMap): SongMapError[] {
 
 /**
  * checks data against the song map schema, then timing and offset rules.
- * returns every problem found, not just the first
+ * schema errors come back all at once. timing/word rules only run once the
+ * schema passes, they need the right shape to check
  */
 export function validateSongMap(data: unknown): ValidationResult {
-  if (!checkSchema(data)) {
-    return { ok: false, errors: (checkSchema.errors ?? []).map(fromAjv) };
+  const check = getCheckSchema();
+  if (!check(data)) {
+    return { ok: false, errors: (check.errors ?? []).map(fromAjv) };
   }
   const errors = checkSemantics(data);
-  return errors.length === 0 ? { ok: true, map: data, errors: [] } : { ok: false, errors };
+  return errors.length === 0 ? { ok: true, map: data } : { ok: false, errors };
 }

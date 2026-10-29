@@ -1,15 +1,17 @@
 // checks every song map in fixtures/ against the schema + timing rules
 import { validateSongMap } from '@lingolyrics/song-map';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const root = join(__dirname, '..');
 const songsDir = join(root, 'fixtures', 'songs');
 
-// find *.songmap.json under fixtures/songs
-const maps = readdirSync(songsDir, { recursive: true, encoding: 'utf8' })
-  .filter((f) => f.endsWith('.songmap.json'))
-  .map((f) => join(songsDir, f));
+// find *.songmap.json under fixtures/songs, missing dir counts as none
+const maps = existsSync(songsDir)
+  ? readdirSync(songsDir, { recursive: true, encoding: 'utf8' })
+      .filter((f) => f.endsWith('.songmap.json'))
+      .map((f) => join(songsDir, f))
+  : [];
 
 // zero maps means something moved, dont pass silently
 if (maps.length === 0) {

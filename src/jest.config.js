@@ -12,9 +12,8 @@ module.exports = {
   // test/ has no node_modules, point it back here
   modulePaths: ['<rootDir>/node_modules'],
   moduleNameMapper: {
-    // @lingolyrics/x -> packages/x/src, @lingolyrics/x/y -> packages/x/src/y
+    // same as tsconfig paths, deep imports are banned by eslint
     '^@lingolyrics/([^/]+)$': '<rootDir>/packages/$1/src',
-    '^@lingolyrics/([^/]+)/(.+)$': '<rootDir>/packages/$1/src/$2',
   },
   collectCoverageFrom: ['<rootDir>/packages/*/src/**/*.ts'],
   coverageReporters: ['text-summary', 'lcov'],

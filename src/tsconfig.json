@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "baseUrl": ".",
+    "types": ["node", "jest"],
+    "paths": {
+      "@lingolyrics/*": ["packages/*/src"]
+    }
+  },
+  "include": ["packages/*/src/**/*", "scripts/**/*", "../test/**/*"],
+  "exclude": ["node_modules", "apps"]
+}

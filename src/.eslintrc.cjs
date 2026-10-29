@@ -24,6 +24,11 @@ module.exports = {
     // named exports only, easier to grep
     'import/prefer-default-export': 'off',
     'import/no-default-export': 'error',
+    // packages export everything from index, no reaching inside
+    'no-restricted-imports': [
+      'error',
+      { patterns: [{ group: ['@lingolyrics/*/*'], message: 'import from the package root' }] },
+    ],
   },
   overrides: [
     {

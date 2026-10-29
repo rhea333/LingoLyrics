@@ -20,7 +20,8 @@
     "test": "jest",
     "test:coverage": "jest --coverage",
     "validate:maps": "tsx scripts/validate-maps.ts",
-    "docs:api": "typedoc"
+    "docs:api": "typedoc",
+    "poc:r2": "tsx scripts/poc-r2.ts"
   },
   "lint-staged": {
     "*.{ts,tsx}": [
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "@types/kuromoji": "^0.1.3",
     "@types/node": "^24.19.2",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",

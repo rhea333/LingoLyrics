@@ -1,0 +1,9 @@
+{
+  "name": "@lingolyrics/sync",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Playback position to active lyric line, and R1 timing-log analysis",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "types": "src/index.ts"
+}

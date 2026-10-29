@@ -20,9 +20,9 @@ same list, so change both together.
 3. **Particles are separate words.** This includes は, が, を, に, へ, で, の,
    も, と, から, まで, and the sentence-final か, よ, ね.
    君 / に / 会いたかった
-4. **Noun suffixes attach to the noun.** たち, さん, 中, and counters such as
-   一度 or 三人.
-   私たち, もう一度
+4. **Noun suffixes attach to the word before them.** たち, さん, 中, counters such as
+   一度 or 三人, and さ/み after an adjective stem.
+   私たち, もう一度, 高さ
 5. **Prefixes attach to the next word.** お and ご.
    お弁当
 6. **Noun + する is two words.** The する chain follows rule 1.
@@ -32,7 +32,8 @@ same list, so change both together.
    綺麗 / だ / ね
 8. **Nominalizer ん/の before だ is separate.**
    見ていた / ん / だ
-9. **Punctuation and spaces are not words.** Leave them out of the list.
+9. **Punctuation, symbols (♪ 〜) and spaces are not words.** Leave them out
+   of the list.
 10. **Latin-script words are one word each.**
     Baby
 

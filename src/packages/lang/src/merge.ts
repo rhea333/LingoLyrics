@@ -10,9 +10,12 @@ function isPredicate(m: Morpheme): boolean {
   return m.pos === '動詞' || m.pos === '形容詞';
 }
 
-// punctuation and spaces are not words
+// same set goldSpans skips, keep in step with score.ts
+const SKIPPABLE = /^[\s\p{P}\p{S}]*$/u;
+
+// punctuation, symbols like ♪, spaces are not words
 function isSkipped(m: Morpheme): boolean {
-  return m.pos === '記号' || m.surface_form.trim() === '';
+  return m.pos === '記号' || SKIPPABLE.test(m.surface_form);
 }
 
 /** true if m belongs on the end of the group instead of starting a new word */
@@ -39,8 +42,10 @@ export function attaches(group: Morpheme[], m: Morpheme): boolean {
     }
   }
 
-  // 私たち
-  if (head.pos === '名詞' && m.pos === '名詞' && m.pos_detail_1 === '接尾') return true;
+  // 私たち, and 高さ where さ follows an adjective stem
+  if (m.pos === '名詞' && m.pos_detail_1 === '接尾') {
+    if (head.pos === '名詞' || last.pos === '形容詞') return true;
+  }
 
   return false;
 }

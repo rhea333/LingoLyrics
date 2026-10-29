@@ -42,8 +42,13 @@ wanakana converts kuromoji's katakana _reading_:
 - Each word is converted in one go, so a small っ that ends one morpheme doubles
   the next consonant (会いたかった becomes `aitakatta`).
 - ん before a vowel becomes `n'` (原因 becomes `gen'in`).
-- Unknown Latin words such as `Baby` are kept unchanged. Any other unknown word
-  gets an empty reading and empty romaji.
+- Unknown Latin words such as `Baby` (or full-width `Ｂａｂｙ`) keep their
+  letters as romaji. Any other unknown word gets empty romaji.
+- `reading` is all or nothing. If any part of a word is unknown (the 2 in
+  2人), the reading is empty rather than partial.
+- Offsets are UTF-16, like JavaScript strings, so `line.slice(start, end)`
+  always equals `surface`, even after emoji (kuromoji itself counts code
+  points and drops emoji).
 
 ## Known limits
 

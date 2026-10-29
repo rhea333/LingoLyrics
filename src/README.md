@@ -16,12 +16,12 @@ future web editor. The Expo app only wires those packages to a screen.
 
 | Path                 | Purpose                                                                                     | Status  |
 | -------------------- | ------------------------------------------------------------------------------------------- | ------- |
-| `packages/song-map/` | JSON Schema, TS types and validator for song maps. Shared by the app and the future editor. | phase 2 |
+| `packages/song-map/` | JSON Schema, TS types and validator for song maps. Shared by the app and the future editor. | done    |
 | `packages/lang/`     | `segment(line)` returns tokens with surface, reading and romaji (R2).                       | phase 3 |
 | `packages/sync/`     | Maps a playback position to the active line, and analyzes timing logs (R1).                 | phase 4 |
 | `packages/anki/`     | One interface with AnkiMobile URL scheme, AnkiConnect and export-file adapters (R3).        | phase 5 |
 | `apps/learner/`      | Expo app with one demo screen per risk. PoC only, may be thrown out.                        | phase 4 |
-| `fixtures/songs/`    | The Japanese test song and its song map.                                                    | phase 2 |
+| `fixtures/songs/`    | The Japanese test song and its song map (lyrics are placeholders).                          | done    |
 | `fixtures/gold/`     | Gold segmentation for the 20 R2 test lines.                                                 | phase 3 |
 | `scripts/`           | Command-line tools: map validation and the PoC measurement scripts.                         |         |
 

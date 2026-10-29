@@ -5,7 +5,7 @@ folders here mirror `src/packages/`:
 
 | Folder               | Tests for                                            |
 | -------------------- | ---------------------------------------------------- |
-| `packages/song-map/` | schema and validator (phase 2)                       |
+| `packages/song-map/` | schema and validator                                 |
 | `packages/lang/`     | segmentation and romanization (phase 3)              |
 | `packages/sync/`     | active-line lookup and timing-log analysis (phase 4) |
 | `packages/anki/`     | note building and adapters (phase 5)                 |

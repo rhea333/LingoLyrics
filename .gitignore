@@ -219,6 +219,13 @@ pythontex-files-*/
 *.hst
 *.ver
 
+## JavaScript / Expo
+node_modules/
+.expo/
+dist/
+coverage/
+npm-debug.log*
+
 # easy-todo
 *.lod
 

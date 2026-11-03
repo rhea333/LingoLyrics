@@ -960,8 +960,12 @@ Output: The draft is restored. Undo and redo work for all edits. A warning
 appears before closing with unsaved changes, and the multiple-line operation asks
 for confirmation.\\
 Test Case Derivation: Fit criterion of IN6.\\
-How test will be performed: A tester follows the steps and checks the restored
-draft.
+How test will be performed: Record the time of the edit and inspect the
+persisted draft while the tab remains open, without manually saving.
+Confirm that the edit is persisted within \cn{AUTOSAVE\_INT}.
+Then close and reopen the editor, accept the restore option, and compare
+the restored draft with the saved state. For undo and redo, record the
+state before and after each tested edit and compare the resulting states.
 
 \item[\tid{FT-37}] \textbf{Export history}\\
 Control: Automatic.\\

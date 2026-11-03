@@ -994,8 +994,13 @@ closed.\\
 Input/Condition: Open each lesson.\\
 Output/Result: Each lesson is ready to play within \cn{LOAD\_TIME}. The measured
 times are reported for each lesson.\\
-How test will be performed: The app logs the time from opening to ready, and
-the test is repeated several times to show the spread.\\
+How test will be performed: Perform five runs per acceptance-suite lesson
+on each test device, fully closing and relaunching the app between runs.
+Start timing when the learner selects the lesson. Stop when its audio is
+loaded, its initial lyrics are displayed, and playback is enabled.
+Record the device model, operating system, build commit, and all five
+durations. Report the minimum, median, and maximum. Every measured run
+must meet \cn{LOAD\_TIME}.\\
 Requirements: SL1 (also the R2 PoC criterion).
 
 \item[\tid{NT-2}] \textbf{Selection response time}\\

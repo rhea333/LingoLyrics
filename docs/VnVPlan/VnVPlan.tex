@@ -610,7 +610,12 @@ Test Case Derivation: FR4, FR5, PA2, and the definition of the active line in th
 SRS. The thresholds are the G1 criteria.\\
 How test will be performed: The app logs the playback position at each
 highlight change, and a script compares the log with the map and reports the
-percentage that are on time.
+percentage that are on time. For uninterrupted playback, the denominator
+is the number of expected line starts in the map, not the number of
+logged changes. A missing highlight counts as a failure, and repeated
+highlights cannot increase the number of successful transitions.
+Word highlights are evaluated separately using the expected word starts
+where word timings are provided.
 
 \item[\tid{FT-9}] \textbf{Realignment after interruptions}\\
 Control: Manual.\\

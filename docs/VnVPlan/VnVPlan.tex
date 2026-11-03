@@ -569,9 +569,12 @@ Output: The editor and the learner app use one validator module and give the
 same verdict for every map. Valid maps open in the app without manual changes.\\
 Test Case Derivation: FR16 requires a single shared module, and G3 requires that
 an editor map opens in the app.\\
-How test will be performed: A CI job validates every example map with the shared
-module. A test exports a map from the editor and opens it with the app's import
-code.
+How test will be performed: Each example map has an expected verdict and
+expected failed rules derived from the SRS. CI compares the shared
+validator's results with these expectations. The same maps are passed
+through the editor's export validation and the app's import validation
+to confirm that both use the validator correctly. A valid map exported
+by the editor must open in the app without manual changes.
 
 \end{description}
 

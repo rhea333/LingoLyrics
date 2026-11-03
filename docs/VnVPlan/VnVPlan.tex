@@ -467,6 +467,14 @@ by area. Tests marked \emph{Automatic} run in CI or from a script. Tests marked
 \emph{Manual} are carried out by a team member who records the results in the
 test issue.
 
+\textbf{Test records.} Each execution records the test ID, tester, date,
+build commit, device or browser version, and the version or commit of
+the input files. The linked test issue includes the expected result,
+actual result, pass/fail status, and supporting logs or screenshots.
+A failed test links to a defect issue. After a fix, the affected test
+is rerun and both results are retained. Tests that cannot be executed
+are marked blocked with a reason and are not counted as passes.
+
 \textbf{Test environment.} Unless a test says otherwise, tests run on one iOS
 device and one Android device with the same release build of the learner app
 (OE4, MS4), and the editor runs in each supported browser. The acceptance suite

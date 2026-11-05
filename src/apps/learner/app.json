@@ -1,0 +1,10 @@
+{
+  "expo": {
+    "name": "LingoLyrics PoC",
+    "slug": "lingolyrics-poc",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "platforms": ["ios", "android"]
+  }
+}

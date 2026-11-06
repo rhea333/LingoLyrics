@@ -150,11 +150,21 @@ Administrative tasks will be broken down into the following operational roles, w
     \item \texttt{main} always contains the latest submitted state of the
     project. It is protected: changes arrive only through pull requests that
     pass CI and have at least one approving review.
-    \item \texttt{develop} is the integration branch. Feature branches are
-    created from \texttt{develop} and merged back into it. We keep this branch
-    so that \texttt{main} only changes at submission points.
+    \item \texttt{develop} is the team's single, lightweight integration
+    branch. Feature branches are created from \texttt{develop} and merged back
+    into it through reviewed pull requests that pass CI. This gives the learner
+    app, editor, and shared schema work a place to be integrated and checked
+    together, while keeping unfinished changes off \texttt{main}, which is
+    reserved for accepted deliverable states. For this small team, one
+    integration branch provides that checkpoint without the overhead of a more
+    elaborate branching model.
     \item Before each deliverable deadline, \texttt{develop} is merged into
     \texttt{main} through a release pull request reviewed by the QA manager.
+    Before approving it, the QA manager confirms that CI is green on the
+    release candidate and that the fixed acceptance suite passes through the
+    editor-to-app workflow. The results are recorded in the release pull
+    request. If a check fails, the release is held on \texttt{develop} until
+    the issue is fixed and the checks pass.
     \item Each submission is tagged on \texttt{main}, for example
     \texttt{PS-DevPlan-Rev0}, \texttt{SRS-Rev0}, and \texttt{PoC-Demo}. Revision 0
     and Revision 1 are distinguished by tags rather than separate files.

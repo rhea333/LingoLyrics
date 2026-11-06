@@ -225,8 +225,9 @@ Bernuy, acts as the client: the supervisor reviews the scope and goals and
 accepts the deliverables at each milestone.
 
 \subsection{Customer}
-The customers are language learners at early intermediate to intermediate levels who study on their own who want to study vocabulary from songs, and song map creators who
-want a tool for preparing synchronized song lessons.
+The customers are language learners at early intermediate to intermediate
+levels who study on their own and want to learn vocabulary from songs, and song
+map creators who want a tool for preparing synchronized song lessons.
 
 \subsection{Other Stakeholders}
 \begin{itemize}
@@ -236,6 +237,10 @@ want a tool for preparing synchronized song lessons.
           deliverables.
     \item Anki users and the maintainers of Anki, AnkiDroid, and AnkiConnect,
           whose software receives the exported notes.
+    \item Language teachers and language-learning institutions, which may use
+          the app and its lessons as teaching aids.
+    \item Songwriters, performers, and people who represent songs (such as
+          promoters and record labels), who may use the app to promote music.
     \item Copyright holders of songs and lyrics, whose rights limit what
           content can be distributed.
 \end{itemize}
@@ -1267,10 +1272,15 @@ code. Reviewed when the design is complete.}
 
 \subsection{Longevity Requirements}
 \begin{description}
-\item[\reqdef{LO1}] A learner app version shall open every valid song map whose major
-schema version it supports, regardless of minor or patch version.
-\rat{Lessons made earlier must keep working.}
-\fit{CI opens maps of every released minor version with the current app.}
+\item[\reqdef{LO1}] The project shall support each released major song map
+schema version for at least one calendar year after its release.
+During that period, at least one supported learner app release shall open every
+valid song map using that major version, regardless of minor or patch version.
+\rat{Creators invest time in lessons and need a predictable period in which
+learners can use them.}
+\fit{CI opens valid maps for every supported major, minor, and patch version.
+For each released major version, release records show that a compatible learner
+app remains available throughout the support period.}
 \trace{G3, \req{IN3}.}
 \usedby{\req{OE5}, \req{SC1}.}
 \end{description}
@@ -1941,28 +1951,52 @@ may be used if the requirements and constraints are met.
 \begin{description}
 \item[LC1] The method for sending vocabulary to Anki (AnkiDroid API,
 AnkiConnect, or export file), depending on the PoC result for risk R3.
+\emph{Rationale:} the team has not yet confirmed which handoff method can
+reliably meet IN8 across the supported platforms.
 \item[LC2] The second language, and later a third language.
+\emph{Rationale:} the second language has not been chosen, and a third language
+is an identified stretch goal.
 \item[LC3] The audio playback library in the learner app (Expo Audio or a
 native module), depending on the PoC result for risk R1.
+\emph{Rationale:} the PoC must establish whether Expo Audio reports playback
+position accurately enough to meet FR4.
 \item[LC4] The fields of the song map schema, as minor versions.
+\emph{Rationale:} lesson authoring may reveal additional fields needed without
+changing the schema's major version.
 \item[LC5] The Japanese tokenizer used by the editor (kuromoji.js or
 Sudachi).
+\emph{Rationale:} kuromoji.js is the current choice, but its segmentation
+accuracy will be measured and Sudachi remains an alternative.
 \item[LC6] The values of the symbolic constants in
 Appendix~\ref{SecConstants}, after measurement in the PoC and usability
 testing.
+\emph{Rationale:} several values are explicitly initial and depend on measured
+playback, authoring, or usability results.
 \item[LC7] How song map packages reach the learner app (file import, bundled
 lessons, or a hosted catalogue).
+\emph{Rationale:} file transfer is the initial approach, while bundling or a
+catalogue may better suit the demonstration or later distribution.
 \end{description}
 
 \subsection{Unlikely Changes}
 \begin{description}
 \item[UC1] Learners use a phone app and creators use a web editor on a
 computer.
+\emph{Rationale:} this division is established by the target users and the
+platform constraints in MC2, with no planned alternative in the initial scope.
 \item[UC2] Lessons are song maps with timed lines, stored in one shared,
 versioned format.
+\emph{Rationale:} a shared versioned format is required for the editor and app
+to exchange lessons reliably (G3 and MC3).
 \item[UC3] The initial release has no user accounts and no server.
+\emph{Rationale:} the initial scope explicitly excludes accounts, servers, and
+cloud storage; adding them would change the architecture and privacy obligations.
 \item[UC4] The target users are learners at early intermediate to intermediate levels who study on their own.
+\emph{Rationale:} this group defines the project goals, personas, and acceptance
+criteria, and no broader audience is currently planned.
 \item[UC5] Anki is the spaced repetition system that receives vocabulary.
+\emph{Rationale:} Anki is central to goal G6 and the planned learner workflow;
+supporting another system is outside the current scope.
 \end{description}
 
 \appendix

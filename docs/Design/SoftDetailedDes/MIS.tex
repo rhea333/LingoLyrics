@@ -436,98 +436,7 @@ and licence information (LG1).
 \item[\texttt{suggestWords}(r):] $out$ is M8's
 language-specific proposal for line $r$; the draft is
 unchanged until the creator accepts or corrects it.
-\item[\texttt{acceptWords}(r,g):] Replace line $r
-\bibliography {../../../refs/References}
-
-\newpage
-
-\newpage{}
-
-\section{Appendix --- Generative AI Use Disclosure}
-\label{SecMISDisclosure}
-
-\subsection{AI Tools Used}
-
-OpenAI ChatGPT (GPT-6, November 13, 2026) was used to assist
-Raymond Ma in drafting the M1--M4 module contracts and revising
-the MIS template. Other contributors must add disclosures for
-their own material AI use before the team's final submission.
-
-\subsection{How and Where Used}
-
-ChatGPT was given the Module Guide, the Volere SRS, the Development
-Plan, the course MIS checklist, and the Revision~$-1$ rubric.
-It helped replace unrelated scientific-computing template content
-with the actual LingoLyrics module inventory, define abstract
-interfaces and data ownership, and propose exported operations,
-state, environment variables, exceptions, and the first-half
-module semantics (Sections~\ref{SecMISModules}--\ref{MISM4}).
-The proposed interfaces are documentation artifacts, not proof
-that these operations already exist in code.
-
-\subsection{Verification of AI-Generated Content}
-
-The four module names, identifiers, classes, and use dependencies
-were compared to the revised Module Guide. The input/output
-contracts were reviewed against SRS functional requirements
-FR1--FR16 and relevant IN, RB, OE, and MC requirements.
-The descriptions distinguish persisted application state from
-external environment state, identify the sole owner of each
-mutable record, and do not prescribe a particular implementation
-framework. M4 was specified as stateless, while the platform
-adapter and both user-facing interfaces retain their own state.
-
-Before integrating the document, the team must inspect the
-generated PDF, check the remaining M5--M8 specifications for
-type consistency, confirm that each access program has the
-required behaviour or state transition, and record any
-required interface changes as GitHub issues. The developer
-assigned to each module remains responsible for its correctness,
-consistency, and implementability; AI-generated text is not an
-independent verification source.
-
-\newpage{}
-
-\section{Appendix --- Reflection}
-
-\wss{Not required for CAS 741 projects}
-
-The information in this section will be used to evaluate the team members on the
-graduate attribute of Problem Analysis and Design.
-
-\input{../../Reflection.text}
-
-\begin{enumerate}
-  \item What went well while writing this deliverable? 
-  \item What pain points did you experience during this deliverable, and how
-    did you resolve them?
-  \item Which of your design decisions stemmed from speaking to your client(s)
-  or a proxy (e.g. your peers, stakeholders, potential users)? For those that
-  were not, why, and where did they come from?
-  \item While creating the design doc, what parts of your other documents (e.g.
-  requirements, hazard analysis, etc), it any, needed to be changed, and why?
-  \item What are the limitations of your solution?  Put another way, given
-  unlimited resources, what could you do to make the project better? (LO\_ProbSolutions)
-  \item Give a brief overview of other design solutions you considered.  What
-  are the benefits and tradeoffs of those other designs compared with the chosen
-  design?  From all the potential options, why did you select the documented design?
-  (LO\_Explores)
-  \item (After you have implemented another team's module, which means this
-  isn't filled in until after the original deadline). What did you learn by
-  implementing another team's module? Were all the details you needed in the
-  documentation, or did you need to make assumptions, or ask the other team
-  questions?  If your team also had another team implement one of your modules,
-  what was this experience like?  Are there things in your documentation you
-  could have changed to make the process go more smoothly for when an
-  ``outsider'' completes some of the implementation?
-
-  Your reflection should be about concepts learned in your SE education, such as modular decomposition, cohesion, coupling, information hiding, etc.  You should critique the quality and utility of the specification you received.
-
-  You should create a PR for your implemented module.  A link to the PR should be part of your reflection.
-
-\end{enumerate}
-
-\end{document}s
+\item[\texttt{acceptWords}(r,g):] Replace line $r$'s
 segmentation with a creator-approved, verified $g$ and
 record the operation in history.
 \item[\texttt{preview}():] Supply the draft's timing to M7
@@ -639,37 +548,34 @@ not mandatory implementation helpers.
 \newpage{}
 
 \section{Appendix --- Generative AI Use Disclosure}
-
-\wss{ChatGPT (version 5) was used to brainstorm ideas for the template for this disclose section.}
+\label{SecMISDisclosure}
 
 \subsection{AI Tools Used}
-
-\wss{Give the name of the AI tool(s) used and the version.}
+OpenAI ChatGPT (GPT-6, November 13, 2026) assisted Raymond Ma with
+the M1--M4 interface specifications and replacement of sample content.
+Other team members must disclose their own material AI use before
+the final submission.
 
 \subsection{How and Where Used}
-
-\wss{Explain what the tool(s) were used for.  Examples include: brainstorming,
-explaining a technical concept, reviewing the document, generating or modifying
-text, generating or modifying diagrams, identifying errors or omissions or
-inconsistencies.}
-
-\wss{For each of the uses, identify which parts of the document were affected.}
-
-\wss{You do not need to report every interaction, but you should disclose the 
-uses that materially contributed to your work}
+ChatGPT reviewed the Volere SRS, the MG, the MIS checklist, and
+the design rubric. It helped draft the LingoLyrics module inventory
+and contracts in Sections~\ref{SecMISModules}--\ref{MISM4},
+including abstract operations, exceptions, state ownership,
+environment variables, and access routine semantics. These
+interfaces are design proposals, not claims of implementation.
 
 \subsection{Verification of AI-Generated Content}
+Module names, numbers, and direct use relations were checked
+against the revised Module Guide. Operations and conditions were
+compared against SRS FR1--FR16 and applicable IN, MC, RB, OE,
+and LG requirements. State ownership was reviewed to avoid
+duplicate authoritative data, and the stateless validator
+has no environment or state variables.
 
-\wss{\begin{itemize}
-    \item Describe how the team checked AI-generated or AI-assisted material
-    before including it in the document.
-    \item In particular, verify factual claims, technical assertions,
-    requirements, calculations, references, and other information for which an
-    AI system may produce incorrect or fabricated results.
-    \item \textbf{The team is responsible for the accuracy, completeness,
-consistency, and appropriateness of the submitted document, regardless of
-whether material was generated by a human or an AI system.}
-\end{itemize}}
+The team must inspect the compiled PDF, check the companion
+M5--M8 specifications for type and dependency consistency,
+and have each owner confirm its interfaces. All claims of
+completeness and correctness remain the team's responsibility.
 
 \newpage{}
 

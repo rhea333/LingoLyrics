@@ -46,7 +46,8 @@
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
 \toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
 \midrule
-November 13, 2026 & -1 & Initial module guide decomposition for the Rev -1 design.\\
+November 13, 2026 & -1 & Initial module decomposition and anticipated changes.\\
+November 13, 2026 & -1 & Requirements traceability, interfaces, and supporting design sections.\\
 \bottomrule
 \end{tabularx}
 
@@ -54,28 +55,28 @@ November 13, 2026 & -1 & Initial module guide decomposition for the Rev -1 desig
 
 \section{Reference Material}
 
-This section records information for easy reference. 
+This section defines terminology used throughout the module decomposition.
 
 \subsection{Abbreviations and Acronyms}
-
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{l l} 
-  \toprule		
-  \textbf{symbol} & \textbf{description}\\
-  \midrule 
-  AC & Anticipated Change\\
-  DAG & Directed Acyclic Graph \\
-  M & Module \\
-  MG & Module Guide \\
-  OS & Operating System \\
-  R & Requirement\\
-  SC & Scientific Computing \\
-  SRS & Software Requirements Specification\\
-  \progname & Explanation of program name\\
-  UC & Unlikely Change \\
-  \wss{etc.} & \wss{...}\\
-  \bottomrule
-\end{tabular}\\
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Symbol} & \textbf{Description}\\
+\midrule
+AC & Anticipated change\\
+API & Application programming interface\\
+CI & Continuous integration\\
+DAG & Directed acyclic graph\\
+M & Module\\
+MG & Module Guide\\
+MIS & Module Interface Specification\\
+OS & Operating system\\
+PoC & Proof of concept\\
+SRS & Software Requirements Specification\\
+UC & Unlikely change\\
+UI & User interface\\
+\bottomrule
+\end{tabular}
 
 \newpage
 
@@ -96,9 +97,14 @@ software.  A module is a work assignment for a programmer or programming
 team~\citep{ParnasEtAl1984}.  We advocate a decomposition
 based on the principle of information hiding~\citep{Parnas1972a}.  This
 principle supports design for change, because the ``secrets'' that each module
-hides represent likely future changes.  Design for change is valuable in SC,
-where modifications are frequent, especially during initial development as the
-solution space is explored.  
+hides represent likely future changes.  For LingoLyrics, design for change separates decisions that may evolve
+independently: platform integration, song-map representation, lyric
+synchronization, lesson authoring, language processing, and vocabulary
+transfer. The system comprises an iOS/Android learner application and a
+browser-based song-map editor. Both depend on one versioned lesson format
+and common validation rules. Modules hide these decisions so that changing a
+language-processing library or Anki transfer method does not require
+rewriting unrelated user workflows.  
 
 Our design follows the rules layed out by \citet{ParnasEtAl1984}, as follows:
 \begin{itemize}
@@ -129,16 +135,21 @@ potential readers of this document are as follows:
   decomposition, and flexibility of the design.
 \end{itemize}
 
-The rest of the document is organized as follows. Section
-\ref{SecChange} lists the anticipated and unlikely changes of the software
-requirements. Section \ref{SecMH} summarizes the module decomposition that
-was constructed according to the likely changes. Section \ref{SecConnection}
-specifies the connections between the software requirements and the
-modules. Section \ref{SecMD} gives a detailed description of the
-modules. Section \ref{SecTM} includes two traceability matrices. One checks
-the completeness of the design against the requirements provided in the SRS. The
-other shows the relation between anticipated changes and the modules. Section
-\ref{SecUse} describes the use relation between modules.
+The authoritative requirements are in the
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/SRS-Volere/SRS.tex}
+{Volere SRS}. The
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/DevelopmentPlan/DevelopmentPlan.tex}
+{Development Plan} gives milestones and initial component owners. The
+accompanying Module Interface Specification (MIS) defines each module's
+public contract.
+
+Section~\ref{SecChange} identifies design changes; Section~\ref{SecMH}
+names the modules; Section~\ref{SecConnection} explains architectural
+decisions; Section~\ref{SecMD} documents module secrets and services;
+Section~\ref{SecTM} traces requirements and changes; and
+Section~\ref{SecUse} documents dependencies. The remaining sections cover
+user interfaces, communication, persistence, implementation planning, and
+generative AI use.
 
 \section{Anticipated and Unlikely Changes} \label{SecChange}
 
@@ -248,12 +259,16 @@ The design of the system is intended to satisfy the requirements developed in
 the SRS. In this stage, the system is decomposed into modules. The connection
 between requirements and modules is listed in Table~\ref{TblRT}.
 
-\wss{The intention of this section is to document decisions that are made
-  ``between'' the requirements and the design.  To satisfy some requirements,
-  design decisions need to be made.  Rather than make these decisions implicit,
-  they are explicitly recorded here.  For instance, if a program has security
-  requirements, a specific design decision may be made to satisfy those
-  requirements with a password.}
+The learner and editor share the same song-map representation
+(\mref{mMap}) and validation service (\mref{mValidate}) to satisfy
+FR16 and IN2: import and export must agree on validity. The editor
+owns segmentation suggestions and creator verification, while the
+learner displays the stored results without running a tokenizer (IN4).
+Synchronization is calculated from reported audio position rather than
+a parallel timer (IN1). Anki transport and note-field mapping are
+isolated in \mref{mAnki}; the learner interface does not depend on a
+particular Anki integration method (LC1). These decisions are
+reflected in the allocation tables of Section~\ref{SecTM}.
 
 \section{Module Decomposition} \label{SecMD}
 

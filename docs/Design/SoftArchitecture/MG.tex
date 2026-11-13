@@ -5,7 +5,10 @@
 \usepackage{multirow}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{longtable}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 \usepackage{float}
 \usepackage{hyperref}
 \hypersetup{
@@ -46,7 +49,8 @@
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
 \toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
 \midrule
-November 13, 2026 & -1 & Initial module guide decomposition for the Rev -1 design.\\
+November 13, 2026 & -1 & Initial module decomposition and anticipated changes.\\
+November 13, 2026 & -1 & Requirements traceability, interfaces, and supporting design sections.\\
 \bottomrule
 \end{tabularx}
 
@@ -54,28 +58,28 @@ November 13, 2026 & -1 & Initial module guide decomposition for the Rev -1 desig
 
 \section{Reference Material}
 
-This section records information for easy reference. 
+This section defines terminology used throughout the module decomposition.
 
 \subsection{Abbreviations and Acronyms}
-
 \renewcommand{\arraystretch}{1.2}
-\begin{tabular}{l l} 
-  \toprule		
-  \textbf{symbol} & \textbf{description}\\
-  \midrule 
-  AC & Anticipated Change\\
-  DAG & Directed Acyclic Graph \\
-  M & Module \\
-  MG & Module Guide \\
-  OS & Operating System \\
-  R & Requirement\\
-  SC & Scientific Computing \\
-  SRS & Software Requirements Specification\\
-  \progname & Explanation of program name\\
-  UC & Unlikely Change \\
-  \wss{etc.} & \wss{...}\\
-  \bottomrule
-\end{tabular}\\
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Symbol} & \textbf{Description}\\
+\midrule
+AC & Anticipated change\\
+API & Application programming interface\\
+CI & Continuous integration\\
+DAG & Directed acyclic graph\\
+M & Module\\
+MG & Module Guide\\
+MIS & Module Interface Specification\\
+OS & Operating system\\
+PoC & Proof of concept\\
+SRS & Software Requirements Specification\\
+UC & Unlikely change\\
+UI & User interface\\
+\bottomrule
+\end{tabularx}
 
 \newpage
 
@@ -96,9 +100,14 @@ software.  A module is a work assignment for a programmer or programming
 team~\citep{ParnasEtAl1984}.  We advocate a decomposition
 based on the principle of information hiding~\citep{Parnas1972a}.  This
 principle supports design for change, because the ``secrets'' that each module
-hides represent likely future changes.  Design for change is valuable in SC,
-where modifications are frequent, especially during initial development as the
-solution space is explored.  
+hides represent likely future changes.  For LingoLyrics, design for change separates decisions that may evolve
+independently: platform integration, song-map representation, lyric
+synchronization, lesson authoring, language processing, and vocabulary
+transfer. The system comprises an iOS/Android learner application and a
+browser-based song-map editor. Both depend on one versioned lesson format
+and common validation rules. Modules hide these decisions so that changing a
+language-processing library or Anki transfer method does not require
+rewriting unrelated user workflows.  
 
 Our design follows the rules layed out by \citet{ParnasEtAl1984}, as follows:
 \begin{itemize}
@@ -129,16 +138,21 @@ potential readers of this document are as follows:
   decomposition, and flexibility of the design.
 \end{itemize}
 
-The rest of the document is organized as follows. Section
-\ref{SecChange} lists the anticipated and unlikely changes of the software
-requirements. Section \ref{SecMH} summarizes the module decomposition that
-was constructed according to the likely changes. Section \ref{SecConnection}
-specifies the connections between the software requirements and the
-modules. Section \ref{SecMD} gives a detailed description of the
-modules. Section \ref{SecTM} includes two traceability matrices. One checks
-the completeness of the design against the requirements provided in the SRS. The
-other shows the relation between anticipated changes and the modules. Section
-\ref{SecUse} describes the use relation between modules.
+The authoritative requirements are in the
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/SRS-Volere/SRS.tex}
+{Volere SRS}. The
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/DevelopmentPlan/DevelopmentPlan.tex}
+{Development Plan} gives milestones and initial component owners. The
+accompanying Module Interface Specification (MIS) defines each module's
+public contract.
+
+Section~\ref{SecChange} identifies design changes; Section~\ref{SecMH}
+names the modules; Section~\ref{SecConnection} explains architectural
+decisions; Section~\ref{SecMD} documents module secrets and services;
+Section~\ref{SecTM} traces requirements and changes; and
+Section~\ref{SecUse} documents dependencies. The remaining sections cover
+user interfaces, communication, persistence, implementation planning, and
+generative AI use.
 
 \section{Anticipated and Unlikely Changes} \label{SecChange}
 
@@ -172,6 +186,13 @@ change.
 \item[\refstepcounter{acnum} \actheacnum \label{acAnki}:] The supported method
   for transferring selected vocabulary, including the mapping to Anki note
   fields.
+\item[\refstepcounter{acnum} \actheacnum \label{acThresholds}:] The measured
+  symbolic thresholds used by playback, authoring, validation, and other
+  workflows. These are distinct decisions and therefore have multiple
+  documented owners rather than one artificial configuration module.
+\item[\refstepcounter{acnum} \actheacnum \label{acDelivery}:] The mechanism
+  through which song-map packages are selected or obtained by the learner,
+  such as local import, bundled files, or a future hosted catalogue.
 \end{description}
 
 \subsection{Unlikely Changes} \label{SecUchange}
@@ -248,12 +269,16 @@ The design of the system is intended to satisfy the requirements developed in
 the SRS. In this stage, the system is decomposed into modules. The connection
 between requirements and modules is listed in Table~\ref{TblRT}.
 
-\wss{The intention of this section is to document decisions that are made
-  ``between'' the requirements and the design.  To satisfy some requirements,
-  design decisions need to be made.  Rather than make these decisions implicit,
-  they are explicitly recorded here.  For instance, if a program has security
-  requirements, a specific design decision may be made to satisfy those
-  requirements with a password.}
+The learner and editor share the same song-map representation
+(\mref{mMap}) and validation service (\mref{mValidate}) to satisfy
+FR16 and IN2: import and export must agree on validity. The editor
+owns segmentation suggestions and creator verification, while the
+learner displays the stored results without running a tokenizer (IN4).
+Synchronization is calculated from reported audio position rather than
+a parallel timer (IN1). Anki transport and note-field mapping are
+isolated in \mref{mAnki}; the learner interface does not depend on a
+particular Anki integration method (LC1). These decisions are
+reflected in the allocation tables of Section~\ref{SecTM}.
 
 \section{Module Decomposition} \label{SecMD}
 
@@ -281,7 +306,7 @@ to be implemented.
   platform-specific APIs to those applications.
 \item[Implemented By:] Expo Audio and operating-system APIs in the learner app;
   browser audio and file APIs in the editor.
-\item[Type of Module:] Library
+\item[Type of Module:] Abstract Object (one active platform session)
 \end{description}
 
 \subsection{Behaviour-Hiding Modules}
@@ -323,8 +348,9 @@ to be implemented.
 \subsubsection{Song Map Validation Module (\mref{mValidate})}
 
 \begin{description}
-\item[Secrets:] The validation rules and the way validation failures are
-  reported to a creator.
+\item[Secrets:] The schema and semantic validity predicates for song maps.
+  It returns rule identifiers; the creator interface owns presentation of
+  those failures to the user.
 \item[Services:] Determines whether a song map conforms to the shared format
   and reports invalid or missing map data to the editor.
 \item[Implemented By:] TypeScript and JSON Schema.
@@ -341,7 +367,7 @@ to be implemented.
   into Anki.
 \item[Implemented By:] TypeScript; the specific API or export mechanism remains
   a development decision.
-\item[Type of Module:] Library
+\item[Type of Module:] Abstract Object (owns pending transfer state)
 \end{description}
 
 
@@ -368,7 +394,7 @@ to be implemented.
   metadata, and makes that representation available to the applications and
   validation module.
 \item[Implemented By:] Shared TypeScript types and a versioned JSON Schema.
-\item[Type of Module:] Abstract Data Type
+\item[Type of Module:] Exported data types (no mutable ADT state)
 \end{description}
 
 \subsubsection{Playback Synchronization Module (\mref{mSync})}
@@ -396,138 +422,493 @@ to be implemented.
 
 \section{Traceability Matrix} \label{SecTM}
 
-This section shows two traceability matrices: between the modules and the
-requirements and between the modules and the anticipated changes.
+Table~\ref{TblRT} assigns every numbered requirement in the
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/SRS-Volere/SRS.tex}
+{Volere SRS} to responsible modules. The first, bold module is the
+primary owner of the capability; the other modules provide supporting
+services. The table covers all numbered functional and nonfunctional
+requirements, including the mandated constraints (MC1--MC3).
+No module is unassigned, and every SRS requirement has a primary
+responsible module. The mapping expresses responsibility, not a promise
+that the implementation is already complete.
 
-% the table should use mref, the requirements should be named, use something
-% like fref
+Some requirements are verified at the project level rather than by
+one runtime operation. MC1 and MC2 constrain technology choices;
+MS1, MS2, and IM3 require CI checks; OE5 concerns release tags.
+These are allocated to the affected modules in Table~\ref{TblRT},
+but the build/release workflow must enforce them. They are not
+interpreted as additional public methods of those modules.
+
+\small
+\begin{longtable}{@{}p{0.14\textwidth}p{0.79\textwidth}@{}}
+\caption{Trace between all SRS requirements and modules}\label{TblRT}\\
+\toprule
+\textbf{Req.} & \textbf{Module allocation (primary in bold)}\\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\tablename\ \thetable{} -- continued}\\
+\toprule
+\textbf{Req.} & \textbf{Module allocation (primary in bold)}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+MC1 & \textbf{\mref{mHH}}, \mref{mLearner}, \mref{mEditor}, \mref{mValidate}, \mref{mAnki}, \mref{mMap}, \mref{mSync}, \mref{mLanguage}\\
+MC2 & \textbf{\mref{mLearner}}, \mref{mEditor}\\
+MC3 & \textbf{\mref{mMap}}, \mref{mValidate}\\
+FR1 & \textbf{\mref{mLearner}}, \mref{mValidate}, \mref{mMap}, \mref{mHH}\\
+FR2 & \textbf{\mref{mLearner}}, \mref{mMap}\\
+FR3 & \textbf{\mref{mLearner}}, \mref{mHH}, \mref{mSync}\\
+FR4 & \textbf{\mref{mSync}}, \mref{mLearner}, \mref{mHH}\\
+FR5 & \textbf{\mref{mSync}}, \mref{mLearner}, \mref{mMap}\\
+FR6 & \textbf{\mref{mLearner}}, \mref{mMap}\\
+FR7 & \textbf{\mref{mLearner}}, \mref{mMap}\\
+FR8 & \textbf{\mref{mAnki}}, \mref{mLearner}, \mref{mMap}\\
+FR9 & \textbf{\mref{mEditor}}, \mref{mHH}, \mref{mMap}\\
+FR10 & \textbf{\mref{mEditor}}, \mref{mHH}, \mref{mSync}\\
+FR11 & \textbf{\mref{mLanguage}}, \mref{mEditor}\\
+FR12 & \textbf{\mref{mEditor}}, \mref{mMap}\\
+FR13 & \textbf{\mref{mEditor}}, \mref{mSync}, \mref{mHH}\\
+FR14 & \textbf{\mref{mValidate}}, \mref{mEditor}, \mref{mMap}\\
+FR15 & \textbf{\mref{mEditor}}\\
+FR16 & \textbf{\mref{mValidate}}, \mref{mMap}, \mref{mEditor}, \mref{mLearner}\\
+LF1 & \textbf{\mref{mLearner}}, \mref{mSync}\\
+LF2 & \textbf{\mref{mLearner}}\\
+LF3 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+UH1 & \textbf{\mref{mLearner}}\\
+UH2 & \textbf{\mref{mEditor}}, \mref{mValidate}\\
+UH3 & \textbf{\mref{mLearner}}\\
+UH4 & \textbf{\mref{mLearner}}, \mref{mEditor}, \mref{mLanguage}\\
+UH5 & \textbf{\mref{mLearner}}, \mref{mAnki}\\
+UH6 & \textbf{\mref{mLearner}}, \mref{mEditor}, \mref{mValidate}, \mref{mAnki}\\
+UH7 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+SL1 & \textbf{\mref{mLearner}}, \mref{mValidate}, \mref{mHH}\\
+SL2 & \textbf{\mref{mLearner}}, \mref{mMap}\\
+SL3 & \textbf{\mref{mAnki}}, \mref{mLearner}\\
+HS1 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+HS2 & \textbf{\mref{mHH}}, \mref{mLearner}\\
+HS3 & \textbf{\mref{mHH}}, \mref{mLearner}\\
+HS4 & \textbf{\mref{mLearner}}, \mref{mSync}\\
+HS5 & \textbf{\mref{mLearner}}\\
+HS6 & \textbf{\mref{mLearner}}, \mref{mMap}, \mref{mValidate}\\
+HS7 & \textbf{\mref{mLearner}}\\
+HS8 & \textbf{\mref{mHH}}, \mref{mLearner}\\
+HS9 & \textbf{\mref{mEditor}}, \mref{mHH}\\
+PA1 & \textbf{\mref{mMap}}, \mref{mSync}\\
+PA2 & \textbf{\mref{mSync}}, \mref{mHH}\\
+PA3 & \textbf{\mref{mLanguage}}, \mref{mEditor}\\
+RB1 & \textbf{\mref{mValidate}}, \mref{mLearner}, \mref{mEditor}\\
+RB2 & \textbf{\mref{mHH}}, \mref{mLearner}\\
+CP1 & \textbf{\mref{mValidate}}, \mref{mHH}, \mref{mLearner}\\
+CP2 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+SC1 & \textbf{\mref{mMap}}, \mref{mLanguage}\\
+LO1 & \textbf{\mref{mMap}}, \mref{mValidate}, \mref{mLearner}\\
+OE1 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+OE2 & \textbf{\mref{mAnki}}, \mref{mHH}\\
+OE3 & \textbf{\mref{mHH}}, \mref{mEditor}, \mref{mValidate}\\
+OE4 & \textbf{\mref{mHH}}, \mref{mLearner}, \mref{mEditor}\\
+OE5 & \textbf{\mref{mMap}}, \mref{mLearner}, \mref{mEditor}\\
+MS1 & \textbf{\mref{mValidate}}, \mref{mMap}\\
+MS2 & \textbf{\mref{mValidate}}, \mref{mMap}, \mref{mSync}, \mref{mLanguage}\\
+MS3 & \textbf{\mref{mLearner}}, \mref{mEditor}, \mref{mAnki}\\
+MS4 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+AC1 & \textbf{\mref{mAnki}}\\
+AC2 & \textbf{\mref{mAnki}}, \mref{mHH}\\
+IN1 & \textbf{\mref{mSync}}, \mref{mHH}, \mref{mLearner}\\
+IN2 & \textbf{\mref{mValidate}}, \mref{mMap}, \mref{mLearner}, \mref{mEditor}\\
+IN3 & \textbf{\mref{mValidate}}, \mref{mMap}, \mref{mLearner}\\
+IN4 & \textbf{\mref{mEditor}}, \mref{mLanguage}, \mref{mMap}, \mref{mLearner}\\
+IN5 & \textbf{\mref{mValidate}}, \mref{mEditor}, \mref{mMap}\\
+IN6 & \textbf{\mref{mEditor}}, \mref{mHH}\\
+IN7 & \textbf{\mref{mEditor}}, \mref{mSync}, \mref{mHH}\\
+IN8 & \textbf{\mref{mAnki}}, \mref{mLearner}, \mref{mHH}\\
+IN9 & \textbf{\mref{mAnki}}, \mref{mLearner}\\
+IN10 & \textbf{\mref{mAnki}}, \mref{mMap}\\
+IN11 & \textbf{\mref{mValidate}}, \mref{mHH}, \mref{mLearner}\\
+IN12 & \textbf{\mref{mHH}}, \mref{mLearner}, \mref{mEditor}, \mref{mMap}\\
+PR1 & \textbf{\mref{mLearner}}, \mref{mAnki}, \mref{mHH}\\
+PR2 & \textbf{\mref{mAnki}}, \mref{mHH}\\
+AU1 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+AU2 & \textbf{\mref{mMap}}, \mref{mEditor}\\
+IM1 & \textbf{\mref{mValidate}}, \mref{mHH}\\
+IM2 & \textbf{\mref{mValidate}}, \mref{mHH}, \mref{mMap}\\
+IM3 & \textbf{\mref{mHH}}, \mref{mValidate}, \mref{mAnki}, \mref{mLanguage}\\
+CU1 & \textbf{\mref{mLanguage}}, \mref{mEditor}, \mref{mMap}\\
+CU2 & \textbf{\mref{mEditor}}, \mref{mMap}\\
+LG1 & \textbf{\mref{mEditor}}, \mref{mValidate}, \mref{mMap}, \mref{mLearner}\\
+ST1 & \textbf{\mref{mLearner}}, \mref{mSync}\\
+ST2 & \textbf{\mref{mMap}}, \mref{mValidate}\\
+
+\end{longtable}
+\normalsize
+
+Table~\ref{TblACT} links the architectural anticipated changes (AC)
+to their primary hiding modules. An anticipated change may affect a
+caller, but the intent is that only the primary module needs to change
+its internal implementation. In particular, M1 owns both platform
+abstractions and audio-driver selection; those changes share its
+platform-interface secret. M8 likewise hides the language-processing
+strategy for both additional languages and tokenizer replacement.
+
 \begin{table}[H]
 \centering
-\begin{tabular}{p{0.2\textwidth} p{0.6\textwidth}}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
 \toprule
-\textbf{Req.} & \textbf{Modules}\\
+\textbf{AC} & \textbf{Primary module} & \textbf{Affected dependents / rationale}\\
 \midrule
-R1 & \mref{mHH}, \mref{mInput}, \mref{mParams}, \mref{mControl}\\
-R2 & \mref{mInput}, \mref{mParams}\\
-R3 & \mref{mVerify}\\
-R4 & \mref{mOutput}, \mref{mControl}\\
-R5 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R6 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R7 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R8 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R9 & \mref{mVerifyOut}\\
-R10 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}\\
-R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
+\acref{acPlatforms} & \mref{mHH} & Learner and editor invoke platform services.\\
+\acref{acSongMap} & \mref{mMap} & Validator and UI modules consume the versioned types.\\
+\acref{acAudio} & \mref{mHH} & Synchronization consumes platform playback position.\\
+\acref{acAuthoring} & \mref{mEditor} & Validation remains separate from creator UI.\\
+\acref{acLanguage} & \mref{mLanguage} & The editor calls language-processing services.\\
+\acref{acAnki} & \mref{mAnki} & The learner calls the handoff interface.\\
+\acref{acThresholds} & Distributed & This is a collection of independent
+  thresholds, not one hidden decision; see LC6 in Table~\ref{TblLCT}.\\
+\acref{acDelivery} & \mref{mHH} & The adapter hides the platform import or
+  retrieval mechanism; the learner presents the selected lesson.\\
 \bottomrule
-\end{tabular}
-\caption{Trace Between Requirements and Modules}
-\label{TblRT}
+\end{tabularx}
+\caption{Primary owners of the architectural anticipated changes}
+\label{TblACT}
 \end{table}
 
+The SRS additionally identifies seven \emph{likely changes} (LC1--LC7).
+Table~\ref{TblLCT} ensures none is lost when the MG uses a different
+set of architectural change identifiers. LC6 is explicitly a group of
+unrelated threshold constants rather than one independently changeable
+decision, so it has a documented exception to one-to-one ownership.
+
 \begin{table}[H]
 \centering
-\begin{tabular}{p{0.2\textwidth} p{0.6\textwidth}}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
 \toprule
-\textbf{AC} & \textbf{Modules}\\
+\textbf{SRS LC} & \textbf{Primary owner} & \textbf{Design rationale}\\
 \midrule
-\acref{acPlatforms} & \mref{mHH}\\
-\acref{acSongMap} & \mref{mMap}, \mref{mValidate}\\
-\acref{acAudio} & \mref{mHH}, \mref{mSync}\\
-\acref{acAuthoring} & \mref{mEditor}, \mref{mValidate}\\
-\acref{acLanguage} & \mref{mLanguage}, \mref{mLearner}, \mref{mMap}\\
-\acref{acAnki} & \mref{mAnki}\\
+LC1 & \mref{mAnki} & Hides handoff method and note-field mapping.\\
+LC2 & \mref{mLanguage} & Hides language-specific processing.\\
+LC3 & \mref{mHH} & Hides the audio library and platform APIs.\\
+LC4 & \mref{mMap} & Owns the versioned song-map representation.\\
+LC5 & \mref{mLanguage} & Hides the Japanese tokenizer choice.\\
+LC6 & Distributed & Constants set independent limits for playback
+(\mref{mSync}), song-map structure (\mref{mMap}), and user workflows
+(\mref{mLearner}, \mref{mEditor}); a single owner would incorrectly
+couple unrelated policies. Each value is owned by its affected module.\\
+LC7 & \mref{mHH} & Hides local-file and package delivery mechanisms
+behind the platform adapter.\\
 \bottomrule
-\end{tabular}
-\caption{Trace Between Anticipated Changes and Modules}
-\label{TblACT}
+\end{tabularx}
+\caption{SRS likely changes allocated to information-hiding modules}
+\label{TblLCT}
 \end{table}
 
 \section{Use Hierarchy Between Modules} \label{SecUse}
 
-In this section, the uses hierarchy between modules is
-provided. \citet{Parnas1978} said of two programs A and B that A {\em uses} B if
-correct execution of B may be necessary for A to complete the task described in
-its specification. That is, A {\em uses} B if there exist situations in which
-the correct functioning of A depends upon the availability of a correct
-implementation of B.  Figure \ref{FigUH} illustrates the use relation between
-the modules. It can be seen that the graph is a directed acyclic graph
-(DAG). Each level of the hierarchy offers a testable and usable subset of the
-system, and modules in the higher level of the hierarchy are essentially simpler
-because they use modules from the lower levels.
+A module \emph{uses} another when its correct execution depends on a service
+provided by the other module~\citep{Parnas1978}. An arrow from A to B means
+A uses B; arrows do not represent the direction in which data flows. This
+design keeps both user-facing modules above reusable services, with no
+dependency from a lower-level service back to either user interface.
 
-\wss{The uses relation is not a data flow diagram.  In the code there will often
-be an import statement in module A when it directly uses module B.  Module B
-provides the services that module A needs.  The code for module A needs to be
-able to see these services (hence the import statement).  Since the uses
-relation is transitive, there is a use relation without an import, but the
-arrows in the diagram typically correspond to the presence of import statement.}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Module} & \textbf{Modules it directly uses}\\
+\midrule
+\mref{mHH} Platform and Media Adapter & None\\
+\mref{mLearner} Learner Lesson Interface &
+\mref{mHH}, \mref{mValidate}, \mref{mAnki}, \mref{mMap},
+\mref{mSync}\\
+\mref{mEditor} Song Map Authoring Interface &
+\mref{mHH}, \mref{mValidate}, \mref{mMap}, \mref{mSync},
+\mref{mLanguage}\\
+\mref{mValidate} Song Map Validation & \mref{mMap}\\
+\mref{mAnki} Vocabulary Handoff & \mref{mHH}\\
+\mref{mMap} Shared Song Map Format & None\\
+\mref{mSync} Playback Synchronization & \mref{mMap}\\
+\mref{mLanguage} Language Text Processing & None\\
+\bottomrule
+\end{tabularx}
+\caption{Direct use dependencies (caller to provider)}
+\label{TblUses}
+\end{table}
 
-\wss{If module A uses module B, the arrow is directed from A to B.}
+Figure~\ref{FigUH} groups the same modules by architectural layer.
+The complete direct edge list in Table~\ref{TblUses} is normative.
+For example, the learner calls synchronization over already-verified
+map timings; it does not call the language tokenizer. Likewise, the
+editor uses language processing to suggest segmentation, but validation
+remains a shared service. Anki integration depends on the platform
+adapter for permitted external communication; it does not depend on UI
+widgets.
 
 \begin{figure}[H]
 \centering
-%\includegraphics[width=0.7\textwidth]{UsesHierarchy.png}
-\caption{Use hierarchy among modules}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    >=Stealth,
+    box/.style={draw,rounded corners,align=center,minimum width=3cm,
+                 minimum height=0.85cm,font=\small},
+    edge/.style={->,line width=0.45pt,draw=black!65}
+]
+\node[box] (learner) at (0,6) {M2 Learner\\Interface};
+\node[box] (editor) at (10,6) {M3 Authoring\\Interface};
+\node[box] (validator) at (0,3) {M4 Map\\Validation};
+\node[box] (handoff) at (3.4,3) {M5 Vocabulary\\Handoff};
+\node[box] (sync) at (6.7,3) {M7 Playback\\Synchronization};
+\node[box] (language) at (10,3) {M8 Language\\Processing};
+\node[box] (platform) at (2.5,0) {M1 Platform\\Adapter};
+\node[box] (format) at (8,0) {M6 Song Map\\Format};
+\draw[edge] (learner) -- (validator);
+\draw[edge] (learner) -- (handoff);
+\draw[edge] (learner) -- (sync);
+\draw[edge] (learner) -- (platform);
+\draw[edge] (learner) -- (format);
+\draw[edge] (editor) -- (validator);
+\draw[edge] (editor) -- (sync);
+\draw[edge] (editor) -- (language);
+\draw[edge] (editor) -- (platform);
+\draw[edge] (editor) -- (format);
+\draw[edge] (validator) -- (format);
+\draw[edge] (handoff) -- (platform);
+\draw[edge] (sync) -- (format);
+\end{tikzpicture}%
+}
+\caption{Use hierarchy of LingoLyrics modules; arrows point to providers}
 \label{FigUH}
 \end{figure}
 
+The graph is acyclic. A valid topological layering is
+\{\mref{mLearner}, \mref{mEditor}\},
+\{\mref{mValidate}, \mref{mAnki}, \mref{mSync}, \mref{mLanguage}\},
+and \{\mref{mHH}, \mref{mMap}\}. Lower-level modules do not import
+application screens. Dependencies are architectural commitments to be
+checked against implementation imports during the Revision~0 review.
+
 %\section*{References}
 
-\section{User Interfaces}
+\section{User Interfaces} \label{SecUI}
 
-\wss{Design of user interface for software and hardware.  Attach an appendix if
-needed. Drawings, Sketches, Figma}
+LingoLyrics separates the learner and creator workflows so each can use
+controls appropriate to its device. The learner UI is presented by
+\mref{mLearner}; the editor UI is presented by \mref{mEditor}. The interfaces
+below specify intended interactions for Revision~0, not completed screen
+implementations or final visual styling.
 
-\section{Design of Communication Protocols}
+\subsection{Learner application}
 
-\wss{If there is communication between hardware and software, it may be necessary 
-to explain the design of the communication protocol.  This section should be filled 
-in with NA if it is not appropriate for a given project.}
+The learner starts from a local lesson library displaying title, artist,
+language, difficulty, and explicit-content flag (FR2, HS6). Importing a
+lesson uses the platform file picker and common map validation (FR1, IN2).
+The lesson view prioritizes timed lyrics above the playback controls,
+with the active line highlighted by both a non-colour cue and colour
+(LF1, LF2, HS5). Controls include play, pause, seek, restart-line,
+translation and transliteration toggles, and word/line selection
+(FR3--FR7, UH3). Selecting an annotated word reveals its reading,
+meaning, and context without interrupting playback. From that view,
+the learner can send the word to Anki and receive confirmed, pending,
+or failed status (FR8, IN8). Controls must be screen-reader labelled
+and usable on a phone in one hand (UH7, OE1).
 
-\section{Database Design}
+\subsection{Creator editor}
 
-\wss{If a database is a significant component of the project, the database
-design should be summarized here.  This section should be filled in with NA if
-it is not appropriate for a given project.}
+The browser editor first loads existing audio and lyric text or a previously
+saved map (FR9). The creator then marks and corrects line timing while
+listening, reviews language-specific segmentation suggestions, and edits
+translations, annotations, metadata, source credits, and licence fields
+(FR10--FR12, LG1). A preview uses the same map timing interpretation as
+the learner (FR13). The validation view identifies all failed rules and
+prevents exporting an invalid map (FR14, FR16); successful export produces
+the agreed package without manually editing its underlying representation
+(FR15). Autosave, restore, undo, and redo protect drafts (IN6).
 
-\section{Timeline}
+The UI responsibilities are architectural; exact screen geometry, colours,
+and controls will be refined after user testing. Both UI modules consume
+shared services rather than duplicating timing and validation logic.
 
-\wss{Schedule of tasks and who is responsible}
+\section{Design of Communication Protocols} \label{SecCommunication}
 
-\wss{You can point to GitHub if this information is included there}
+There is no LingoLyrics-operated server, account system, or cloud
+synchronization in the initial release (SRS UC3). Editor-to-learner
+exchange is a versioned song-map package transferred by local file
+operations. \mref{mMap} owns the package representation,
+\mref{mValidate} owns validity rules, and \mref{mHH} handles
+platform-dependent file operations. The learner rejects unsupported
+major versions and file references that escape the package (IN3, IM2).
 
-\section{Generative AI Use Disclosure}
+Vocabulary handoff is the only optional external integration. The
+\mref{mAnki} module hides whether the implementation uses AnkiDroid,
+desktop AnkiConnect, or an importable file (LC1, OE2). When AnkiConnect
+is chosen, a connection is limited to an explicitly configured origin
+and API key (AC2); success is never assumed before a confirmed result
+(IN8). An offline export does not imply the vocabulary has already
+been imported into Anki. This protocol boundary does not require a
+project-hosted backend.
 
-\wss{ChatGPT (version 5) was used to brainstorm ideas for the template for this disclose section.}
+\section{Database Design} \label{SecDatabase}
+
+A centralized database is \emph{not applicable} to the planned release,
+but local persistence remains essential. The following ownerships
+separate the authoritative data from its UI representation:
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}p{0.26\textwidth}p{0.25\textwidth}X@{}}
+\toprule
+\textbf{Data} & \textbf{Logical owner} & \textbf{Storage or presentation}\\
+\midrule
+Song-map metadata, lyric timing, annotations & \mref{mMap} &
+Versioned package on disk; read through validation and file adapter.\\
+Imported lesson library and learner preferences & \mref{mLearner} &
+Local device persistence; copied into in-memory lesson view when opened.\\
+In-progress creator draft and undo history & \mref{mEditor} &
+Editor memory plus locally persisted autosave; no cloud copy.\\
+Unconfirmed vocabulary transfers & \mref{mAnki} &
+Durable local queue, transmitted or exported only on explicit user action.\\
+Platform audio position and file operations & \mref{mHH} &
+External device/player and filesystem; accessed by public adapter calls.\\
+\bottomrule
+\end{tabularx}
+\caption{Logical data ownership and persistence boundaries}
+\label{TblPersistence}
+\end{table}
+
+The adapter provides storage access but does not own the meaning of
+lesson data or pending cards. Each mutable record has one logical
+owner; other modules use the owner's operations rather than maintaining
+a second authoritative copy. The final persistence APIs will be
+specified in the MIS and reviewed for the IN6 and IN8 recovery rules.
+
+\section{Timeline} \label{SecTimeline}
+
+The milestones below refine the
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/DevelopmentPlan/DevelopmentPlan.tex}
+{Development Plan} into module-level deliverables needed for Revision~0
+on January 18, 2027. These are proposed working assignments based on the
+Development Plan's initial component ownership; the team will confirm
+and update them during sprint planning. Each implementation task
+includes enough verification to support integration confidence, but
+the full V\&V Report remains a later deliverable.
+
+\small
+\begin{longtable}{@{}p{0.15\textwidth}p{0.12\textwidth}p{0.18\textwidth}p{0.47\textwidth}@{}}
+\caption{Proposed implementation plan to Revision 0}\label{TblTimeline}\\
+\toprule
+\textbf{Window} & \textbf{Modules} & \textbf{Primary owner} &
+\textbf{Deliverable and verification checkpoint}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Window} & \textbf{Modules} & \textbf{Primary owner} &
+\textbf{Deliverable and verification checkpoint}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Nov.\ 13--16 & All & Team &
+Revision~$-1$ MG and MIS reviewed for module interfaces,
+requirements coverage, and compilation.\\
+Nov.\ 17--20 & M6, M4 & Raymond (backup: Aansh) &
+Finalize song-map types, versioning and validation cases;
+CI rejects deliberately invalid fixtures.\\
+Nov.\ 17--23 & M1, M7 & Omar (backup: Rhea) &
+Connect Expo Audio to synchronized line-selection logic;
+log expected vs.\ observed transitions on a test phone.\\
+Nov.\ 17--23 & M8 & Rhea (backup: Raymond) &
+Verify Japanese segmentation on 20 independently reviewed
+lines, with measured dictionary and processing time.\\
+Nov.\ 17--23 & M5 & Aansh (backup: Omar) &
+Demonstrate one Anki transfer route and independently
+confirm note fields in a test deck.\\
+Nov.\ 23--Dec.\ 4 & M1, M5, M7, M8 & Component owners &
+PoC demonstration for R1, R2, R3; record measured evidence,
+remaining risks, and scope changes where necessary.\\
+Dec.\ 5--18 & M2, M7, M1 & Omar (backup: Rhea) &
+Implement local lesson library, lyric view, playback controls
+and annotations; verify offline playback and seek/restart cases.\\
+Dec.\ 5--Jan.\ 3 & M3, M4, M6 & Raymond (backup: Aansh) &
+Implement creator input, timing, annotations, preview, autosave
+and export; round-trip a valid map into the learner.\\
+Dec.\ 19--Jan.\ 7 & M8, M3 & Rhea (backup: Raymond) &
+Integrate verified language suggestions into the editor and
+test correction and persistence of segmentation.\\
+Jan.\ 4--10 & M5, M2, M1 & Aansh (backup: Omar) &
+Integrate Anki confirmation and pending-item retry; test
+success, timeout, offline, and duplicate-send scenarios.\\
+Jan.\ 11--17 & All & Team &
+Cross-platform integration, module-level tests, syntax/lint
+and CI checks; repair major gaps and rehearse Rev~0 demo.\\
+Jan.\ 18 & All & Team &
+Submit Revision~0 design documentation and integrated build.\\
+\end{longtable}
+\normalsize
+
+The GitHub issue tracker and sprint board are the living schedule.
+Changes in scope or ownership will be reflected there and in the
+Development Plan; the dates above provide a reviewable initial baseline.
+
+\section{Generative AI Use Disclosure} \label{SecMGDisclosure}
 
 \subsection{AI Tools Used}
 
-\wss{Give the name of the AI tool(s) used and the version.}
+OpenAI ChatGPT (GPT-6, accessed November 13, 2026) was used to assist
+with the architecture review and drafting of this Module Guide.
+This disclosure documents Raymond Ma's assistance; any additional
+material use of AI by other contributors must be reported by those
+contributors before the team's submission.
 
 \subsection{How and Where Used}
 
-\wss{Explain what the tool(s) were used for.  Examples include: brainstorming,
-explaining a technical concept, reviewing the document, generating or modifying
-text, generating or modifying diagrams, identifying errors or omissions or
-inconsistencies.}
+ChatGPT was supplied the current MG draft, the Volere SRS, Development
+Plan, MG/MIS checklists, and the Design Document rubrics. It was used
+to propose and edit the project-specific introduction and abbreviations
+(Section~\ref{SecChange} context); the explanation of design decisions
+(Section~\ref{SecConnection}); the requirements and change mappings
+(Section~\ref{SecTM}); the uses hierarchy and diagram
+(Section~\ref{SecUse}); and the interface, storage, communications
+and timeline sections (Sections~\ref{SecUI}--\ref{SecTimeline}).
+It also helped identify residual template content, inconsistent
+identifiers, potential information-hiding issues, and dependencies that
+should not run from reusable services back into user interfaces.
 
-\wss{For each of the uses, identify which parts of the document were affected.}
-
-\wss{You do not need to report every interaction, but you should disclose the 
-uses that materially contributed to your work}
+The tool suggested allocations and wording; the team retains
+responsibility for architecture decisions, module boundaries, the
+feasibility of dates, and the final checked document.
 
 \subsection{Verification of AI-Generated Content}
 
-\wss{\begin{itemize}
-    \item Describe how the team checked AI-generated or AI-assisted material
-    before including it in the document.
-    \item In particular, verify factual claims, technical assertions,
-    requirements, calculations, references, and other information for which an
-    AI system may produce incorrect or fabricated results.
-    \item \textbf{The team is responsible for the accuracy, completeness,
-consistency, and appropriateness of the submitted document, regardless of
-whether material was generated by a human or an AI system.}
-\end{itemize}}
+The following direct checks were performed while preparing these edits:
+
+\begin{itemize}
+\item The requirements list was extracted from the project Volere SRS.
+      All 85 numbered requirements and mandated constraints were
+      checked for one-to-one row coverage in Table~\ref{TblRT}; the
+      module names were checked against the eight labels in
+      Section~\ref{SecMH}. This verifies identifier coverage, not
+      the correctness of every architectural allocation.
+\item SRS likely changes LC1--LC7 were compared with the MG's
+      anticipated changes. The distributed-constants exception is
+      stated explicitly in Table~\ref{TblLCT}, rather than falsely
+      assigning one owner to unrelated thresholds.
+\item Direct dependencies in Table~\ref{TblUses} were checked as an
+      eight-node, 13-edge graph with no cycles. The diagram was
+      derived from that list and must still be checked for legibility
+      in the generated PDF.
+\item Initial module ownership and submission milestones were checked
+      against the Development Plan. The finer-grained task windows
+      remain proposals for team review, not approved commitments.
+\item The file-format, playback, and editor claims were compared with
+      SRS requirements including FR1--FR16, IN1--IN12, and MC1--MC3.
+      Module interfaces and specific implementation choices must
+      also be independently reviewed against the MIS and code.
+\end{itemize}
+
+GitHub Actions will compile the LaTeX on the documentation PR.
+The team must review the resulting PDF, resolve missing references
+and formatting errors, confirm the requirement allocations with
+component owners, and extend this disclosure with any further
+material uses before submission. AI output alone is not treated
+as verification evidence.
 
 \newpage{}
 

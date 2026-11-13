@@ -31,7 +31,7 @@ urlcolor=cyan          % color of external links
 
 \usepackage{array}
 
-\externaldocument{../../SRS/SRS}
+% Requirements are referenced by stable SRS identifiers and source links.
 
 \input{../../Comments.text}
 \input{../../Common.text}
@@ -53,8 +53,7 @@ urlcolor=cyan          % color of external links
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
 \toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
 \midrule
-Date 1 & 1.0 & Notes\\
-Date 2 & 1.1 & Notes\\
+November 13, 2026 & -1 & Initial module inventory and first-half interface syntax.\\
 \bottomrule
 \end{tabularx}
 
@@ -62,9 +61,13 @@ Date 2 & 1.1 & Notes\\
 
 \section{Symbols, Abbreviations and Acronyms}
 
-See SRS Documentation at \wss{give url}
-
-\wss{Also add any additional symbols, abbreviations or acronyms}
+The authoritative functional and nonfunctional identifiers (FR1--FR16,
+IN1--IN12, etc.) are defined in the
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/SRS-Volere/SRS.tex}
+{LingoLyrics Volere SRS}. M1--M8 refer to the module numbers in the
+Module Guide; MIS means Module Interface Specification, and ADT means
+abstract data type. Terms such as \emph{song map}, \emph{line},
+\emph{annotation}, and \emph{target} follow the definitions in the SRS.
 
 \newpage
 
@@ -76,158 +79,466 @@ See SRS Documentation at \wss{give url}
 
 \section{Introduction}
 
-The following document details the Module Interface Specifications for
-\wss{Fill in your project name and description}
+This Module Interface Specification describes the externally observable
+contracts of LingoLyrics's software modules. The mobile learner
+application opens and plays locally stored lessons; the browser editor
+creates validated song-map packages. Both depend on shared map and
+validation services. The architecture and each module's hidden design
+decisions are documented in the
+\href{https://github.com/rhea333/LingoLyrics/blob/docs/mg/docs/Design/SoftArchitecture/MG.tex}
+{Module Guide}. Source code and project documents are in the
+\href{https://github.com/rhea333/LingoLyrics}{LingoLyrics repository}.
 
-Complementary documents include the System Requirement Specifications
-and Module Guide.  The full documentation and implementation can be
-found at \url{...}.  \wss{provide the url for your repo}
+An MIS defines the behaviour, state and environmental interactions that
+a consumer may depend on; it does not prescribe UI widget structure,
+runtime library calls, or a particular serialization language.
+The interface specifications for M1--M4 are provided in this revision.
+M5--M8 require companion specifications before the team's Revision~$-1$
+submission can be considered complete.
 
 \section{Notation}
 
-\wss{You should describe your notation.  You can use what is below as
-  a starting point.}
+This specification uses abstract types and simple mathematical contracts
+instead of application-specific programming syntax. A function
+$f : A \rightarrow B$ accepts a value of type $A$ and yields a value
+of type $B$. $\mathbb{R}_{\geq 0}$ is the set of nonnegative real
+numbers, $\mathbb{B}=\{\mathit{true},\mathit{false}\}$, and
+$\operatorname{Seq}(T)$, $\operatorname{Set}(T)$, and
+$\operatorname{Option}(T)$ mean a sequence, set, and optional value of
+type $T$. $\bot$ denotes no available value. Time measurements
+are in seconds; $t$ is a timestamp and $d$ is audio duration.
 
-The structure of the MIS for modules comes from \citet{HoffmanAndStrooper1995},
-with the addition that template modules have been adapted from
-\cite{GhezziEtAl2003}.  The mathematical notation comes from Chapter 3 of
-\citet{HoffmanAndStrooper1995}.  For instance, the symbol := is used for a
-multiple assignment statement and conditional rules follow the form $(c_1
-\Rightarrow r_1 | c_2 \Rightarrow r_2 | ... | c_n \Rightarrow r_n )$.
+Types from the shared format module M6 include
+$\mathrm{SongMap}$, $\mathrm{LineRef}$, $\mathrm{TargetRef}$,
+$\mathrm{VocabularyItem}$, and $\mathrm{LessonID}$.
+A $\mathrm{CandidateMap}$ is an untrusted, potentially invalid input
+to the validator; a $\mathrm{ValidatedMap}$ is a candidate accepted
+by all relevant song-map validity rules (SRS V1--V8).
+Additional abstract types include $\mathrm{LineText}$ (a lyric line),
+$\mathrm{Metadata}$ (lesson-level fields and credits),
+$\mathrm{Segmentation}$ (a sequence of proposed word spans), and
+$\mathrm{SendStatus}$ (confirmed, queued, or failed).
+Other interface-level types used below are
+$\mathrm{AudioRef}$ (a reference to an audio resource),
+$\mathrm{FileRef}$ (an opaque file location),
+$\mathrm{Bytes}$ (an opaque file payload),
+$\mathrm{Annotation}$ (lesson context and translation),
+$\mathrm{Edit}$ (one undoable change),
+$\mathrm{RuleID}$ (a validation rule identifier), and
+$\mathrm{ValidationResult}$ (a Boolean verdict with failed rule IDs).
 
-The following table summarizes the primitive data types used by \progname. 
+The \emph{Uses} subsection lists only the modules whose public
+services are required to define this interface, not every
+implementation dependency. \emph{State variables} belong to exactly
+one module. \emph{Environment variables} represent devices, files,
+displays, and external services not controlled by the module.
+For access program semantics, $s' := v$ denotes a new state after
+the operation, $out := v$ its returned result, and $exc := E$ an
+exception or failure. Unless specified otherwise, an operation does
+not mutate its input values.
 
-\begin{center}
-\renewcommand{\arraystretch}{1.2}
-\noindent 
-\begin{tabular}{l l p{7.5cm}} 
-\toprule 
-\textbf{Data Type} & \textbf{Notation} & \textbf{Description}\\ 
-\midrule
-character & char & a single symbol or digit\\
-integer & $\mathbb{Z}$ & a number without a fractional component in (-$\infty$, $\infty$) \\
-natural number & $\mathbb{N}$ & a number without a fractional component in [1, $\infty$) \\
-real & $\mathbb{R}$ & any number in (-$\infty$, $\infty$)\\
-\bottomrule
-\end{tabular} 
-\end{center}
+\section{Module Decomposition} \label{SecMISModules}
 
-\noindent
-The specification of \progname \ uses some derived data types: sequences, strings, and
-tuples. Sequences are lists filled with elements of the same data type. Strings
-are sequences of characters. Tuples contain a list of values, potentially of
-different types. In addition, \progname \ uses functions, which
-are defined by the data types of their inputs and outputs. Local functions are
-described by giving their type signature followed by their specification.
+The modules and numbers are taken from the
+\href{https://github.com/rhea333/LingoLyrics/blob/docs/mg/docs/Design/SoftArchitecture/MG.tex}
+{Module Guide}. The table is a classification by hidden decision,
+not a call graph.
 
-\section{Module Decomposition}
-
-The following table is taken directly from the Module Guide document for this project.
-
-\begin{table}[h!]
+\begin{table}[H]
 \centering
-\begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
+\begin{tabularx}{\textwidth}{@{}p{0.27\textwidth}lX@{}}
 \toprule
-\textbf{Level 1} & \textbf{Level 2}\\
+\textbf{Class} & \textbf{ID} & \textbf{Module}\\
 \midrule
-
-{Hardware-Hiding} & ~ \\
-\midrule
-
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding} & Input Parameters\\
-& Output Format\\
-& Output Verification\\
-& Temperature ODEs\\
-& Energy Equations\\ 
-& Control Module\\
-& Specification Parameters Module\\
-\midrule
-
-\multirow{3}{0.3\textwidth}{Software Decision} & {Sequence Data Structure}\\
-& ODE Solver\\
-& Plotting\\
+Hardware-hiding & M1 & Platform and Media Adapter\\
+Behaviour-hiding & M2 & Learner Lesson Interface\\
+ & M3 & Song Map Authoring Interface\\
+ & M4 & Song Map Validation Module\\
+ & M5 & Vocabulary Handoff Module\\
+Software decision & M6 & Shared Song Map Format Module\\
+ & M7 & Playback Synchronization Module\\
+ & M8 & Language Text Processing Module\\
 \bottomrule
-
-\end{tabular}
-\caption{Module Hierarchy}
+\end{tabularx}
+\caption{LingoLyrics module inventory matching the Module Guide}
 \label{TblMH}
 \end{table}
 
-\newpage
-~\newpage
-
-\section{MIS of \wss{Module Name}} \label{Module} \wss{Use labels for
-  cross-referencing}
-
-\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
-
-\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+\clearpage
+\section{MIS of M1: Platform and Media Adapter} \label{MISM1}
 
 \subsection{Module}
-
-\wss{Short name for the module}
+Platform and Media Adapter (hardware-hiding abstract object).
+A single adapter instance represents the active platform playback
+session and access to local files. The adapter hides OS-specific
+audio and storage operations from consumer modules.
 
 \subsection{Uses}
-
+None.
 
 \subsection{Syntax}
-
 \subsubsection{Exported Constants}
+None. Playback tolerances are defined as requirement parameters,
+not hard-coded constants of the adapter.
 
 \subsubsection{Exported Access Programs}
-
 \begin{center}
-\begin{tabular}{p{2cm} p{4cm} p{4cm} p{2cm}}
-\hline
-\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
-\hline
-\wss{accessProg} & - & - & - \\
-\hline
-\end{tabular}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.20\textwidth}p{0.25\textwidth}p{0.23\textwidth}X@{}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions}\\
+\midrule
+\texttt{loadAudio} & $\mathrm{AudioRef}$ & -- &
+ResourceMissing, UnsupportedAudio\\
+\texttt{play} & -- & -- & NoAudio\\
+\texttt{pause} & -- & -- & NoAudio\\
+\texttt{seek} & $t:\mathbb{R}_{\geq 0}$ & -- & NoAudio, OutOfRange\\
+\texttt{getPosition} & -- & $\mathbb{R}_{\geq 0}$ & NoAudio\\
+\texttt{getDuration} & -- & $\mathbb{R}_{\geq 0}$ & NoAudio\\
+\texttt{readFile} & $\mathrm{FileRef}$ & $\mathrm{Bytes}$ &
+ResourceMissing, AccessDenied\\
+\texttt{writeFile} & $\mathrm{FileRef},\mathrm{Bytes}$ & -- &
+AccessDenied, NoSpace\\
+\bottomrule
+\end{tabularx}
+\normalsize
 \end{center}
 
 \subsection{Semantics}
-
 \subsubsection{State Variables}
-
-\wss{Not all modules will have state variables.  State variables give the module
-  a memory.}
+$activeAudio : \operatorname{Option}(\mathrm{AudioRef})$.
+Initially $activeAudio=\bot$. This is the sole logical owner of the
+currently loaded audio resource; UI modules do not copy playback
+engine state.
 
 \subsubsection{Environment Variables}
+$devicePosition:\mathbb{R}_{\geq0}$ and
+$deviceDuration:\mathbb{R}_{\geq0}$ are reported by the external
+audio device; $deviceMode\in\{\mathrm{Idle},\mathrm{Ready},
+\mathrm{Playing},\mathrm{Paused},\mathrm{Ended}\}$ describes its
+transport state. $fileStore$ denotes the external platform filesystem.
+These are observations or effects outside the module, not private
+software state variables.
 
-\wss{This section is not necessary for all modules.  Its purpose is to capture
-  when the module has external interaction with the environment, such as for a
-  device driver, screen interface, keyboard, file, etc.}
-
-\subsubsection{Assumptions}
-
-\wss{Try to minimize assumptions and anticipate programmer errors via
-  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+\subsubsection{Assumptions and Invariants}
+A loaded audio resource has a finite positive duration.
+When $activeAudio\neq\bot$, the reported position lies in
+$[0,deviceDuration]$, subject to the device's reporting precision.
+Only M1 may issue commands to its active audio device.
+The caller is responsible for the user-action rules in HS1;
+loading a resource alone never starts playback.
 
 \subsubsection{Access Routine Semantics}
+\begin{description}
+\item[\texttt{loadAudio}(a):] On successful decode, $activeAudio':=a$,
+$devicePosition':=0$, and $deviceMode':=\mathrm{Ready}$.
+Otherwise $exc:=\mathrm{ResourceMissing}$ or
+$\mathrm{UnsupportedAudio}$; the old session remains unchanged.
+\item[\texttt{play}():] If no audio is loaded, $exc:=\mathrm{NoAudio}$;
+otherwise $deviceMode':=\mathrm{Playing}$.
+\item[\texttt{pause}():] If no audio is loaded, $exc:=\mathrm{NoAudio}$;
+otherwise $deviceMode':=\mathrm{Paused}$.
+\item[\texttt{seek}(t):] If there is no active audio, raise
+NoAudio; if $t>deviceDuration$, raise OutOfRange; otherwise set the
+external audio position to $t$.
+\item[\texttt{getPosition}(), \texttt{getDuration}():]
+After a successful load, $out:=devicePosition$ and
+$out:=deviceDuration$, respectively. NoAudio is raised otherwise.
+\item[\texttt{readFile}(f):] $out:=fileStore[f]$ when readable;
+raise ResourceMissing or AccessDenied otherwise.
+\item[\texttt{writeFile}(f,b):] On success, $fileStore'[f]:=b$.
+Raise AccessDenied or NoSpace on failure; do not report success
+before the requested write is complete.
+\end{description}
 
-\noindent \wss{accessProg}():
-\begin{itemize}
-\item transition: \wss{if appropriate} 
-\item output: \wss{if appropriate} 
-\item exception: \wss{if appropriate} 
-\end{itemize}
+\clearpage
+\section{MIS of M2: Learner Lesson Interface} \label{MISM2}
 
-\wss{A module without environment variables or state variables is unlikely to
-  have a state transition.  In this case a state transition can only occur if
-  the module is changing the state of another module.}
+\subsection{Module}
+Learner Lesson Interface (behaviour-hiding abstract object). It owns
+lesson selection, presentation preferences, and learner interactions;
+it does not implement the audio clock, validator, tokenizer, or
+Anki transport.
 
-\wss{Modules rarely have both a transition and an output.  In most cases you
-  will have one or the other.}
+\subsection{Uses}
+M1 Platform and Media Adapter, M4 Song Map Validation,
+M5 Vocabulary Handoff, M6 Shared Song Map Format, and
+M7 Playback Synchronization.
+
+\subsection{Syntax}
+\subsubsection{Exported Constants}
+None. UI thresholds and lesson limits are taken from the SRS.
+
+\subsubsection{Exported Access Programs}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.21\textwidth}p{0.24\textwidth}p{0.22\textwidth}X@{}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions}\\
+\midrule
+\texttt{importLesson} & $\mathrm{FileRef}$ &
+$\mathrm{LessonID}$ & InvalidMap, ResourceMissing\\
+\texttt{openLesson} & $\mathrm{LessonID}$ & -- & UnknownLesson\\
+\texttt{play}, \texttt{pause} & -- & -- & NoLesson\\
+\texttt{seek} & $t:\mathbb{R}_{\geq0}$ & -- & NoLesson, OutOfRange\\
+\texttt{selectTarget} & $\mathrm{TargetRef}$ &
+$\operatorname{Option}(\mathrm{Annotation})$ & UnknownTarget\\
+\texttt{setLayers} & $\mathbb{B}\times\mathbb{B}$ & -- & --\\
+\texttt{sendSelected} & -- & $\mathrm{SendStatus}$ &
+NoSelection\\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{center}
+
+\subsection{Semantics}
+\subsubsection{State Variables}
+$library:\operatorname{Seq}(\mathrm{LessonID})$ is the locally
+persisted lesson index; $opened:
+\operatorname{Option}(\mathrm{ValidatedMap})$ is the active
+lesson; $selected:\operatorname{Option}(\mathrm{TargetRef})$
+is the selected word or line; and
+$showTransliteration,showTranslation:\mathbb{B}$ are remembered
+presentation preferences. Initially $opened=selected=\bot$.
+The library and preferences are restored from local storage.
+
+\subsubsection{Environment Variables}
+$learnerScreen$ is the displayed lesson and its controls;
+$learnerInput$ is the stream of taps, swipes, and accessibility
+actions. File storage and the audio player belong to M1 and are
+observed through that module rather than duplicated as M2 state.
+
+\subsubsection{Assumptions and Invariants}
+$selected\neq\bot\Rightarrow opened\neq\bot$.
+Every $opened$ lesson has passed M4 validation and its major
+version is supported (FR1, IN3). Displayed segmentation is read
+from the validated map and is never recomputed by M2 (IN4).
+M2 must not display a successful Anki transfer before the M5
+service confirms it (IN8).
+
+\subsubsection{Access Routine Semantics}
+\begin{description}
+\item[\texttt{importLesson}(f):] Read the candidate from M1 and
+validate it using M4. On success, append its identifier to
+$library$ if not already present and persist the updated index;
+$out:=\mathrm{LessonID}$. An invalid candidate raises InvalidMap
+and leaves $library$ unchanged.
+\item[\texttt{openLesson}(id):] If $id$ is in the library, load
+the validated map and set $opened'$ to it and $selected':=\bot$;
+otherwise raise UnknownLesson. The screen presents that lesson.
+\item[\texttt{play}(), \texttt{pause}(), \texttt{seek}(t):]
+When $opened=\bot$, raise NoLesson. Otherwise delegate to M1
+and use the current M1 position with M7 to identify the active
+lyric. Playback starts only on a learner action (HS1).
+\item[\texttt{selectTarget}(r):] If $r$ is not in the active
+lesson, raise UnknownTarget. Otherwise $selected':=r$ and
+$out$ is the stored optional annotation; playback continues.
+\item[\texttt{setLayers}($b_1,b_2$):]
+$showTransliteration':=b_1$ and $showTranslation':=b_2$;
+persist these preferences on the device.
+\item[\texttt{sendSelected}():] Require a selected word. Pass
+its term, correct word translation, and source-line context to
+M5; return its confirmed, queued, or failed result without
+claiming success on a mere attempted send.
+\end{description}
+
+\clearpage
+\section{MIS of M3: Song Map Authoring Interface} \label{MISM3}
+
+\subsection{Module}
+Song Map Authoring Interface (behaviour-hiding abstract object).
+The editor owns the mutable creator draft, undo history, and
+autosave policy. It delegates language suggestions, timing selection,
+validation, and platform I/O to their corresponding modules.
+
+\subsection{Uses}
+M1 Platform and Media Adapter, M4 Song Map Validation,
+M6 Shared Song Map Format, M7 Playback Synchronization, and
+M8 Language Text Processing.
+
+\subsection{Syntax}
+\subsubsection{Exported Constants}
+None. Required timing resolution and autosave interval are
+specified by the SRS and shared configuration.
+
+\subsubsection{Exported Access Programs}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.19\textwidth}p{0.29\textwidth}p{0.20\textwidth}X@{}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions}\\
+\midrule
+\texttt{loadMaterial} & $\mathrm{AudioRef},
+\operatorname{Seq}(\mathrm{LineText})$ & -- & UnsupportedAudio\\
+\texttt{openDraft} & $\mathrm{FileRef}$ & -- & ResourceMissing\\
+\texttt{setTiming} & $\mathrm{LineRef},\mathbb{R}_{\geq0}^2$
+& -- & UnknownLine, InvalidRange\\
+\texttt{setAnnotation} & $\mathrm{TargetRef},
+\mathrm{Annotation}$ & -- & UnknownTarget\\
+\texttt{setMetadata} & $\mathrm{Metadata}$ & -- & --\\
+\texttt{suggestWords} & $\mathrm{LineRef}$ &
+$\mathrm{Segmentation}$ & UnsupportedLanguage\\
+\texttt{acceptWords} & $\mathrm{LineRef},
+\mathrm{Segmentation}$ & -- & InvalidSegmentation\\
+\texttt{preview} & -- & -- & NoDraft\\
+\texttt{validateDraft} & -- & $\mathrm{ValidationResult}$ & NoDraft\\
+\texttt{exportDraft} & $\mathrm{FileRef}$ & -- & InvalidMap, AccessDenied\\
+\texttt{undo}, \texttt{redo} & -- & -- & NoHistory\\
+\texttt{autosave} & -- & -- & StorageFailure\\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{center}
+
+\subsection{Semantics}
+\subsubsection{State Variables}
+$draft:\operatorname{Option}(\mathrm{CandidateMap})$
+is the sole mutable draft;
+$undoHistory,redoHistory:\operatorname{Seq}(\mathrm{Edit})$
+are history stacks; and $dirty:\mathbb{B}$ marks an
+unpersisted change. Initially $draft=\bot$ and the histories
+are empty. The autosaved representation is persisted through M1,
+but remains logically owned by M3.
+
+\subsubsection{Environment Variables}
+$editorScreen$ represents the current browser display,
+$creatorInput$ represents keyboard, pointer, and accessibility
+events, and $localDraftFile$ is the platform-persisted
+snapshot of the draft. The audio output and its reported position
+are accessed through M1.
+
+\subsubsection{Assumptions and Invariants}
+All nonempty history entries are inverseable edits of the active
+draft. An edit clears the redo stack, marks the draft dirty,
+and leaves its current state available for validation. A draft
+may temporarily be invalid, but \texttt{exportDraft} never
+writes an invalid or unpublishable map (FR14, IN5, LG1).
+Unverified machine-generated segmentation cannot be silently
+promoted to verified content (IN4).
+
+\subsubsection{Access Routine Semantics}
+\begin{description}
+\item[\texttt{loadMaterial}(a,L):] Initialize an editable draft
+using the provided audio and lyric lines; load $a$ through M1,
+clear both histories, and set $dirty':=\mathit{true}$.
+\item[\texttt{openDraft}(f):] Read a draft via M1, place it in
+$draft'$, and initialize an undo history for the restored state.
+A failed read leaves the current draft unchanged.
+\item[\texttt{setTiming}(r,s,e):] Require a known line and
+$0\leq s\leq e$. Replace only that line's timing, append
+its previous value to $undoHistory$, clear $redoHistory$,
+and set $dirty':=\mathit{true}$. Application of the
+latency calibration offset follows IN7.
+\item[\texttt{setAnnotation}(r,v), \texttt{setMetadata}(m):]
+Update the indicated part of $draft$, recording each change
+as an undoable edit. Metadata includes audio/lyric sources
+and licence information (LG1).
+\item[\texttt{suggestWords}(r):] $out$ is M8's
+language-specific proposal for line $r$; the draft is
+unchanged until the creator accepts or corrects it.
+\item[\texttt{acceptWords}(r,g):] Replace line $r$'s
+segmentation with a creator-approved, verified $g$ and
+record the operation in history.
+\item[\texttt{preview}():] Supply the draft's timing to M7
+and the audio reference to M1. Only presentation and audio
+device state are affected; draft data is not modified.
+\item[\texttt{validateDraft}():] $out$ is the complete
+result of M4 validation; the draft is not modified.
+\item[\texttt{exportDraft}(f):] Require valid and publishable
+content from M4. Serialize through the M6 contract and
+write via M1, otherwise raise InvalidMap and leave the
+output file unchanged.
+\item[\texttt{undo}(), \texttt{redo}():] Apply one existing
+history entry and move it between the stacks. Raise NoHistory
+without mutation if the relevant stack is empty.
+\item[\texttt{autosave}():] Persist the current draft through
+M1 without changing the edit history; on success
+$dirty':=\mathit{false}$. An automatic attempt is made
+at least once per AUTOSAVE\_INT after edits (IN6).
+\end{description}
+
+\clearpage
+\section{MIS of M4: Song Map Validation Module} \label{MISM4}
+
+\subsection{Module}
+Song Map Validation Module (stateless library). It is the single
+authority for rejecting invalid or unpublishable lesson packages,
+using the versioned format owned by M6.
+
+\subsection{Uses}
+M6 Shared Song Map Format.
+
+\subsection{Syntax}
+\subsubsection{Exported Constants}
+None. Song-map limits are specification parameters defined
+in the SRS and format contract, not duplicate constants
+inside the validator.
+
+\subsubsection{Exported Access Programs}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.21\textwidth}p{0.22\textwidth}p{0.27\textwidth}X@{}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions}\\
+\midrule
+\texttt{validatePackage} & $\mathrm{Bytes}$ &
+$\mathrm{ValidationResult}$ & --\\
+\texttt{validateMap} & $\mathrm{CandidateMap}$ &
+$\mathrm{ValidationResult}$ & --\\
+\texttt{isPublishable} & $\mathrm{CandidateMap}$ &
+$\mathbb{B}$ & --\\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{center}
+
+\subsection{Semantics}
+\subsubsection{State Variables}
+None; validation never mutates the candidate or caches
+a second authoritative copy of the format.
+
+\subsubsection{Environment Variables}
+None. Files are read and decoded outside this module's
+public contract; a package is supplied as opaque bytes.
+
+\subsubsection{Assumptions and Invariants}
+$\mathrm{ValidationResult}$ contains a Boolean verdict and
+a set of failed rule identifiers. Failed rules name actual
+SRS validity conditions. Every invalid input yields a
+failure result rather than a crash (RB1). For any given
+input and format version, the validation result is
+deterministic. Both the editor and learner call this same
+interface (FR16).
+
+\subsubsection{Access Routine Semantics}
+\begin{description}
+\item[\texttt{validatePackage}(b):] Check package-size and
+nesting limits before fully parsing untrusted content
+(IM1), reject unsafe resource paths (IM2), and evaluate
+the supported format version, schema rules, and SRS
+validity predicates V1--V8. Set
+$out:=(\mathit{valid},\mathit{failedRules})$, where
+$\mathit{valid}$ holds exactly when the failure set is
+empty; report every applicable failed rule.
+\item[\texttt{validateMap}(m):] Evaluate the already parsed
+candidate using the same field and semantic validity
+predicates as \texttt{validatePackage}, including
+timing order and verified segmentation. The input is
+unchanged.
+\item[\texttt{isPublishable}(m):] $out:=\mathit{true}$
+only when M4 accepts the candidate and every annotation
+has a distinct named author and reviewer (IN5);
+otherwise $out:=\mathit{false}$. Publication also
+requires the SRS content rights fields (LG1).
+\end{description}
 
 \subsubsection{Local Functions}
+$\operatorname{validTiming}$, $\operatorname{validRefs}$,
+and $\operatorname{validAnnotations}$ denote the corresponding
+predicates in SRS V1--V8. They are specification abbreviations,
+not mandatory implementation helpers.
 
-\wss{As appropriate} \wss{These functions are for the purpose of specification.
-  They are not necessarily something that is going to be implemented
-  explicitly.  Even if they are implemented, they are not exported; they only
-  have local scope.}
-
-\newpage
+\clearpage
 
 \bibliographystyle {plainnat}
 \bibliography {../../../refs/References}
@@ -237,43 +548,42 @@ The following table is taken directly from the Module Guide document for this pr
 \newpage{}
 
 \section{Appendix --- Generative AI Use Disclosure}
-
-\wss{ChatGPT (version 5) was used to brainstorm ideas for the template for this disclose section.}
+\label{SecMISDisclosure}
 
 \subsection{AI Tools Used}
-
-\wss{Give the name of the AI tool(s) used and the version.}
+OpenAI ChatGPT (GPT-6, November 13, 2026) assisted Raymond Ma with
+the M1--M4 interface specifications and replacement of sample content.
+Other team members must disclose their own material AI use before
+the final submission.
 
 \subsection{How and Where Used}
-
-\wss{Explain what the tool(s) were used for.  Examples include: brainstorming,
-explaining a technical concept, reviewing the document, generating or modifying
-text, generating or modifying diagrams, identifying errors or omissions or
-inconsistencies.}
-
-\wss{For each of the uses, identify which parts of the document were affected.}
-
-\wss{You do not need to report every interaction, but you should disclose the 
-uses that materially contributed to your work}
+ChatGPT reviewed the Volere SRS, the MG, the MIS checklist, and
+the design rubric. It helped draft the LingoLyrics module inventory
+and contracts in Sections~\ref{SecMISModules}--\ref{MISM4},
+including abstract operations, exceptions, state ownership,
+environment variables, and access routine semantics. These
+interfaces are design proposals, not claims of implementation.
 
 \subsection{Verification of AI-Generated Content}
+Module names, numbers, and direct use relations were checked
+against the revised Module Guide. Operations and conditions were
+compared against SRS FR1--FR16 and applicable IN, MC, RB, OE,
+and LG requirements. State ownership was reviewed to avoid
+duplicate authoritative data, and the stateless validator
+has no environment or state variables.
 
-\wss{\begin{itemize}
-    \item Describe how the team checked AI-generated or AI-assisted material
-    before including it in the document.
-    \item In particular, verify factual claims, technical assertions,
-    requirements, calculations, references, and other information for which an
-    AI system may produce incorrect or fabricated results.
-    \item \textbf{The team is responsible for the accuracy, completeness,
-consistency, and appropriateness of the submitted document, regardless of
-whether material was generated by a human or an AI system.}
-\end{itemize}}
+The team must inspect the compiled PDF, check the companion
+M5--M8 specifications for type and dependency consistency,
+and have each owner confirm its interfaces. All claims of
+completeness and correctness remain the team's responsibility.
 
 \newpage{}
 
 \section{Appendix --- Reflection}
 
-\wss{Not required for CAS 741 projects}
+This section is reserved for the team reflection submitted after the
+original design deadline. Responses will be added after module owners
+have reviewed each other's interfaces and implementation tradeoffs.
 
 The information in this section will be used to evaluate the team members on the
 graduate attribute of Problem Analysis and Design.

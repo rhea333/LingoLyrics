@@ -31,7 +31,7 @@ urlcolor=cyan          % color of external links
 
 \usepackage{array}
 
-\externaldocument{../../SRS/SRS}
+% Requirements are referenced by stable SRS identifiers and source links.
 
 \input{../../Comments.text}
 \input{../../Common.text}
@@ -53,8 +53,7 @@ urlcolor=cyan          % color of external links
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
 \toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
 \midrule
-Date 1 & 1.0 & Notes\\
-Date 2 & 1.1 & Notes\\
+November 13, 2026 & -1 & Initial module inventory and first-half interface syntax.\\
 \bottomrule
 \end{tabularx}
 
@@ -62,9 +61,13 @@ Date 2 & 1.1 & Notes\\
 
 \section{Symbols, Abbreviations and Acronyms}
 
-See SRS Documentation at \wss{give url}
-
-\wss{Also add any additional symbols, abbreviations or acronyms}
+The authoritative functional and nonfunctional identifiers (FR1--FR16,
+IN1--IN12, etc.) are defined in the
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/SRS-Volere/SRS.tex}
+{LingoLyrics Volere SRS}. M1--M8 refer to the module numbers in the
+Module Guide; MIS means Module Interface Specification, and ADT means
+abstract data type. Terms such as \emph{song map}, \emph{line},
+\emph{annotation}, and \emph{target} follow the definitions in the SRS.
 
 \newpage
 
@@ -76,85 +79,86 @@ See SRS Documentation at \wss{give url}
 
 \section{Introduction}
 
-The following document details the Module Interface Specifications for
-\wss{Fill in your project name and description}
+This Module Interface Specification describes the externally observable
+contracts of LingoLyrics's software modules. The mobile learner
+application opens and plays locally stored lessons; the browser editor
+creates validated song-map packages. Both depend on shared map and
+validation services. The architecture and each module's hidden design
+decisions are documented in the
+\href{https://github.com/rhea333/LingoLyrics/blob/docs/mg/docs/Design/SoftArchitecture/MG.tex}
+{Module Guide}. Source code and project documents are in the
+\href{https://github.com/rhea333/LingoLyrics}{LingoLyrics repository}.
 
-Complementary documents include the System Requirement Specifications
-and Module Guide.  The full documentation and implementation can be
-found at \url{...}.  \wss{provide the url for your repo}
+An MIS defines the behaviour, state and environmental interactions that
+a consumer may depend on; it does not prescribe UI widget structure,
+runtime library calls, or a particular serialization language.
+The interface specifications for M1--M4 are provided in this revision.
+M5--M8 require companion specifications before the team's Revision~$-1$
+submission can be considered complete.
 
 \section{Notation}
 
-\wss{You should describe your notation.  You can use what is below as
-  a starting point.}
+This specification uses abstract types and simple mathematical contracts
+instead of application-specific programming syntax. A function
+$f : A \rightarrow B$ accepts a value of type $A$ and yields a value
+of type $B$. $\mathbb{R}_{\geq 0}$ is the set of nonnegative real
+numbers, $\mathbb{B}=\{\mathit{true},\mathit{false}\}$, and
+$\operatorname{Seq}(T)$, $\operatorname{Set}(T)$, and
+$\operatorname{Option}(T)$ mean a sequence, set, and optional value of
+type $T$. $\bot$ denotes no available value. Time measurements
+are in seconds; $t$ is a timestamp and $d$ is audio duration.
 
-The structure of the MIS for modules comes from \citet{HoffmanAndStrooper1995},
-with the addition that template modules have been adapted from
-\cite{GhezziEtAl2003}.  The mathematical notation comes from Chapter 3 of
-\citet{HoffmanAndStrooper1995}.  For instance, the symbol := is used for a
-multiple assignment statement and conditional rules follow the form $(c_1
-\Rightarrow r_1 | c_2 \Rightarrow r_2 | ... | c_n \Rightarrow r_n )$.
+Types from the shared format module M6 include
+$\mathrm{SongMap}$, $\mathrm{LineRef}$, $\mathrm{TargetRef}$,
+$\mathrm{VocabularyItem}$, and $\mathrm{LessonID}$.
+A $\mathrm{CandidateMap}$ is an untrusted, potentially invalid input
+to the validator; a $\mathrm{ValidatedMap}$ is a candidate accepted
+by all relevant song-map validity rules (SRS V1--V8).
+Other interface-level types used below are
+$\mathrm{AudioRef}$ (a reference to an audio resource),
+$\mathrm{FileRef}$ (an opaque file location),
+$\mathrm{Bytes}$ (an opaque file payload),
+$\mathrm{Annotation}$ (lesson context and translation),
+$\mathrm{Edit}$ (one undoable change),
+$\mathrm{RuleID}$ (a validation rule identifier), and
+$\mathrm{ValidationResult}$ (a Boolean verdict with failed rule IDs).
 
-The following table summarizes the primitive data types used by \progname. 
+The \emph{Uses} subsection lists only the modules whose public
+services are required to define this interface, not every
+implementation dependency. \emph{State variables} belong to exactly
+one module. \emph{Environment variables} represent devices, files,
+displays, and external services not controlled by the module.
+For access program semantics, $s' := v$ denotes a new state after
+the operation, $out := v$ its returned result, and $exc := E$ an
+exception or failure. Unless specified otherwise, an operation does
+not mutate its input values.
 
-\begin{center}
-\renewcommand{\arraystretch}{1.2}
-\noindent 
-\begin{tabular}{l l p{7.5cm}} 
-\toprule 
-\textbf{Data Type} & \textbf{Notation} & \textbf{Description}\\ 
-\midrule
-character & char & a single symbol or digit\\
-integer & $\mathbb{Z}$ & a number without a fractional component in (-$\infty$, $\infty$) \\
-natural number & $\mathbb{N}$ & a number without a fractional component in [1, $\infty$) \\
-real & $\mathbb{R}$ & any number in (-$\infty$, $\infty$)\\
-\bottomrule
-\end{tabular} 
-\end{center}
+\section{Module Decomposition} \label{SecMISModules}
 
-\noindent
-The specification of \progname \ uses some derived data types: sequences, strings, and
-tuples. Sequences are lists filled with elements of the same data type. Strings
-are sequences of characters. Tuples contain a list of values, potentially of
-different types. In addition, \progname \ uses functions, which
-are defined by the data types of their inputs and outputs. Local functions are
-described by giving their type signature followed by their specification.
+The modules and numbers are taken from the
+\href{https://github.com/rhea333/LingoLyrics/blob/docs/mg/docs/Design/SoftArchitecture/MG.tex}
+{Module Guide}. The table is a classification by hidden decision,
+not a call graph.
 
-\section{Module Decomposition}
-
-The following table is taken directly from the Module Guide document for this project.
-
-\begin{table}[h!]
+\begin{table}[H]
 \centering
-\begin{tabular}{p{0.3\textwidth} p{0.6\textwidth}}
+\begin{tabularx}{\textwidth}{@{}p{0.27\textwidth}lX@{}}
 \toprule
-\textbf{Level 1} & \textbf{Level 2}\\
+\textbf{Class} & \textbf{ID} & \textbf{Module}\\
 \midrule
-
-{Hardware-Hiding} & ~ \\
-\midrule
-
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding} & Input Parameters\\
-& Output Format\\
-& Output Verification\\
-& Temperature ODEs\\
-& Energy Equations\\ 
-& Control Module\\
-& Specification Parameters Module\\
-\midrule
-
-\multirow{3}{0.3\textwidth}{Software Decision} & {Sequence Data Structure}\\
-& ODE Solver\\
-& Plotting\\
+Hardware-hiding & M1 & Platform and Media Adapter\\
+Behaviour-hiding & M2 & Learner Lesson Interface\\
+ & M3 & Song Map Authoring Interface\\
+ & M4 & Song Map Validation Module\\
+ & M5 & Vocabulary Handoff Module\\
+Software decision & M6 & Shared Song Map Format Module\\
+ & M7 & Playback Synchronization Module\\
+ & M8 & Language Text Processing Module\\
 \bottomrule
-
-\end{tabular}
-\caption{Module Hierarchy}
+\end{tabularx}
+\caption{LingoLyrics module inventory matching the Module Guide}
 \label{TblMH}
 \end{table}
-
-\newpage
-~\newpage
 
 \section{MIS of \wss{Module Name}} \label{Module} \wss{Use labels for
   cross-referencing}

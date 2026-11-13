@@ -6,6 +6,8 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning}
 \usepackage{float}
 \usepackage{hyperref}
 \hypersetup{
@@ -459,32 +461,87 @@ R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
 
 \section{Use Hierarchy Between Modules} \label{SecUse}
 
-In this section, the uses hierarchy between modules is
-provided. \citet{Parnas1978} said of two programs A and B that A {\em uses} B if
-correct execution of B may be necessary for A to complete the task described in
-its specification. That is, A {\em uses} B if there exist situations in which
-the correct functioning of A depends upon the availability of a correct
-implementation of B.  Figure \ref{FigUH} illustrates the use relation between
-the modules. It can be seen that the graph is a directed acyclic graph
-(DAG). Each level of the hierarchy offers a testable and usable subset of the
-system, and modules in the higher level of the hierarchy are essentially simpler
-because they use modules from the lower levels.
+A module \emph{uses} another when its correct execution depends on a service
+provided by the other module~\citep{Parnas1978}. An arrow from A to B means
+A uses B; arrows do not represent the direction in which data flows. This
+design keeps both user-facing modules above reusable services, with no
+dependency from a lower-level service back to either user interface.
 
-\wss{The uses relation is not a data flow diagram.  In the code there will often
-be an import statement in module A when it directly uses module B.  Module B
-provides the services that module A needs.  The code for module A needs to be
-able to see these services (hence the import statement).  Since the uses
-relation is transitive, there is a use relation without an import, but the
-arrows in the diagram typically correspond to the presence of import statement.}
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}lX@{}}
+\toprule
+\textbf{Module} & \textbf{Modules it directly uses}\\
+\midrule
+\mref{mHH} Platform and Media Adapter & None\\
+\mref{mLearner} Learner Lesson Interface &
+\mref{mHH}, \mref{mValidate}, \mref{mAnki}, \mref{mMap},
+\mref{mSync}\\
+\mref{mEditor} Song Map Authoring Interface &
+\mref{mHH}, \mref{mValidate}, \mref{mMap}, \mref{mSync},
+\mref{mLanguage}\\
+\mref{mValidate} Song Map Validation & \mref{mMap}\\
+\mref{mAnki} Vocabulary Handoff & \mref{mHH}\\
+\mref{mMap} Shared Song Map Format & None\\
+\mref{mSync} Playback Synchronization & \mref{mMap}\\
+\mref{mLanguage} Language Text Processing & None\\
+\bottomrule
+\end{tabularx}
+\caption{Direct use dependencies (caller to provider)}
+\label{TblUses}
+\end{table}
 
-\wss{If module A uses module B, the arrow is directed from A to B.}
+Figure~\ref{FigUH} groups the same modules by architectural layer.
+The complete direct edge list in Table~\ref{TblUses} is normative.
+For example, the learner calls synchronization over already-verified
+map timings; it does not call the language tokenizer. Likewise, the
+editor uses language processing to suggest segmentation, but validation
+remains a shared service. Anki integration depends on the platform
+adapter for permitted external communication; it does not depend on UI
+widgets.
 
 \begin{figure}[H]
 \centering
-%\includegraphics[width=0.7\textwidth]{UsesHierarchy.png}
-\caption{Use hierarchy among modules}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+    >=Stealth,
+    box/.style={draw,rounded corners,align=center,minimum width=3cm,
+                 minimum height=0.85cm,font=\small},
+    edge/.style={->,line width=0.45pt,draw=black!65}
+]
+\node[box] (learner) at (0,6) {M2 Learner\\Interface};
+\node[box] (editor) at (10,6) {M3 Authoring\\Interface};
+\node[box] (validator) at (0,3) {M4 Map\\Validation};
+\node[box] (handoff) at (3.4,3) {M5 Vocabulary\\Handoff};
+\node[box] (sync) at (6.7,3) {M7 Playback\\Synchronization};
+\node[box] (language) at (10,3) {M8 Language\\Processing};
+\node[box] (platform) at (2.5,0) {M1 Platform\\Adapter};
+\node[box] (format) at (8,0) {M6 Song Map\\Format};
+\draw[edge] (learner) -- (validator);
+\draw[edge] (learner) -- (handoff);
+\draw[edge] (learner) -- (sync);
+\draw[edge] (learner) -- (platform);
+\draw[edge] (learner) -- (format);
+\draw[edge] (editor) -- (validator);
+\draw[edge] (editor) -- (sync);
+\draw[edge] (editor) -- (language);
+\draw[edge] (editor) -- (platform);
+\draw[edge] (editor) -- (format);
+\draw[edge] (validator) -- (format);
+\draw[edge] (handoff) -- (platform);
+\draw[edge] (sync) -- (format);
+\end{tikzpicture}%
+}
+\caption{Use hierarchy of LingoLyrics modules; arrows point to providers}
 \label{FigUH}
 \end{figure}
+
+The graph is acyclic. A valid topological layering is
+\{\mref{mLearner}, \mref{mEditor}\},
+\{\mref{mValidate}, \mref{mAnki}, \mref{mSync}, \mref{mLanguage}\},
+and \{\mref{mHH}, \mref{mMap}\}. Lower-level modules do not import
+application screens. Dependencies are architectural commitments to be
+checked against implementation imports during the Revision~0 review.
 
 %\section*{References}
 

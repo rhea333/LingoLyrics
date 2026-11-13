@@ -46,8 +46,7 @@
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
 \toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
 \midrule
-Date 1 & 1.0 & Notes\\
-Date 2 & 1.1 & Notes\\
+November 13, 2026 & -1 & Initial module guide decomposition for the Rev -1 design.\\
 \bottomrule
 \end{tabularx}
 
@@ -157,16 +156,23 @@ adapted here is called design for
 change.
 
 \begin{description}
-\item[\refstepcounter{acnum} \actheacnum \label{acHardware}:] The specific
-  hardware on which the software is running.
-\item[\refstepcounter{acnum} \actheacnum \label{acInput}:] The format of the
-  initial input data.
-\item ...
+\item[\refstepcounter{acnum} \actheacnum \label{acPlatforms}:] The mobile and
+  desktop operating systems and platform APIs supported by the learner
+  application and creator editor.
+\item[\refstepcounter{acnum} \actheacnum \label{acSongMap}:] The structure,
+  fields, and versioning rules of the shared song-map format.
+\item[\refstepcounter{acnum} \actheacnum \label{acAudio}:] The audio playback
+  technology and the method used to obtain playback position for lyric
+  synchronization.
+\item[\refstepcounter{acnum} \actheacnum \label{acAuthoring}:] The creator
+  workflow and the controls used to enter and edit lyric timing, translations,
+  transliterations, and annotations.
+\item[\refstepcounter{acnum} \actheacnum \label{acLanguage}:] The supported
+  languages and the language-specific text processing needed to present them.
+\item[\refstepcounter{acnum} \actheacnum \label{acAnki}:] The supported method
+  for transferring selected vocabulary, including the mapping to Anki note
+  fields.
 \end{description}
-
-\wss{Anticipated changes relate to changes that would be made in requirements,
-design or implementation choices.  They are not related to changes that are made
-at run-time, like the values of parameters.}
 
 \subsection{Unlikely Changes} \label{SecUchange}
 
@@ -178,9 +184,17 @@ will potentially need to be modified. Hence, it is not intended that these
 decisions will be changed.
 
 \begin{description}
-\item[\refstepcounter{ucnum} \uctheucnum \label{ucIO}:] Input/Output devices
-  (Input: File and/or Keyboard, Output: File, Memory, and/or Screen).
-\item ...
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucProduct}:] The product will
+  continue to provide a mobile learner experience and a companion web-based
+  authoring workflow, rather than combining both workflows into a single
+  platform.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucStreaming}:] The initial
+  product will not integrate with streaming services or provide a production
+  music catalogue; lessons use audio and song-map content supplied by creators.
+\item[\refstepcounter{ucnum} \uctheucnum \label{ucContentRights}:] The product
+  will not acquire or distribute copyrighted recordings or lyrics without
+  authorization. Initial lesson content will be team-created, public-domain, or
+  appropriately licensed.
 \end{description}
 
 \section{Module Hierarchy} \label{SecMH}
@@ -191,8 +205,14 @@ below, which are leaves in the hierarchy tree, are the modules that will
 actually be implemented.
 
 \begin{description}
-\item [\refstepcounter{mnum} \mthemnum \label{mHH}:] Hardware-Hiding Module
-\item ...
+\item [\refstepcounter{mnum} \mthemnum \label{mHH}:] Platform and Media Adapter
+\item [\refstepcounter{mnum} \mthemnum \label{mLearner}:] Learner Lesson Interface
+\item [\refstepcounter{mnum} \mthemnum \label{mEditor}:] Song Map Authoring Interface
+\item [\refstepcounter{mnum} \mthemnum \label{mValidate}:] Song Map Validation Module
+\item [\refstepcounter{mnum} \mthemnum \label{mAnki}:] Vocabulary Handoff Module
+\item [\refstepcounter{mnum} \mthemnum \label{mMap}:] Shared Song Map Format Module
+\item [\refstepcounter{mnum} \mthemnum \label{mSync}:] Playback Synchronization Module
+\item [\refstepcounter{mnum} \mthemnum \label{mLanguage}:] Language Text Processing Module
 \end{description}
 
 
@@ -203,22 +223,18 @@ actually be implemented.
 \textbf{Level 1} & \textbf{Level 2}\\
 \midrule
 
-{Hardware-Hiding Module} & ~ \\
+\multirow{1}{0.3\textwidth}{Hardware-Hiding Module} & Platform and Media Adapter\\
 \midrule
 
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding Module} & ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\
-& ?\\ 
-& ?\\
+\multirow{4}{0.3\textwidth}{Behaviour-Hiding Module} & Learner Lesson Interface\\
+& Song Map Authoring Interface\\
+& Song Map Validation Module\\
+& Vocabulary Handoff Module\\
 \midrule
 
-\multirow{3}{0.3\textwidth}{Software Decision Module} & {?}\\
-& ?\\
-& ?\\
+\multirow{3}{0.3\textwidth}{Software Decision Module} & Shared Song Map Format Module\\
+& Playback Synchronization Module\\
+& Language Text Processing Module\\
 \bottomrule
 
 \end{tabular}
@@ -258,15 +274,17 @@ to be implemented.
 \subsection{Hardware Hiding Modules (\mref{mHH})}
 
 \begin{description}
-\item[Secrets:]The data structure and algorithm used to implement the virtual
-  hardware.
-\item[Services:]Serves as a virtual hardware used by the rest of the
-  system. This module provides the interface between the hardware and the
-  software. So, the system can use it to display outputs or to accept inputs.
-\item[Implemented By:] OS
+\item[Secrets:] The platform-specific interfaces for audio playback, playback
+  position, and access to lesson files.
+\item[Services:] Provides the learner and editor applications with audio
+  playback, playback position, and platform file access without exposing
+  platform-specific APIs to those applications.
+\item[Implemented By:] Expo Audio and operating-system APIs in the learner app;
+  browser audio and file APIs in the editor.
+\item[Type of Module:] Library
 \end{description}
 
-\subsection{Behaviour-Hiding Module}
+\subsection{Behaviour-Hiding Modules}
 
 \begin{description}
 \item[Secrets:]The contents of the required behaviours.
@@ -278,18 +296,53 @@ to be implemented.
 \item[Implemented By:] --
 \end{description}
 
-\subsubsection{Input Format Module (\mref{mInput})}
+\subsubsection{Learner Lesson Interface (\mref{mLearner})}
 
 \begin{description}
-\item[Secrets:]The format and structure of the input data.
-\item[Services:]Converts the input data into the data structure used by the
-  input parameters module.
-\item[Implemented By:] [Your Program Name Here]
-\item[Type of Module:] [Record, Library, Abstract Object, or Abstract Data Type]
-  [Information to include for leaf modules in the decomposition by secrets tree.]
+\item[Secrets:] The interaction and presentation design for studying a song,
+  including synchronized lyrics and contextual support.
+\item[Services:] Presents a lesson, follows the audio with the relevant lyric
+  line, and displays translations, transliterations, and annotations when
+  learners select lyric content.
+\item[Implemented By:] React Native with Expo.
+\item[Type of Module:] Abstract Object
 \end{description}
 
-\subsubsection{Etc.}
+\subsubsection{Song Map Authoring Interface (\mref{mEditor})}
+
+\begin{description}
+\item[Secrets:] The creator workflow and editor interaction design for preparing
+  lesson content.
+\item[Services:] Lets creators enter and edit audio references, timed lyrics,
+  translations, transliterations, annotations, and language metadata, and
+  produces a song map for learner use.
+\item[Implemented By:] React web application.
+\item[Type of Module:] Abstract Object
+\end{description}
+
+\subsubsection{Song Map Validation Module (\mref{mValidate})}
+
+\begin{description}
+\item[Secrets:] The validation rules and the way validation failures are
+  reported to a creator.
+\item[Services:] Determines whether a song map conforms to the shared format
+  and reports invalid or missing map data to the editor.
+\item[Implemented By:] TypeScript and JSON Schema.
+\item[Type of Module:] Library
+\end{description}
+
+\subsubsection{Vocabulary Handoff Module (\mref{mAnki})}
+
+\begin{description}
+\item[Secrets:] The selected Anki transfer mechanism and the mapping of a
+  selected vocabulary item to the destination note fields.
+\item[Services:] Transfers a learner-selected term, translation, and context
+  to the learner's Anki workflow, or provides an export that can be imported
+  into Anki.
+\item[Implemented By:] TypeScript; the specific API or export mechanism remains
+  a development decision.
+\item[Type of Module:] Library
+\end{description}
 
 
 \subsection{Software Decision Module}
@@ -305,7 +358,41 @@ to be implemented.
 \item[Implemented By:] --
 \end{description}
 
-\subsubsection{Etc.}
+\subsubsection{Shared Song Map Format Module (\mref{mMap})}
+
+\begin{description}
+\item[Secrets:] The song-map data structure, field definitions, and serialized
+  representation shared by the learner application and editor.
+\item[Services:] Defines the common representation for audio references,
+  timed lyrics, translations, transliterations, annotations, and language
+  metadata, and makes that representation available to the applications and
+  validation module.
+\item[Implemented By:] Shared TypeScript types and a versioned JSON Schema.
+\item[Type of Module:] Abstract Data Type
+\end{description}
+
+\subsubsection{Playback Synchronization Module (\mref{mSync})}
+
+\begin{description}
+\item[Secrets:] The decision procedure that associates the current audio
+  position with the lyric line or word to present.
+\item[Services:] Given playback position and song-map timing data, identifies
+  the lyric content that should be active in the lesson view.
+\item[Implemented By:] Shared TypeScript logic.
+\item[Type of Module:] Library
+\end{description}
+
+\subsubsection{Language Text Processing Module (\mref{mLanguage})}
+
+\begin{description}
+\item[Secrets:] The language-specific text processing decisions, including
+  segmentation and reading generation where required.
+\item[Services:] Supplies language-aware text processing needed to present
+  supported lyrics and word-level learning content.
+\item[Implemented By:] TypeScript language-processing libraries; the initial
+  Japanese segmentation candidate is kuromoji.js.
+\item[Type of Module:] Library
+\end{description}
 
 \section{Traceability Matrix} \label{SecTM}
 
@@ -343,18 +430,12 @@ R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
 \toprule
 \textbf{AC} & \textbf{Modules}\\
 \midrule
-\acref{acHardware} & \mref{mHH}\\
-\acref{acInput} & \mref{mInput}\\
-\acref{acParams} & \mref{mParams}\\
-\acref{acVerify} & \mref{mVerify}\\
-\acref{acOutput} & \mref{mOutput}\\
-\acref{acVerifyOut} & \mref{mVerifyOut}\\
-\acref{acODEs} & \mref{mODEs}\\
-\acref{acEnergy} & \mref{mEnergy}\\
-\acref{acControl} & \mref{mControl}\\
-\acref{acSeqDS} & \mref{mSeqDS}\\
-\acref{acSolver} & \mref{mSolver}\\
-\acref{acPlot} & \mref{mPlot}\\
+\acref{acPlatforms} & \mref{mHH}\\
+\acref{acSongMap} & \mref{mMap}, \mref{mValidate}\\
+\acref{acAudio} & \mref{mHH}, \mref{mSync}\\
+\acref{acAuthoring} & \mref{mEditor}, \mref{mValidate}\\
+\acref{acLanguage} & \mref{mLanguage}, \mref{mLearner}, \mref{mMap}\\
+\acref{acAnki} & \mref{mAnki}\\
 \bottomrule
 \end{tabular}
 \caption{Trace Between Anticipated Changes and Modules}

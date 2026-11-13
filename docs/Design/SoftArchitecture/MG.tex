@@ -675,28 +675,165 @@ checked against implementation imports during the Revision~0 review.
 
 %\section*{References}
 
-\section{User Interfaces}
+\section{User Interfaces} \label{SecUI}
 
-\wss{Design of user interface for software and hardware.  Attach an appendix if
-needed. Drawings, Sketches, Figma}
+LingoLyrics separates the learner and creator workflows so each can use
+controls appropriate to its device. The learner UI is presented by
+\mref{mLearner}; the editor UI is presented by \mref{mEditor}. The interfaces
+below specify intended interactions for Revision~0, not completed screen
+implementations or final visual styling.
 
-\section{Design of Communication Protocols}
+\subsection{Learner application}
 
-\wss{If there is communication between hardware and software, it may be necessary 
-to explain the design of the communication protocol.  This section should be filled 
-in with NA if it is not appropriate for a given project.}
+The learner starts from a local lesson library displaying title, artist,
+language, difficulty, and explicit-content flag (FR2, HS6). Importing a
+lesson uses the platform file picker and common map validation (FR1, IN2).
+The lesson view prioritizes timed lyrics above the playback controls,
+with the active line highlighted by both a non-colour cue and colour
+(LF1, LF2, HS5). Controls include play, pause, seek, restart-line,
+translation and transliteration toggles, and word/line selection
+(FR3--FR7, UH3). Selecting an annotated word reveals its reading,
+meaning, and context without interrupting playback. From that view,
+the learner can send the word to Anki and receive confirmed, pending,
+or failed status (FR8, IN8). Controls must be screen-reader labelled
+and usable on a phone in one hand (UH7, OE1).
 
-\section{Database Design}
+\subsection{Creator editor}
 
-\wss{If a database is a significant component of the project, the database
-design should be summarized here.  This section should be filled in with NA if
-it is not appropriate for a given project.}
+The browser editor first loads existing audio and lyric text or a previously
+saved map (FR9). The creator then marks and corrects line timing while
+listening, reviews language-specific segmentation suggestions, and edits
+translations, annotations, metadata, source credits, and licence fields
+(FR10--FR12, LG1). A preview uses the same map timing interpretation as
+the learner (FR13). The validation view identifies all failed rules and
+prevents exporting an invalid map (FR14, FR16); successful export produces
+the agreed package without manually editing its underlying representation
+(FR15). Autosave, restore, undo, and redo protect drafts (IN6).
 
-\section{Timeline}
+The UI responsibilities are architectural; exact screen geometry, colours,
+and controls will be refined after user testing. Both UI modules consume
+shared services rather than duplicating timing and validation logic.
 
-\wss{Schedule of tasks and who is responsible}
+\section{Design of Communication Protocols} \label{SecCommunication}
 
-\wss{You can point to GitHub if this information is included there}
+There is no LingoLyrics-operated server, account system, or cloud
+synchronization in the initial release (SRS UC3). Editor-to-learner
+exchange is a versioned song-map package transferred by local file
+operations. \mref{mMap} owns the package representation,
+\mref{mValidate} owns validity rules, and \mref{mHH} handles
+platform-dependent file operations. The learner rejects unsupported
+major versions and file references that escape the package (IN3, IM2).
+
+Vocabulary handoff is the only optional external integration. The
+\mref{mAnki} module hides whether the implementation uses AnkiDroid,
+desktop AnkiConnect, or an importable file (LC1, OE2). When AnkiConnect
+is chosen, a connection is limited to an explicitly configured origin
+and API key (AC2); success is never assumed before a confirmed result
+(IN8). An offline export does not imply the vocabulary has already
+been imported into Anki. This protocol boundary does not require a
+project-hosted backend.
+
+\section{Database Design} \label{SecDatabase}
+
+A centralized database is \emph{not applicable} to the planned release,
+but local persistence remains essential. The following ownerships
+separate the authoritative data from its UI representation:
+
+\begin{table}[H]
+\centering
+\begin{tabularx}{\textwidth}{@{}p{0.26\textwidth}p{0.25\textwidth}X@{}}
+\toprule
+\textbf{Data} & \textbf{Logical owner} & \textbf{Storage or presentation}\\
+\midrule
+Song-map metadata, lyric timing, annotations & \mref{mMap} &
+Versioned package on disk; read through validation and file adapter.\\
+Imported lesson library and learner preferences & \mref{mLearner} &
+Local device persistence; copied into in-memory lesson view when opened.\\
+In-progress creator draft and undo history & \mref{mEditor} &
+Editor memory plus locally persisted autosave; no cloud copy.\\
+Unconfirmed vocabulary transfers & \mref{mAnki} &
+Durable local queue, transmitted or exported only on explicit user action.\\
+Platform audio position and file operations & \mref{mHH} &
+External device/player and filesystem; accessed by public adapter calls.\\
+\bottomrule
+\end{tabularx}
+\caption{Logical data ownership and persistence boundaries}
+\label{TblPersistence}
+\end{table}
+
+The adapter provides storage access but does not own the meaning of
+lesson data or pending cards. Each mutable record has one logical
+owner; other modules use the owner's operations rather than maintaining
+a second authoritative copy. The final persistence APIs will be
+specified in the MIS and reviewed for the IN6 and IN8 recovery rules.
+
+\section{Timeline} \label{SecTimeline}
+
+The milestones below refine the
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/DevelopmentPlan/DevelopmentPlan.tex}
+{Development Plan} into module-level deliverables needed for Revision~0
+on January 18, 2027. These are proposed working assignments based on the
+Development Plan's initial component ownership; the team will confirm
+and update them during sprint planning. Each implementation task
+includes enough verification to support integration confidence, but
+the full V\&V Report remains a later deliverable.
+
+\small
+\begin{longtable}{@{}p{0.15\textwidth}p{0.12\textwidth}p{0.18\textwidth}p{0.47\textwidth}@{}}
+\caption{Proposed implementation plan to Revision 0}\label{TblTimeline}\\
+\toprule
+\textbf{Window} & \textbf{Modules} & \textbf{Primary owner} &
+\textbf{Deliverable and verification checkpoint}\\
+\midrule
+\endfirsthead
+\toprule
+\textbf{Window} & \textbf{Modules} & \textbf{Primary owner} &
+\textbf{Deliverable and verification checkpoint}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+Nov.\ 13--16 & All & Team &
+Revision~$-1$ MG and MIS reviewed for module interfaces,
+requirements coverage, and compilation.\\
+Nov.\ 17--20 & M6, M4 & Raymond (backup: Aansh) &
+Finalize song-map types, versioning and validation cases;
+CI rejects deliberately invalid fixtures.\\
+Nov.\ 17--23 & M1, M7 & Omar (backup: Rhea) &
+Connect Expo Audio to synchronized line-selection logic;
+log expected vs.\ observed transitions on a test phone.\\
+Nov.\ 17--23 & M8 & Rhea (backup: Raymond) &
+Verify Japanese segmentation on 20 independently reviewed
+lines, with measured dictionary and processing time.\\
+Nov.\ 17--23 & M5 & Aansh (backup: Omar) &
+Demonstrate one Anki transfer route and independently
+confirm note fields in a test deck.\\
+Nov.\ 23--Dec.\ 4 & M1, M5, M7, M8 & Component owners &
+PoC demonstration for R1, R2, R3; record measured evidence,
+remaining risks, and scope changes where necessary.\\
+Dec.\ 5--18 & M2, M7, M1 & Omar (backup: Rhea) &
+Implement local lesson library, lyric view, playback controls
+and annotations; verify offline playback and seek/restart cases.\\
+Dec.\ 5--Jan.\ 3 & M3, M4, M6 & Raymond (backup: Aansh) &
+Implement creator input, timing, annotations, preview, autosave
+and export; round-trip a valid map into the learner.\\
+Dec.\ 19--Jan.\ 7 & M8, M3 & Rhea (backup: Raymond) &
+Integrate verified language suggestions into the editor and
+test correction and persistence of segmentation.\\
+Jan.\ 4--10 & M5, M2, M1 & Aansh (backup: Omar) &
+Integrate Anki confirmation and pending-item retry; test
+success, timeout, offline, and duplicate-send scenarios.\\
+Jan.\ 11--17 & All & Team &
+Cross-platform integration, module-level tests, syntax/lint
+and CI checks; repair major gaps and rehearse Rev~0 demo.\\
+Jan.\ 18 & All & Team &
+Submit Revision~0 design documentation and integrated build.\\
+\end{longtable}
+\normalsize
+
+The GitHub issue tracker and sprint board are the living schedule.
+Changes in scope or ownership will be reflected there and in the
+Development Plan; the dates above provide a reviewable initial baseline.
 
 \section{Generative AI Use Disclosure}
 

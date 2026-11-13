@@ -5,6 +5,7 @@
 \usepackage{multirow}
 \usepackage{booktabs}
 \usepackage{tabularx}
+\usepackage{longtable}
 \usepackage{graphicx}
 \usepackage{tikz}
 \usetikzlibrary{arrows.meta,positioning}
@@ -413,50 +414,179 @@ to be implemented.
 
 \section{Traceability Matrix} \label{SecTM}
 
-This section shows two traceability matrices: between the modules and the
-requirements and between the modules and the anticipated changes.
+Table~\ref{TblRT} assigns every numbered requirement in the
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/SRS-Volere/SRS.tex}
+{Volere SRS} to responsible modules. The first, bold module is the
+primary owner of the capability; the other modules provide supporting
+services. The table covers all numbered functional and nonfunctional
+requirements, including the mandated constraints (MC1--MC3).
+No module is unassigned, and every SRS requirement has a primary
+responsible module. The mapping expresses responsibility, not a promise
+that the implementation is already complete.
 
-% the table should use mref, the requirements should be named, use something
-% like fref
+Some requirements are verified at the project level rather than by
+one runtime operation. MC1 and MC2 constrain technology choices;
+MS1, MS2, and IM3 require CI checks; OE5 concerns release tags.
+These are allocated to the affected modules in Table~\ref{TblRT},
+but the build/release workflow must enforce them. They are not
+interpreted as additional public methods of those modules.
+
+\small
+\begin{longtable}{@{}p{0.14\textwidth}p{0.79\textwidth}@{}}
+\caption{Trace between all SRS requirements and modules}\label{TblRT}\\
+\toprule
+\textbf{Req.} & \textbf{Module allocation (primary in bold)}\\
+\midrule
+\endfirsthead
+\multicolumn{2}{c}{\tablename\ \thetable{} -- continued}\\
+\toprule
+\textbf{Req.} & \textbf{Module allocation (primary in bold)}\\
+\midrule
+\endhead
+\bottomrule
+\endfoot
+MC1 & \textbf{\mref{mHH}}, \mref{mLearner}, \mref{mEditor}, \mref{mValidate}, \mref{mAnki}, \mref{mMap}, \mref{mSync}, \mref{mLanguage}\\
+MC2 & \textbf{\mref{mLearner}}, \mref{mEditor}\\
+MC3 & \textbf{\mref{mMap}}, \mref{mValidate}\\
+FR1 & \textbf{\mref{mLearner}}, \mref{mValidate}, \mref{mMap}, \mref{mHH}\\
+FR2 & \textbf{\mref{mLearner}}, \mref{mMap}\\
+FR3 & \textbf{\mref{mLearner}}, \mref{mHH}, \mref{mSync}\\
+FR4 & \textbf{\mref{mSync}}, \mref{mLearner}, \mref{mHH}\\
+FR5 & \textbf{\mref{mSync}}, \mref{mLearner}, \mref{mMap}\\
+FR6 & \textbf{\mref{mLearner}}, \mref{mMap}\\
+FR7 & \textbf{\mref{mLearner}}, \mref{mMap}\\
+FR8 & \textbf{\mref{mAnki}}, \mref{mLearner}, \mref{mMap}\\
+FR9 & \textbf{\mref{mEditor}}, \mref{mHH}, \mref{mMap}\\
+FR10 & \textbf{\mref{mEditor}}, \mref{mHH}, \mref{mSync}\\
+FR11 & \textbf{\mref{mLanguage}}, \mref{mEditor}\\
+FR12 & \textbf{\mref{mEditor}}, \mref{mMap}\\
+FR13 & \textbf{\mref{mEditor}}, \mref{mSync}, \mref{mHH}\\
+FR14 & \textbf{\mref{mValidate}}, \mref{mEditor}, \mref{mMap}\\
+FR15 & \textbf{\mref{mEditor}}\\
+FR16 & \textbf{\mref{mValidate}}, \mref{mMap}, \mref{mEditor}, \mref{mLearner}\\
+LF1 & \textbf{\mref{mLearner}}, \mref{mSync}\\
+LF2 & \textbf{\mref{mLearner}}\\
+LF3 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+UH1 & \textbf{\mref{mLearner}}\\
+UH2 & \textbf{\mref{mEditor}}, \mref{mValidate}\\
+UH3 & \textbf{\mref{mLearner}}\\
+UH4 & \textbf{\mref{mLearner}}, \mref{mEditor}, \mref{mLanguage}\\
+UH5 & \textbf{\mref{mLearner}}, \mref{mAnki}\\
+UH6 & \textbf{\mref{mLearner}}, \mref{mEditor}, \mref{mValidate}, \mref{mAnki}\\
+UH7 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+SL1 & \textbf{\mref{mLearner}}, \mref{mValidate}, \mref{mHH}\\
+SL2 & \textbf{\mref{mLearner}}, \mref{mMap}\\
+SL3 & \textbf{\mref{mAnki}}, \mref{mLearner}\\
+HS1 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+HS2 & \textbf{\mref{mHH}}, \mref{mLearner}\\
+HS3 & \textbf{\mref{mHH}}, \mref{mLearner}\\
+HS4 & \textbf{\mref{mLearner}}, \mref{mSync}\\
+HS5 & \textbf{\mref{mLearner}}\\
+HS6 & \textbf{\mref{mLearner}}, \mref{mMap}, \mref{mValidate}\\
+HS7 & \textbf{\mref{mLearner}}\\
+HS8 & \textbf{\mref{mHH}}, \mref{mLearner}\\
+HS9 & \textbf{\mref{mEditor}}, \mref{mHH}\\
+PA1 & \textbf{\mref{mMap}}, \mref{mSync}\\
+PA2 & \textbf{\mref{mSync}}, \mref{mHH}\\
+PA3 & \textbf{\mref{mLanguage}}, \mref{mEditor}\\
+RB1 & \textbf{\mref{mValidate}}, \mref{mLearner}, \mref{mEditor}\\
+RB2 & \textbf{\mref{mHH}}, \mref{mLearner}\\
+CP1 & \textbf{\mref{mValidate}}, \mref{mHH}, \mref{mLearner}\\
+CP2 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+SC1 & \textbf{\mref{mMap}}, \mref{mLanguage}\\
+LO1 & \textbf{\mref{mMap}}, \mref{mValidate}, \mref{mLearner}\\
+OE1 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+OE2 & \textbf{\mref{mAnki}}, \mref{mHH}\\
+OE3 & \textbf{\mref{mHH}}, \mref{mEditor}, \mref{mValidate}\\
+OE4 & \textbf{\mref{mHH}}, \mref{mLearner}, \mref{mEditor}\\
+OE5 & \textbf{\mref{mMap}}, \mref{mLearner}, \mref{mEditor}\\
+MS1 & \textbf{\mref{mValidate}}, \mref{mMap}\\
+MS2 & \textbf{\mref{mValidate}}, \mref{mMap}, \mref{mSync}, \mref{mLanguage}\\
+MS3 & \textbf{\mref{mLearner}}, \mref{mEditor}, \mref{mAnki}\\
+MS4 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+AC1 & \textbf{\mref{mAnki}}\\
+AC2 & \textbf{\mref{mAnki}}, \mref{mHH}\\
+IN1 & \textbf{\mref{mSync}}, \mref{mHH}, \mref{mLearner}\\
+IN2 & \textbf{\mref{mValidate}}, \mref{mMap}, \mref{mLearner}, \mref{mEditor}\\
+IN3 & \textbf{\mref{mValidate}}, \mref{mMap}, \mref{mLearner}\\
+IN4 & \textbf{\mref{mEditor}}, \mref{mLanguage}, \mref{mMap}, \mref{mLearner}\\
+IN5 & \textbf{\mref{mValidate}}, \mref{mEditor}, \mref{mMap}\\
+IN6 & \textbf{\mref{mEditor}}, \mref{mHH}\\
+IN7 & \textbf{\mref{mEditor}}, \mref{mSync}, \mref{mHH}\\
+IN8 & \textbf{\mref{mAnki}}, \mref{mLearner}, \mref{mHH}\\
+IN9 & \textbf{\mref{mAnki}}, \mref{mLearner}\\
+IN10 & \textbf{\mref{mAnki}}, \mref{mMap}\\
+IN11 & \textbf{\mref{mValidate}}, \mref{mHH}, \mref{mLearner}\\
+IN12 & \textbf{\mref{mHH}}, \mref{mLearner}, \mref{mEditor}, \mref{mMap}\\
+PR1 & \textbf{\mref{mLearner}}, \mref{mAnki}, \mref{mHH}\\
+PR2 & \textbf{\mref{mAnki}}, \mref{mHH}\\
+AU1 & \textbf{\mref{mLearner}}, \mref{mHH}\\
+AU2 & \textbf{\mref{mMap}}, \mref{mEditor}\\
+IM1 & \textbf{\mref{mValidate}}, \mref{mHH}\\
+IM2 & \textbf{\mref{mValidate}}, \mref{mHH}, \mref{mMap}\\
+IM3 & \textbf{\mref{mHH}}, \mref{mValidate}, \mref{mAnki}, \mref{mLanguage}\\
+CU1 & \textbf{\mref{mLanguage}}, \mref{mEditor}, \mref{mMap}\\
+CU2 & \textbf{\mref{mEditor}}, \mref{mMap}\\
+LG1 & \textbf{\mref{mEditor}}, \mref{mValidate}, \mref{mMap}, \mref{mLearner}\\
+ST1 & \textbf{\mref{mLearner}}, \mref{mSync}\\
+ST2 & \textbf{\mref{mMap}}, \mref{mValidate}\\
+
+\end{longtable}
+\normalsize
+
+Table~\ref{TblACT} links the architectural anticipated changes (AC)
+to their primary hiding modules. An anticipated change may affect a
+caller, but the intent is that only the primary module needs to change
+its internal implementation. In particular, M1 owns both platform
+abstractions and audio-driver selection; those changes share its
+platform-interface secret. M8 likewise hides the language-processing
+strategy for both additional languages and tokenizer replacement.
+
 \begin{table}[H]
 \centering
-\begin{tabular}{p{0.2\textwidth} p{0.6\textwidth}}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
 \toprule
-\textbf{Req.} & \textbf{Modules}\\
+\textbf{AC} & \textbf{Primary module} & \textbf{Affected dependents / rationale}\\
 \midrule
-R1 & \mref{mHH}, \mref{mInput}, \mref{mParams}, \mref{mControl}\\
-R2 & \mref{mInput}, \mref{mParams}\\
-R3 & \mref{mVerify}\\
-R4 & \mref{mOutput}, \mref{mControl}\\
-R5 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R6 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}, \mref{mSeqDS}, \mref{mSolver}, \mref{mPlot}\\
-R7 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R8 & \mref{mOutput}, \mref{mEnergy}, \mref{mControl}, \mref{mSeqDS}, \mref{mPlot}\\
-R9 & \mref{mVerifyOut}\\
-R10 & \mref{mOutput}, \mref{mODEs}, \mref{mControl}\\
-R11 & \mref{mOutput}, \mref{mODEs}, \mref{mEnergy}, \mref{mControl}\\
+\acref{acPlatforms} & \mref{mHH} & Learner and editor invoke platform services.\\
+\acref{acSongMap} & \mref{mMap} & Validator and UI modules consume the versioned types.\\
+\acref{acAudio} & \mref{mHH} & Synchronization consumes platform playback position.\\
+\acref{acAuthoring} & \mref{mEditor} & Validation remains separate from creator UI.\\
+\acref{acLanguage} & \mref{mLanguage} & The editor calls language-processing services.\\
+\acref{acAnki} & \mref{mAnki} & The learner calls the handoff interface.\\
 \bottomrule
-\end{tabular}
-\caption{Trace Between Requirements and Modules}
-\label{TblRT}
+\end{tabularx}
+\caption{Primary owners of the architectural anticipated changes}
+\label{TblACT}
 \end{table}
 
+The SRS additionally identifies seven \emph{likely changes} (LC1--LC7).
+Table~\ref{TblLCT} ensures none is lost when the MG uses a different
+set of architectural change identifiers. LC6 is explicitly a group of
+unrelated threshold constants rather than one independently changeable
+decision, so it has a documented exception to one-to-one ownership.
+
 \begin{table}[H]
 \centering
-\begin{tabular}{p{0.2\textwidth} p{0.6\textwidth}}
+\begin{tabularx}{\textwidth}{@{}l l X@{}}
 \toprule
-\textbf{AC} & \textbf{Modules}\\
+\textbf{SRS LC} & \textbf{Primary owner} & \textbf{Design rationale}\\
 \midrule
-\acref{acPlatforms} & \mref{mHH}\\
-\acref{acSongMap} & \mref{mMap}, \mref{mValidate}\\
-\acref{acAudio} & \mref{mHH}, \mref{mSync}\\
-\acref{acAuthoring} & \mref{mEditor}, \mref{mValidate}\\
-\acref{acLanguage} & \mref{mLanguage}, \mref{mLearner}, \mref{mMap}\\
-\acref{acAnki} & \mref{mAnki}\\
+LC1 & \mref{mAnki} & Hides handoff method and note-field mapping.\\
+LC2 & \mref{mLanguage} & Hides language-specific processing.\\
+LC3 & \mref{mHH} & Hides the audio library and platform APIs.\\
+LC4 & \mref{mMap} & Owns the versioned song-map representation.\\
+LC5 & \mref{mLanguage} & Hides the Japanese tokenizer choice.\\
+LC6 & Distributed & Constants set independent limits for playback
+(\mref{mSync}), song-map structure (\mref{mMap}), and user workflows
+(\mref{mLearner}, \mref{mEditor}); a single owner would incorrectly
+couple unrelated policies. Each value is owned by its affected module.\\
+LC7 & \mref{mHH} & Hides local-file and package delivery mechanisms
+behind the platform adapter.\\
 \bottomrule
-\end{tabular}
-\caption{Trace Between Anticipated Changes and Modules}
-\label{TblACT}
+\end{tabularx}
+\caption{SRS likely changes allocated to information-hiding modules}
+\label{TblLCT}
 \end{table}
 
 \section{Use Hierarchy Between Modules} \label{SecUse}

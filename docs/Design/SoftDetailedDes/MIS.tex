@@ -114,6 +114,10 @@ $\mathrm{VocabularyItem}$, and $\mathrm{LessonID}$.
 A $\mathrm{CandidateMap}$ is an untrusted, potentially invalid input
 to the validator; a $\mathrm{ValidatedMap}$ is a candidate accepted
 by all relevant song-map validity rules (SRS V1--V8).
+Additional abstract types include $\mathrm{LineText}$ (a lyric line),
+$\mathrm{Metadata}$ (lesson-level fields and credits),
+$\mathrm{Segmentation}$ (a sequence of proposed word spans), and
+$\mathrm{SendStatus}$ (confirmed, queued, or failed).
 Other interface-level types used below are
 $\mathrm{AudioRef}$ (a reference to an audio resource),
 $\mathrm{FileRef}$ (an opaque file location),
@@ -337,6 +341,285 @@ its term, correct word translation, and source-line context to
 M5; return its confirmed, queued, or failed result without
 claiming success on a mere attempted send.
 \end{description}
+
+\clearpage
+\section{MIS of M3: Song Map Authoring Interface} \label{MISM3}
+
+\subsection{Module}
+Song Map Authoring Interface (behaviour-hiding abstract object).
+The editor owns the mutable creator draft, undo history, and
+autosave policy. It delegates language suggestions, timing selection,
+validation, and platform I/O to their corresponding modules.
+
+\subsection{Uses}
+M1 Platform and Media Adapter, M4 Song Map Validation,
+M6 Shared Song Map Format, M7 Playback Synchronization, and
+M8 Language Text Processing.
+
+\subsection{Syntax}
+\subsubsection{Exported Constants}
+None. Required timing resolution and autosave interval are
+specified by the SRS and shared configuration.
+
+\subsubsection{Exported Access Programs}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.19\textwidth}p{0.29\textwidth}p{0.20\textwidth}X@{}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions}\\
+\midrule
+\texttt{loadMaterial} & $\mathrm{AudioRef},
+\operatorname{Seq}(\mathrm{LineText})$ & -- & UnsupportedAudio\\
+\texttt{openDraft} & $\mathrm{FileRef}$ & -- & ResourceMissing\\
+\texttt{setTiming} & $\mathrm{LineRef},\mathbb{R}_{\geq0}^2$
+& -- & UnknownLine, InvalidRange\\
+\texttt{setAnnotation} & $\mathrm{TargetRef},
+\mathrm{Annotation}$ & -- & UnknownTarget\\
+\texttt{setMetadata} & $\mathrm{Metadata}$ & -- & --\\
+\texttt{suggestWords} & $\mathrm{LineRef}$ &
+$\mathrm{Segmentation}$ & UnsupportedLanguage\\
+\texttt{acceptWords} & $\mathrm{LineRef},
+\mathrm{Segmentation}$ & -- & InvalidSegmentation\\
+\texttt{preview} & -- & -- & NoDraft\\
+\texttt{validateDraft} & -- & $\mathrm{ValidationResult}$ & NoDraft\\
+\texttt{exportDraft} & $\mathrm{FileRef}$ & -- & InvalidMap, AccessDenied\\
+\texttt{undo}, \texttt{redo} & -- & -- & NoHistory\\
+\texttt{autosave} & -- & -- & StorageFailure\\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{center}
+
+\subsection{Semantics}
+\subsubsection{State Variables}
+$draft:\operatorname{Option}(\mathrm{CandidateMap})$
+is the sole mutable draft;
+$undoHistory,redoHistory:\operatorname{Seq}(\mathrm{Edit})$
+are history stacks; and $dirty:\mathbb{B}$ marks an
+unpersisted change. Initially $draft=\bot$ and the histories
+are empty. The autosaved representation is persisted through M1,
+but remains logically owned by M3.
+
+\subsubsection{Environment Variables}
+$editorScreen$ represents the current browser display,
+$creatorInput$ represents keyboard, pointer, and accessibility
+events, and $localDraftFile$ is the platform-persisted
+snapshot of the draft. The audio output and its reported position
+are accessed through M1.
+
+\subsubsection{Assumptions and Invariants}
+All nonempty history entries are inverseable edits of the active
+draft. An edit clears the redo stack, marks the draft dirty,
+and leaves its current state available for validation. A draft
+may temporarily be invalid, but \texttt{exportDraft} never
+writes an invalid or unpublishable map (FR14, IN5, LG1).
+Unverified machine-generated segmentation cannot be silently
+promoted to verified content (IN4).
+
+\subsubsection{Access Routine Semantics}
+\begin{description}
+\item[\texttt{loadMaterial}(a,L):] Initialize an editable draft
+using the provided audio and lyric lines; load $a$ through M1,
+clear both histories, and set $dirty':=\mathit{true}$.
+\item[\texttt{openDraft}(f):] Read a draft via M1, place it in
+$draft'$, and initialize an undo history for the restored state.
+A failed read leaves the current draft unchanged.
+\item[\texttt{setTiming}(r,s,e):] Require a known line and
+$0\leq s\leq e$. Replace only that line's timing, append
+its previous value to $undoHistory$, clear $redoHistory$,
+and set $dirty':=\mathit{true}$. Application of the
+latency calibration offset follows IN7.
+\item[\texttt{setAnnotation}(r,v), \texttt{setMetadata}(m):]
+Update the indicated part of $draft$, recording each change
+as an undoable edit. Metadata includes audio/lyric sources
+and licence information (LG1).
+\item[\texttt{suggestWords}(r):] $out$ is M8's
+language-specific proposal for line $r$; the draft is
+unchanged until the creator accepts or corrects it.
+\item[\texttt{acceptWords}(r,g):] Replace line $r
+\bibliography {../../../refs/References}
+
+\newpage
+
+\newpage{}
+
+\section{Appendix --- Generative AI Use Disclosure}
+
+\wss{ChatGPT (version 5) was used to brainstorm ideas for the template for this disclose section.}
+
+\subsection{AI Tools Used}
+
+\wss{Give the name of the AI tool(s) used and the version.}
+
+\subsection{How and Where Used}
+
+\wss{Explain what the tool(s) were used for.  Examples include: brainstorming,
+explaining a technical concept, reviewing the document, generating or modifying
+text, generating or modifying diagrams, identifying errors or omissions or
+inconsistencies.}
+
+\wss{For each of the uses, identify which parts of the document were affected.}
+
+\wss{You do not need to report every interaction, but you should disclose the 
+uses that materially contributed to your work}
+
+\subsection{Verification of AI-Generated Content}
+
+\wss{\begin{itemize}
+    \item Describe how the team checked AI-generated or AI-assisted material
+    before including it in the document.
+    \item In particular, verify factual claims, technical assertions,
+    requirements, calculations, references, and other information for which an
+    AI system may produce incorrect or fabricated results.
+    \item \textbf{The team is responsible for the accuracy, completeness,
+consistency, and appropriateness of the submitted document, regardless of
+whether material was generated by a human or an AI system.}
+\end{itemize}}
+
+\newpage{}
+
+\section{Appendix --- Reflection}
+
+\wss{Not required for CAS 741 projects}
+
+The information in this section will be used to evaluate the team members on the
+graduate attribute of Problem Analysis and Design.
+
+\input{../../Reflection.text}
+
+\begin{enumerate}
+  \item What went well while writing this deliverable? 
+  \item What pain points did you experience during this deliverable, and how
+    did you resolve them?
+  \item Which of your design decisions stemmed from speaking to your client(s)
+  or a proxy (e.g. your peers, stakeholders, potential users)? For those that
+  were not, why, and where did they come from?
+  \item While creating the design doc, what parts of your other documents (e.g.
+  requirements, hazard analysis, etc), it any, needed to be changed, and why?
+  \item What are the limitations of your solution?  Put another way, given
+  unlimited resources, what could you do to make the project better? (LO\_ProbSolutions)
+  \item Give a brief overview of other design solutions you considered.  What
+  are the benefits and tradeoffs of those other designs compared with the chosen
+  design?  From all the potential options, why did you select the documented design?
+  (LO\_Explores)
+  \item (After you have implemented another team's module, which means this
+  isn't filled in until after the original deadline). What did you learn by
+  implementing another team's module? Were all the details you needed in the
+  documentation, or did you need to make assumptions, or ask the other team
+  questions?  If your team also had another team implement one of your modules,
+  what was this experience like?  Are there things in your documentation you
+  could have changed to make the process go more smoothly for when an
+  ``outsider'' completes some of the implementation?
+
+  Your reflection should be about concepts learned in your SE education, such as modular decomposition, cohesion, coupling, information hiding, etc.  You should critique the quality and utility of the specification you received.
+
+  You should create a PR for your implemented module.  A link to the PR should be part of your reflection.
+
+\end{enumerate}
+
+\end{document}s
+segmentation with a creator-approved, verified $g$ and
+record the operation in history.
+\item[\texttt{preview}():] Supply the draft's timing to M7
+and the audio reference to M1. Only presentation and audio
+device state are affected; draft data is not modified.
+\item[\texttt{validateDraft}():] $out$ is the complete
+result of M4 validation; the draft is not modified.
+\item[\texttt{exportDraft}(f):] Require valid and publishable
+content from M4. Serialize through the M6 contract and
+write via M1, otherwise raise InvalidMap and leave the
+output file unchanged.
+\item[\texttt{undo}(), \texttt{redo}():] Apply one existing
+history entry and move it between the stacks. Raise NoHistory
+without mutation if the relevant stack is empty.
+\item[\texttt{autosave}():] Persist the current draft through
+M1 without changing the edit history; on success
+$dirty':=\mathit{false}$. An automatic attempt is made
+at least once per AUTOSAVE\_INT after edits (IN6).
+\end{description}
+
+\clearpage
+\section{MIS of M4: Song Map Validation Module} \label{MISM4}
+
+\subsection{Module}
+Song Map Validation Module (stateless library). It is the single
+authority for rejecting invalid or unpublishable lesson packages,
+using the versioned format owned by M6.
+
+\subsection{Uses}
+M6 Shared Song Map Format.
+
+\subsection{Syntax}
+\subsubsection{Exported Constants}
+None. Song-map limits are specification parameters defined
+in the SRS and format contract, not duplicate constants
+inside the validator.
+
+\subsubsection{Exported Access Programs}
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{@{}p{0.21\textwidth}p{0.22\textwidth}p{0.27\textwidth}X@{}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions}\\
+\midrule
+\texttt{validatePackage} & $\mathrm{Bytes}$ &
+$\mathrm{ValidationResult}$ & --\\
+\texttt{validateMap} & $\mathrm{CandidateMap}$ &
+$\mathrm{ValidationResult}$ & --\\
+\texttt{isPublishable} & $\mathrm{CandidateMap}$ &
+$\mathbb{B}$ & --\\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{center}
+
+\subsection{Semantics}
+\subsubsection{State Variables}
+None; validation never mutates the candidate or caches
+a second authoritative copy of the format.
+
+\subsubsection{Environment Variables}
+None. Files are read and decoded outside this module's
+public contract; a package is supplied as opaque bytes.
+
+\subsubsection{Assumptions and Invariants}
+$\mathrm{ValidationResult}$ contains a Boolean verdict and
+a set of failed rule identifiers. Failed rules name actual
+SRS validity conditions. Every invalid input yields a
+failure result rather than a crash (RB1). For any given
+input and format version, the validation result is
+deterministic. Both the editor and learner call this same
+interface (FR16).
+
+\subsubsection{Access Routine Semantics}
+\begin{description}
+\item[\texttt{validatePackage}(b):] Check package-size and
+nesting limits before fully parsing untrusted content
+(IM1), reject unsafe resource paths (IM2), and evaluate
+the supported format version, schema rules, and SRS
+validity predicates V1--V8. Set
+$out:=(\mathit{valid},\mathit{failedRules})$, where
+$\mathit{valid}$ holds exactly when the failure set is
+empty; report every applicable failed rule.
+\item[\texttt{validateMap}(m):] Evaluate the already parsed
+candidate using the same field and semantic validity
+predicates as \texttt{validatePackage}, including
+timing order and verified segmentation. The input is
+unchanged.
+\item[\texttt{isPublishable}(m):] $out:=\mathit{true}$
+only when M4 accepts the candidate and every annotation
+has a distinct named author and reviewer (IN5);
+otherwise $out:=\mathit{false}$. Publication also
+requires the SRS content rights fields (LG1).
+\end{description}
+
+\subsubsection{Local Functions}
+$\operatorname{validTiming}$, $\operatorname{validRefs}$,
+and $\operatorname{validAnnotations}$ denote the corresponding
+predicates in SRS V1--V8. They are specification abbreviations,
+not mandatory implementation helpers.
+
+\clearpage
 
 \bibliographystyle {plainnat}
 \bibliography {../../../refs/References}

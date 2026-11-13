@@ -139,6 +139,16 @@ jobs:
             --pdf-engine=pdflatex --toc -V geometry:margin=1in
           test -s "$smoke/smoke.pdf" && echo "pandoc -> PDF smoke test OK"
           rm -rf "$smoke"
+      - name: Compile changed design documents first
+        run: |
+          # Verify the MG and MIS even if a different document in a full
+          # rebuild needs additional third-party TeX packages.
+          for src in docs/Design/SoftArchitecture/MG.tex \
+                     docs/Design/SoftDetailedDes/MIS.tex; do
+            if [[ " $BUILD_DOCS " == *" $src "* ]]; then
+              make -B "${src%.tex}.pdf"
+            fi
+          done
       - name: Compile LaTeX
         run: |
           PDF_CACHE_DIR="$GITHUB_WORKSPACE/build-pdf"

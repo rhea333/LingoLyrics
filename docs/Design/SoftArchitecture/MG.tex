@@ -299,7 +299,7 @@ to be implemented.
   platform-specific APIs to those applications.
 \item[Implemented By:] Expo Audio and operating-system APIs in the learner app;
   browser audio and file APIs in the editor.
-\item[Type of Module:] Library
+\item[Type of Module:] Abstract Object (one active platform session)
 \end{description}
 
 \subsection{Behaviour-Hiding Modules}
@@ -341,8 +341,9 @@ to be implemented.
 \subsubsection{Song Map Validation Module (\mref{mValidate})}
 
 \begin{description}
-\item[Secrets:] The validation rules and the way validation failures are
-  reported to a creator.
+\item[Secrets:] The schema and semantic validity predicates for song maps.
+  It returns rule identifiers; the creator interface owns presentation of
+  those failures to the user.
 \item[Services:] Determines whether a song map conforms to the shared format
   and reports invalid or missing map data to the editor.
 \item[Implemented By:] TypeScript and JSON Schema.
@@ -359,7 +360,7 @@ to be implemented.
   into Anki.
 \item[Implemented By:] TypeScript; the specific API or export mechanism remains
   a development decision.
-\item[Type of Module:] Library
+\item[Type of Module:] Abstract Object (owns pending transfer state)
 \end{description}
 
 
@@ -386,7 +387,7 @@ to be implemented.
   metadata, and makes that representation available to the applications and
   validation module.
 \item[Implemented By:] Shared TypeScript types and a versioned JSON Schema.
-\item[Type of Module:] Abstract Data Type
+\item[Type of Module:] Exported data types (no mutable ADT state)
 \end{description}
 
 \subsubsection{Playback Synchronization Module (\mref{mSync})}

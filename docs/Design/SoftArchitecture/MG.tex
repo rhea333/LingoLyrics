@@ -186,6 +186,13 @@ change.
 \item[\refstepcounter{acnum} \actheacnum \label{acAnki}:] The supported method
   for transferring selected vocabulary, including the mapping to Anki note
   fields.
+\item[\refstepcounter{acnum} \actheacnum \label{acThresholds}:] The measured
+  symbolic thresholds used by playback, authoring, validation, and other
+  workflows. These are distinct decisions and therefore have multiple
+  documented owners rather than one artificial configuration module.
+\item[\refstepcounter{acnum} \actheacnum \label{acDelivery}:] The mechanism
+  through which song-map packages are selected or obtained by the learner,
+  such as local import, bundled files, or a future hosted catalogue.
 \end{description}
 
 \subsection{Unlikely Changes} \label{SecUchange}
@@ -555,6 +562,10 @@ strategy for both additional languages and tokenizer replacement.
 \acref{acAuthoring} & \mref{mEditor} & Validation remains separate from creator UI.\\
 \acref{acLanguage} & \mref{mLanguage} & The editor calls language-processing services.\\
 \acref{acAnki} & \mref{mAnki} & The learner calls the handoff interface.\\
+\acref{acThresholds} & Distributed & This is a collection of independent
+  thresholds, not one hidden decision; see LC6 in Table~\ref{TblLCT}.\\
+\acref{acDelivery} & \mref{mHH} & The adapter hides the platform import or
+  retrieval mechanism; the learner presents the selected lesson.\\
 \bottomrule
 \end{tabularx}
 \caption{Primary owners of the architectural anticipated changes}

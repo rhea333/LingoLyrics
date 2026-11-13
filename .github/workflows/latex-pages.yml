@@ -99,6 +99,16 @@ jobs:
           # texlive's is what builds the ls-R filename database. Without this
           # kpsewhich cannot see the restored packages, which surfaced as
           # "lmodern.sty not found" on the first cache hit.
+          # The apt cache sometimes restores TeX files without the binaries'
+          # post-install wrappers (mktexlsr, pdflatex, fmtutil-sys).
+          # Reinstall only the base packages when that happens.
+          if ! command -v mktexlsr >/dev/null 2>&1 ||
+             ! command -v pdflatex >/dev/null 2>&1 ||
+             ! command -v fmtutil-sys >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall \
+              texlive-binaries texlive-base texlive-latex-base
+          fi
           sudo mktexlsr
           # ...and updmap-sys is what builds the font map files. Without it
           # pdflatex finds lmodern.sty but not the fonts it maps to, failing

@@ -153,79 +153,363 @@ The following table is taken directly from the Module Guide document for this pr
 \label{TblMH}
 \end{table}
 
+% Modules 1--4 are specified by the team members responsible for the first
+% half of the MIS.  The sections below specify Modules 5--8.
+
 \newpage
-~\newpage
 
-\section{MIS of \wss{Module Name}} \label{Module} \wss{Use labels for
-  cross-referencing}
-
-\wss{You can reference SRS labels, such as R\ref{R_Inputs}.}
-
-\wss{It is also possible to use \LaTeX for hypperlinks to external documents.}
+\section{MIS of the Vocabulary Handoff Module} \label{mVocabularyHandoff}
 
 \subsection{Module}
 
-\wss{Short name for the module}
+\texttt{VocabularyHandoff}; Library
 
 \subsection{Uses}
 
+Learner Lesson Interface, Platform and Media Adapter, and the device's
+persistent storage service.
 
 \subsection{Syntax}
 
-\subsubsection{Exported Constants}
+\subsubsection{Exported Types}
+
+\begin{align*}
+\textit{VocabularyItem} = \{&\textit{term}: \textit{String},
+  \textit{translation}: \textit{String},
+  \textit{context}: \textit{String}\} \\
+\textit{DeliveryStatus} = \{&\textit{sent}, \textit{queued},
+  \textit{duplicate}, \textit{exportReady}\} \\
+\textit{HandoffResult} = \{&\textit{id}: \mathbb{N},
+  \textit{status}: \textit{DeliveryStatus}\}
+\end{align*}
 
 \subsubsection{Exported Access Programs}
 
 \begin{center}
-\begin{tabular}{p{2cm} p{4cm} p{4cm} p{2cm}}
-\hline
+\begin{tabularx}{\textwidth}{p{2.2cm} X X p{3.2cm}}
+\toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
-\hline
-\wss{accessProg} & - & - & - \\
-\hline
-\end{tabular}
+\midrule
+\texttt{handoff} & \textit{VocabularyItem} &
+  $\operatorname{Promise}(\textit{HandoffResult})$ &
+  \textit{InvalidItem}, \textit{StorageFailure} \\
+\texttt{retry} & $\mathbb{N}$ &
+  $\operatorname{Promise}(\textit{HandoffResult})$ &
+  \textit{UnknownItem}, \textit{StorageFailure} \\
+\texttt{pending} & -- & $\operatorname{Seq}(\textit{VocabularyItem})$ &
+  \textit{StorageFailure} \\
+\texttt{exportPending} & $\operatorname{Seq}(\mathbb{N})$ &
+  $\operatorname{Promise}(\textit{FileRef})$ &
+  \textit{UnknownItem}, \textit{ExportFailure} \\
+\bottomrule
+\end{tabularx}
 \end{center}
 
 \subsection{Semantics}
 
 \subsubsection{State Variables}
 
-\wss{Not all modules will have state variables.  State variables give the module
-  a memory.}
+\begin{itemize}
+  \item $Q$: a persistent mapping from item identifiers to vocabulary items
+  whose creation has not been confirmed by a destination;
+  \item $K$: a persistent set of $(term, context)$ keys for notes whose
+  creation has been confirmed; and
+  \item $B$: the set of item identifiers currently being processed.  This set
+  prevents a second request for the same item while the first is in progress.
+\end{itemize}
 
 \subsubsection{Environment Variables}
 
-\wss{This section is not necessary for all modules.  Its purpose is to capture
-  when the module has external interaction with the environment, such as for a
-  device driver, screen interface, keyboard, file, etc.}
+\begin{itemize}
+  \item \textit{destination}: the supported Anki application selected by the
+  platform adapter.  The primary mobile adapters are the AnkiDroid application
+  API on Android and the AnkiMobile add-note URL scheme on iOS;
+  \item \textit{deviceStore}: persistent on-device storage used for $Q$ and
+  $K$; and
+  \item \textit{sharedFiles}: the operating-system file and share interface
+  used for the export fallback.
+\end{itemize}
+
+AnkiConnect may be supplied as an optional desktop adapter, but it is not the
+primary mobile interface and the learner is not required to enter a network
+endpoint.
 
 \subsubsection{Assumptions}
 
-\wss{Try to minimize assumptions and anticipate programmer errors via
-  exceptions, but for practical purposes assumptions are sometimes appropriate.}
+The learner owns the destination collection and explicitly initiates each
+handoff.  A supported Anki application may be absent or temporarily
+unavailable; in that case the item remains in $Q$ and is available for retry or
+export.  The module only adds notes to the \progname{} deck and does not edit or
+delete existing Anki data.
 
 \subsubsection{Access Routine Semantics}
 
-\noindent \wss{accessProg}():
+\noindent \texttt{handoff}($v$):
 \begin{itemize}
-\item transition: \wss{if appropriate} 
-\item output: \wss{if appropriate} 
-\item exception: \wss{if appropriate} 
+  \item transition: validates $v$, stores it in $Q$, and adds its identifier to
+  $B$.  If $(v.term,v.context) \in K$, no destination write occurs.  Otherwise
+  the platform adapter attempts to create a note whose fields are Term,
+  Translation, and Context.  On confirmed creation, the item is removed from
+  $Q$ and its key is added to $K$.  The identifier is removed from $B$ before
+  the routine completes;
+  \item output: \textit{duplicate} if its key is already confirmed,
+  \textit{sent} if the destination confirms creation, or \textit{queued} if no
+  confirmation is obtained; and
+  \item exception: \textit{InvalidItem} if a required field is empty, and
+  \textit{StorageFailure} if the item cannot first be stored safely.  A
+  destination failure is represented by \textit{queued}, so it cannot cause
+  the item to be lost.
 \end{itemize}
 
-\wss{A module without environment variables or state variables is unlikely to
-  have a state transition.  In this case a state transition can only occur if
-  the module is changing the state of another module.}
+\noindent \texttt{retry}($id$):
+\begin{itemize}
+  \item transition: repeats the destination portion of \texttt{handoff} for
+  $Q[id]$ without creating a second queue entry;
+  \item output: the resulting delivery status; and
+  \item exception: \textit{UnknownItem} if $id \notin \operatorname{dom}(Q)$,
+  or \textit{StorageFailure} if the persistent state cannot be read or updated.
+\end{itemize}
 
-\wss{Modules rarely have both a transition and an output.  In most cases you
-  will have one or the other.}
+\noindent \texttt{pending}():
+\begin{itemize}
+  \item output: the queued items in identifier order; and
+  \item exception: \textit{StorageFailure} if the queue cannot be read.
+\end{itemize}
 
-\subsubsection{Local Functions}
+\noindent \texttt{exportPending}($ids$):
+\begin{itemize}
+  \item transition: creates, but does not automatically mark as delivered, an
+  importable file containing the selected queued items;
+  \item output: a reference to the created file; and
+  \item exception: \textit{UnknownItem} if any selected identifier is absent,
+  or \textit{ExportFailure} if the file cannot be created or shared.
+\end{itemize}
 
-\wss{As appropriate} \wss{These functions are for the purpose of specification.
-  They are not necessarily something that is going to be implemented
-  explicitly.  Even if they are implemented, they are not exported; they only
-  have local scope.}
+\newpage
+
+\section{MIS of the Shared Song Map Format Module} \label{mSongMapFormat}
+
+\subsection{Module}
+
+\texttt{SongMapFormat}; Abstract Data Type
+
+\subsection{Uses}
+
+None.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{p{3cm} X}
+\toprule
+\textbf{Name} & \textbf{Description} \\
+\midrule
+\texttt{CURRENT\_SCHEMA\_VERSION} & The schema version written by the current
+implementation. \\
+\texttt{SONG\_MAP\_SCHEMA} & The versioned JSON Schema for the serialized song
+map representation. \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsubsection{Exported Types}
+
+\begin{align*}
+\textit{Word} = \{&start: \mathbb{N}_0, end: \mathbb{N}_0,
+surface: String, reading: String_{?}, romaji: String_{?}, gloss: String_{?}\}\\
+\textit{Line} = \{&id: String, startMs: \mathbb{N}_0,
+endMs: \mathbb{N}_0, text: String, translation: String_{?},
+words: \operatorname{Seq}(Word)_{?}\}\\
+\textit{SongMap} = \{&schemaVersion: String, id: String, title: String,
+artist: String, language: String, audio: AudioRef, rights: Rights,
+lines: \operatorname{Seq}(Line)\}.
+\end{align*}
+
+The subscript $? $ denotes an optional field.  Word offsets are UTF-16 code-unit
+offsets into \textit{Line.text}; $start$ is inclusive and $end$ is exclusive.
+Times are measured in milliseconds, and a line is active on the half-open
+interval $[startMs,endMs)$.
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{p{2.5cm} X X p{2.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{getSchema} & -- & \textit{JSONSchema} & -- \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+None.  Song maps are immutable values at this interface.
+
+\subsubsection{Environment Variables}
+
+None.  An audio path is data stored in a song map; this module does not open
+the referenced file.
+
+\subsubsection{Assumptions}
+
+Untrusted serialized data is checked by the Song Map Validation Module before
+it is treated as a \textit{SongMap}.  A schema-version change that removes a
+field or changes its meaning is accompanied by an explicit migration rather
+than silently reinterpreting existing lesson content.
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{getSchema}():
+\begin{itemize}
+  \item output: \texttt{SONG\_MAP\_SCHEMA}; and
+  \item exception: none.
+\end{itemize}
+
+\newpage
+
+\section{MIS of the Playback Synchronization Module} \label{mPlaybackSync}
+
+\subsection{Module}
+
+\texttt{PlaybackSynchronization}; Library
+
+\subsection{Uses}
+
+Shared Song Map Format Module.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Types}
+
+\[
+\textit{TimedLine}=\{id:String,startMs:\mathbb{N}_0,endMs:\mathbb{N}_0\}.
+\]
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{p{2.8cm} X X p{2.2cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{activeLineAt} & $\operatorname{Seq}(TimedLine)$,
+$positionMs: \mathbb{R}_{\geq 0}$ & $\mathbb{Z}$ & -- \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+None.  Synchronization is a pure calculation from validated timing data and
+the audio player's reported position.
+
+\subsubsection{Environment Variables}
+
+None.  The Platform and Media Adapter supplies player positions to the caller;
+this module neither controls the player nor reads a separate system timer.
+
+\subsubsection{Assumptions}
+
+The input lines have passed song-map validation.  They are ordered by
+$startMs$, occur within the audio duration, satisfy $startMs < endMs$, and do
+not overlap.  The caller invokes this routine after every playback status
+update, seek, pause, resume, and return from the background.
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{activeLineAt}($lines,positionMs$):
+\begin{itemize}
+  \item output: the greatest index $i$ for which
+  $lines[i].startMs \leq positionMs < lines[i].endMs$.  The routine returns
+  $-1$ if there is no such line, including before the first line, after the last
+  line, and in a gap; and
+  \item exception: none under the stated assumptions.
+\end{itemize}
+
+\newpage
+
+\section{MIS of the Language Text Processing Module} \label{mLanguageText}
+
+\subsection{Module}
+
+\texttt{LanguageTextProcessing}; Library
+
+\subsection{Uses}
+
+Shared Song Map Format Module and Platform and Media Adapter.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Types}
+
+\begin{align*}
+\textit{Token}=\{&surface:String,start:\mathbb{N}_0,end:\mathbb{N}_0,
+reading:String,romaji:String,pos:String,baseForm:String\}.
+\end{align*}
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{p{2.6cm} X X p{3.2cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{loadProcessor} & $language:String$ &
+$\operatorname{Promise}(TextProcessor)$ &
+\textit{UnsupportedLanguage}, \textit{ResourceLoadFailure} \\
+\texttt{segment} & $TextProcessor, text:String$ &
+$\operatorname{Seq}(Token)$ & \textit{TokenizationFailure} \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+Each \textit{TextProcessor} retains an initialized tokenizer and its language
+resources.  These resources are logically immutable after construction.
+
+\subsubsection{Environment Variables}
+
+\textit{languageResources}: bundled dictionaries or language models loaded
+through the Platform and Media Adapter.  The initial Japanese implementation
+may use Kuromoji, but the exported interface does not depend on a particular
+tokenizer.
+
+\subsubsection{Assumptions}
+
+The supplied language tag identifies a supported processor.  The editor uses
+this module to suggest segmentation and readings; a creator reviews and stores
+the accepted result in the song map.  When stored word data is present, the
+learner uses it as the authoritative segmentation rather than silently
+re-segmenting the line at runtime.
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{loadProcessor}($language$):
+\begin{itemize}
+  \item output: a processor initialized for $language$;
+  \item exception: \textit{UnsupportedLanguage} if no processor is registered,
+  or \textit{ResourceLoadFailure} if its required resources cannot be loaded.
+\end{itemize}
+
+\noindent \texttt{segment}($processor,text$):
+\begin{itemize}
+  \item output: selectable tokens in source-text order.  For each token $t$,
+  $0 \leq t.start < t.end \leq |text|$ and
+  $t.surface=text[t.start:t.end]$.  Unknown readings and romanizations are
+  empty strings.  If no dictionary form is available, $baseForm=surface$; and
+  \item exception: \textit{TokenizationFailure} if the underlying processor
+  cannot process the input.
+\end{itemize}
 
 \newpage
 

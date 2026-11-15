@@ -53,8 +53,10 @@ urlcolor=cyan          % color of external links
 \begin{tabularx}{\textwidth}{p{3cm}p{2cm}X}
 \toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
 \midrule
-Date 1 & 1.0 & Notes\\
-Date 2 & 1.1 & Notes\\
+November 15, 2026 & 0.1 & Initial MIS draft. Added the module hierarchy,
+front matter, and interface specifications for the Vocabulary Handoff, Shared
+Song Map Format, Playback Synchronization, and Language Text Processing
+modules.\\
 \bottomrule
 \end{tabularx}
 
@@ -62,9 +64,33 @@ Date 2 & 1.1 & Notes\\
 
 \section{Symbols, Abbreviations and Acronyms}
 
-See SRS Documentation at \wss{give url}
+The SRS defines the product vocabulary.  Table~\ref{TblMISSymbols} gives the
+additional terms used by this interface specification.
 
-\wss{Also add any additional symbols, abbreviations or acronyms}
+\begin{table}[h!]
+\centering
+\begin{tabularx}{\textwidth}{p{3cm}X}
+\toprule
+\textbf{Term} & \textbf{Meaning}\\
+\midrule
+ADT & Abstract Data Type\\
+API & Application Programming Interface\\
+HTTP & Hypertext Transfer Protocol\\
+JSON & JavaScript Object Notation\\
+MG & Module Guide\\
+MIS & Module Interface Specification\\
+PoC & Proof of Concept\\
+SRS & Software Requirements Specification\\
+UTF-16 & 16-bit Unicode Transformation Format\\
+ms & milliseconds\\
+AnkiConnect & Optional HTTP adapter for communicating with Anki Desktop\\
+song map & Versioned lesson data containing song metadata, timed lyric lines,
+translations, rights metadata, and optional word-level information\\
+\bottomrule
+\end{tabularx}
+\caption{MIS Symbols and Abbreviations}
+\label{TblMISSymbols}
+\end{table}
 
 \newpage
 
@@ -76,53 +102,70 @@ See SRS Documentation at \wss{give url}
 
 \section{Introduction}
 
-The following document details the Module Interface Specifications for
-\wss{Fill in your project name and description}
+This document specifies the interfaces and externally observable behaviour of
+the modules that compose \progname{}.  \progname{} is a language-learning
+system that presents synchronized song lyrics, translations,
+transliterations, and contextual vocabulary support.  It also provides a
+companion authoring workflow for preparing lesson content.
 
-Complementary documents include the System Requirement Specifications
-and Module Guide.  The full documentation and implementation can be
-found at \url{...}.  \wss{provide the url for your repo}
+This MIS complements the Software Requirements Specification and Module Guide.
+It describes what each module exposes, the state and environmental resources
+on which it depends, and the exceptional conditions callers must handle.
+Implementation details hidden by the modules are intentionally omitted.  The
+documentation and implementation are available at
+\url{https://github.com/rhea333/LingoLyrics}.
 
 \section{Notation}
 
-\wss{You should describe your notation.  You can use what is below as
-  a starting point.}
-
 The structure of the MIS for modules comes from \citet{HoffmanAndStrooper1995},
 with the addition that template modules have been adapted from
-\cite{GhezziEtAl2003}.  The mathematical notation comes from Chapter 3 of
-\citet{HoffmanAndStrooper1995}.  For instance, the symbol := is used for a
-multiple assignment statement and conditional rules follow the form $(c_1
-\Rightarrow r_1 | c_2 \Rightarrow r_2 | ... | c_n \Rightarrow r_n )$.
+\citet{GhezziEtAl2003}.  The mathematical notation comes from Chapter 3 of
+\citet{HoffmanAndStrooper1995}.  A prime denotes post-state, so $x'$ is the
+value of state variable $x$ after an access program completes.  The symbol
+$:=$ denotes assignment.
 
 The following table summarizes the primitive data types used by \progname. 
 
 \begin{center}
 \renewcommand{\arraystretch}{1.2}
 \noindent 
-\begin{tabular}{l l p{7.5cm}} 
+\begin{tabular}{l l p{7.5cm}}
 \toprule 
 \textbf{Data Type} & \textbf{Notation} & \textbf{Description}\\ 
 \midrule
-character & char & a single symbol or digit\\
-integer & $\mathbb{Z}$ & a number without a fractional component in (-$\infty$, $\infty$) \\
-natural number & $\mathbb{N}$ & a number without a fractional component in [1, $\infty$) \\
-real & $\mathbb{R}$ & any number in (-$\infty$, $\infty$)\\
+Boolean & $\mathbb{B}$ & either true or false\\
+integer & $\mathbb{Z}$ & a number without a fractional component\\
+natural number & $\mathbb{N}$ & a positive integer\\
+non-negative integer & $\mathbb{N}_0$ & an integer greater than or equal to zero\\
+non-negative real & $\mathbb{R}_{\geq 0}$ & a real number greater than or equal to zero\\
+string & \textit{String} & a finite sequence of UTF-16 code units\\
 \bottomrule
-\end{tabular} 
+\end{tabular}
 \end{center}
 
 \noindent
-The specification of \progname \ uses some derived data types: sequences, strings, and
-tuples. Sequences are lists filled with elements of the same data type. Strings
-are sequences of characters. Tuples contain a list of values, potentially of
-different types. In addition, \progname \ uses functions, which
-are defined by the data types of their inputs and outputs. Local functions are
-described by giving their type signature followed by their specification.
+The notation $\operatorname{Seq}(T)$ denotes a finite ordered sequence of values
+of type $T$.  $|s|$ is the length of sequence or string $s$, $s[i]$ is its
+zero-based element, and $s[a:b]$ is the half-open slice beginning at $a$ and
+ending before $b$.  A record is written as a set of named fields and types.  A
+subscript $? $ marks an optional field.  $\operatorname{Promise}(T)$ denotes an
+asynchronous computation that either produces a value of type $T$ or raises an
+exception.
+
+Time values are in milliseconds.  Timed intervals are half-open: a lyric line
+is active on $[startMs,endMs)$.  Word offsets are zero-based UTF-16 offsets;
+$start$ is inclusive and $end$ is exclusive.  The integer $-1$ denotes that no
+lyric line is active where an access program must return an index.
+
+An exception listed in an access-program table is observable by the caller.
+An access program with no listed exception assumes its stated preconditions
+have been satisfied.
 
 \section{Module Decomposition}
 
-The following table is taken directly from the Module Guide document for this project.
+Table~\ref{TblMH} follows the leaf-module hierarchy defined in the Module Guide.
+The MIS refines that decomposition without reorganizing it around package or
+directory boundaries.
 
 \begin{table}[h!]
 \centering
@@ -131,21 +174,18 @@ The following table is taken directly from the Module Guide document for this pr
 \textbf{Level 1} & \textbf{Level 2}\\
 \midrule
 
-{Hardware-Hiding} & ~ \\
+\multirow{1}{0.3\textwidth}{Hardware-Hiding Module} & Platform and Media Adapter\\
 \midrule
 
-\multirow{7}{0.3\textwidth}{Behaviour-Hiding} & Input Parameters\\
-& Output Format\\
-& Output Verification\\
-& Temperature ODEs\\
-& Energy Equations\\ 
-& Control Module\\
-& Specification Parameters Module\\
+\multirow{4}{0.3\textwidth}{Behaviour-Hiding Module} & Learner Lesson Interface\\
+& Song Map Authoring Interface\\
+& Song Map Validation Module\\
+& Vocabulary Handoff Module\\
 \midrule
 
-\multirow{3}{0.3\textwidth}{Software Decision} & {Sequence Data Structure}\\
-& ODE Solver\\
-& Plotting\\
+\multirow{3}{0.3\textwidth}{Software Decision Module} & Shared Song Map Format Module\\
+& Playback Synchronization Module\\
+& Language Text Processing Module\\
 \bottomrule
 
 \end{tabular}
@@ -186,7 +226,8 @@ persistent storage service.
 \subsubsection{Exported Access Programs}
 
 \begin{center}
-\begin{tabularx}{\textwidth}{p{2.2cm} X X p{3.2cm}}
+\small
+\begin{tabularx}{\textwidth}{p{2.6cm} X X p{2.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
@@ -203,6 +244,7 @@ persistent storage service.
   \textit{UnknownItem}, \textit{ExportFailure} \\
 \bottomrule
 \end{tabularx}
+\normalsize
 \end{center}
 
 \subsection{Semantics}
@@ -247,8 +289,9 @@ delete existing Anki data.
 \noindent \texttt{handoff}($v$):
 \begin{itemize}
   \item transition: validates $v$, stores it in $Q$, and adds its identifier to
-  $B$.  If $(v.term,v.context) \in K$, no destination write occurs.  Otherwise
-  the platform adapter attempts to create a note whose fields are Term,
+  $B$.  If the pair consisting of $v.term$ and $v.context$ is in $K$, no
+  destination write occurs.  Otherwise the platform adapter attempts to create
+  a note whose fields are Term,
   Translation, and Context.  On confirmed creation, the item is removed from
   $Q$ and its key is added to $K$.  The identifier is removed from $B$ before
   the routine completes;
@@ -306,9 +349,9 @@ None.
 \toprule
 \textbf{Name} & \textbf{Description} \\
 \midrule
-\texttt{CURRENT\_SCHEMA\_VERSION} & The schema version written by the current
+\texttt{schemaVersion} & The schema version written by the current
 implementation. \\
-\texttt{SONG\_MAP\_SCHEMA} & The versioned JSON Schema for the serialized song
+\texttt{songMapSchema} & The versioned JSON Schema for the serialized song
 map representation. \\
 \bottomrule
 \end{tabularx}
@@ -316,16 +359,17 @@ map representation. \\
 
 \subsubsection{Exported Types}
 
-\begin{align*}
-\textit{Word} = \{&start: \mathbb{N}_0, end: \mathbb{N}_0,
-surface: String, reading: String_{?}, romaji: String_{?}, gloss: String_{?}\}\\
-\textit{Line} = \{&id: String, startMs: \mathbb{N}_0,
-endMs: \mathbb{N}_0, text: String, translation: String_{?},
-words: \operatorname{Seq}(Word)_{?}\}\\
-\textit{SongMap} = \{&schemaVersion: String, id: String, title: String,
-artist: String, language: String, audio: AudioRef, rights: Rights,
-lines: \operatorname{Seq}(Line)\}.
-\end{align*}
+\begin{description}
+  \item[$Word$:] a record containing $start: \mathbb{N}_0$,
+  $end: \mathbb{N}_0$, $surface: String$, and the optional fields
+  $reading: String$, $romaji: String$, and $gloss: String$.
+  \item[$Line$:] a record containing $id: String$, $startMs: \mathbb{N}_0$,
+  $endMs: \mathbb{N}_0$, $text: String$, and the optional fields
+  $translation: String$ and $words: \operatorname{Seq}(Word)$.
+  \item[$SongMap$:] a record containing $schemaVersion: String$, $id: String$,
+  $title: String$, $artist: String$, $language: String$, $audio: AudioRef$,
+  $rights: Rights$, and $lines: \operatorname{Seq}(Line)$.
+\end{description}
 
 The subscript $? $ denotes an optional field.  Word offsets are UTF-16 code-unit
 offsets into \textit{Line.text}; $start$ is inclusive and $end$ is exclusive.
@@ -366,7 +410,7 @@ than silently reinterpreting existing lesson content.
 
 \noindent \texttt{getSchema}():
 \begin{itemize}
-  \item output: \texttt{SONG\_MAP\_SCHEMA}; and
+  \item output: \texttt{songMapSchema}; and
   \item exception: none.
 \end{itemize}
 
@@ -393,6 +437,7 @@ Shared Song Map Format Module.
 \subsubsection{Exported Access Programs}
 
 \begin{center}
+\small
 \begin{tabularx}{\textwidth}{p{2.8cm} X X p{2.2cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
@@ -401,6 +446,7 @@ Shared Song Map Format Module.
 $positionMs: \mathbb{R}_{\geq 0}$ & $\mathbb{Z}$ & -- \\
 \bottomrule
 \end{tabularx}
+\normalsize
 \end{center}
 
 \subsection{Semantics}
@@ -426,8 +472,11 @@ update, seek, pause, resume, and return from the background.
 
 \noindent \texttt{activeLineAt}($lines,positionMs$):
 \begin{itemize}
-  \item output: the greatest index $i$ for which
-  $lines[i].startMs \leq positionMs < lines[i].endMs$.  The routine returns
+  \item output: the greatest index $i$ satisfying
+  \[
+    lines[i].startMs \leq positionMs < lines[i].endMs.
+  \]
+  The routine returns
   $-1$ if there is no such line, including before the first line, after the last
   line, and in a gap; and
   \item exception: none under the stated assumptions.
@@ -449,32 +498,33 @@ Shared Song Map Format Module and Platform and Media Adapter.
 
 \subsubsection{Exported Types}
 
-\begin{align*}
-\textit{Token}=\{&surface:String,start:\mathbb{N}_0,end:\mathbb{N}_0,
-reading:String,romaji:String,pos:String,baseForm:String\}.
-\end{align*}
+\textit{Token} is a record containing $surface:String$, $start:\mathbb{N}_0$,
+$end:\mathbb{N}_0$, $reading:String$, $romaji:String$, $pos:String$, and
+$baseForm:String$.
 
 \subsubsection{Exported Access Programs}
 
 \begin{center}
-\begin{tabularx}{\textwidth}{p{2.6cm} X X p{3.2cm}}
+\footnotesize
+\begin{tabularx}{\textwidth}{p{2.4cm} X X p{2.5cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
 \texttt{loadProcessor} & $language:String$ &
-$\operatorname{Promise}(TextProcessor)$ &
-\textit{UnsupportedLanguage}, \textit{ResourceLoadFailure} \\
-\texttt{segment} & $TextProcessor, text:String$ &
-$\operatorname{Seq}(Token)$ & \textit{TokenizationFailure} \\
+$\operatorname{Promise}(Processor)$ &
+\textit{Unsupported}, \textit{LoadFailure} \\
+\texttt{segment} & $Processor, text:String$ &
+$\operatorname{Seq}(Token)$ & \textit{TokenizeFailure} \\
 \bottomrule
 \end{tabularx}
+\normalsize
 \end{center}
 
 \subsection{Semantics}
 
 \subsubsection{State Variables}
 
-Each \textit{TextProcessor} retains an initialized tokenizer and its language
+Each \textit{Processor} retains an initialized tokenizer and its language
 resources.  These resources are logically immutable after construction.
 
 \subsubsection{Environment Variables}
@@ -497,8 +547,8 @@ re-segmenting the line at runtime.
 \noindent \texttt{loadProcessor}($language$):
 \begin{itemize}
   \item output: a processor initialized for $language$;
-  \item exception: \textit{UnsupportedLanguage} if no processor is registered,
-  or \textit{ResourceLoadFailure} if its required resources cannot be loaded.
+  \item exception: \textit{Unsupported} if no processor is registered,
+  or \textit{LoadFailure} if its required resources cannot be loaded.
 \end{itemize}
 
 \noindent \texttt{segment}($processor,text$):
@@ -507,7 +557,7 @@ re-segmenting the line at runtime.
   $0 \leq t.start < t.end \leq |text|$ and
   $t.surface=text[t.start:t.end]$.  Unknown readings and romanizations are
   empty strings.  If no dictionary form is available, $baseForm=surface$; and
-  \item exception: \textit{TokenizationFailure} if the underlying processor
+  \item exception: \textit{TokenizeFailure} if the underlying processor
   cannot process the input.
 \end{itemize}
 
@@ -522,42 +572,54 @@ re-segmenting the line at runtime.
 
 \section{Appendix --- Generative AI Use Disclosure}
 
-\wss{ChatGPT (version 5) was used to brainstorm ideas for the template for this disclose section.}
-
 \subsection{AI Tools Used}
 
-\wss{Give the name of the AI tool(s) used and the version.}
+OpenAI Codex, using a GPT-5 model through the Codex desktop application, was
+used while preparing this revision of the MIS.
 
 \subsection{How and Where Used}
 
-\wss{Explain what the tool(s) were used for.  Examples include: brainstorming,
-explaining a technical concept, reviewing the document, generating or modifying
-text, generating or modifying diagrams, identifying errors or omissions or
-inconsistencies.}
+Codex was used as a drafting and review aid for the revision history, symbols,
+notation, module decomposition, the initial interfaces for the Vocabulary
+Handoff, Shared Song Map Format, Playback Synchronization, and Language Text
+Processing modules, and the reflection.  It compared the Module Guide, SRS,
+Hazard Analysis constraints, and TypeScript interfaces to propose
+access-program names, types, state variables, environmental dependencies,
+assumptions, and exceptions.
 
-\wss{For each of the uses, identify which parts of the document were affected.}
-
-\wss{You do not need to report every interaction, but you should disclose the 
-uses that materially contributed to your work}
+Codex also helped identify design boundaries requiring explicit treatment.  In
+particular, the public vocabulary interface was kept independent of
+AnkiConnect, unsuccessful handoffs were made persistent and retryable, stored
+song-map segmentation was made authoritative for the learner, and the language
+processor interface was kept independent of Kuromoji.  Team members selected
+and edited the retained text; the tool did not determine project scope or
+approve design decisions.
 
 \subsection{Verification of AI-Generated Content}
 
-\wss{\begin{itemize}
-    \item Describe how the team checked AI-generated or AI-assisted material
-    before including it in the document.
-    \item In particular, verify factual claims, technical assertions,
-    requirements, calculations, references, and other information for which an
-    AI system may produce incorrect or fabricated results.
-    \item \textbf{The team is responsible for the accuracy, completeness,
-consistency, and appropriateness of the submitted document, regardless of
-whether material was generated by a human or an AI system.}
-\end{itemize}}
+The team verified AI-assisted material by:
+\begin{itemize}
+  \item comparing the module names, types, secrets, and services with the
+  Module Guide;
+  \item checking vocabulary queueing, duplicate prevention, permissions, and
+  failure behaviour against the SRS and Hazard Analysis requirements;
+  \item comparing song-map fields and timing rules with the versioned JSON
+  Schema and TypeScript types;
+  \item comparing synchronization and language-processing signatures with the
+  current implementation and tests;
+  \item checking external integration claims against the AnkiDroid API and
+  AnkiMobile URL-scheme documentation already cited by the SRS; and
+  \item compiling the document and reviewing the generated PDF for missing
+  references, overflow, and unreadable tables.
+\end{itemize}
+
+The team remains responsible for the accuracy, completeness, consistency, and
+appropriateness of the submitted document, regardless of whether material was
+initially written by a team member or assisted by an AI tool.
 
 \newpage{}
 
 \section{Appendix --- Reflection}
-
-\wss{Not required for CAS 741 projects}
 
 The information in this section will be used to evaluate the team members on the
 graduate attribute of Problem Analysis and Design.
@@ -565,32 +627,87 @@ graduate attribute of Problem Analysis and Design.
 \input{../../Reflection.text}
 
 \begin{enumerate}
-  \item What went well while writing this deliverable? 
-  \item What pain points did you experience during this deliverable, and how
-    did you resolve them?
-  \item Which of your design decisions stemmed from speaking to your client(s)
-  or a proxy (e.g. your peers, stakeholders, potential users)? For those that
-  were not, why, and where did they come from?
-  \item While creating the design doc, what parts of your other documents (e.g.
-  requirements, hazard analysis, etc), it any, needed to be changed, and why?
-  \item What are the limitations of your solution?  Put another way, given
-  unlimited resources, what could you do to make the project better? (LO\_ProbSolutions)
-  \item Give a brief overview of other design solutions you considered.  What
-  are the benefits and tradeoffs of those other designs compared with the chosen
-  design?  From all the potential options, why did you select the documented design?
-  (LO\_Explores)
-  \item (After you have implemented another team's module, which means this
-  isn't filled in until after the original deadline). What did you learn by
-  implementing another team's module? Were all the details you needed in the
-  documentation, or did you need to make assumptions, or ask the other team
-  questions?  If your team also had another team implement one of your modules,
-  what was this experience like?  Are there things in your documentation you
-  could have changed to make the process go more smoothly for when an
-  ``outsider'' completes some of the implementation?
+  \item \textbf{What went well while writing this deliverable?}
 
-  Your reflection should be about concepts learned in your SE education, such as modular decomposition, cohesion, coupling, information hiding, etc.  You should critique the quality and utility of the specification you received.
+  The PoC implementation, JSON Schema, SRS, and Module Guide provided
+  independent views of the design that could be compared.  This made the
+  interfaces more concrete than a design written from the template alone.  The
+  information-hiding decomposition was particularly helpful: it separated the
+  durable song-map representation from validation, platform-dependent Anki
+  adapters from the vocabulary workflow, and the audio player from the pure
+  synchronization calculation.
 
-  You should create a PR for your implemented module.  A link to the PR should be part of your reflection.
+  \item \textbf{What pain points did you experience, and how did you resolve
+  them?}
+
+  The main difficulty was separating intended product behaviour from a narrow
+  PoC implementation.  The PoC sends directly to AnkiConnect, performs runtime
+  Japanese tokenization, and includes timing-analysis utilities.  Treating
+  those details as the final interface would unnecessarily couple the product
+  to a desktop endpoint, one tokenizer, and test instrumentation.  The team
+  resolved this by using the requirements and Module Guide as the authority for
+  behaviour, then using the PoC only to validate feasibility and sharpen types
+  and failure cases.
+
+  \item \textbf{Which decisions stemmed from clients or proxies?}
+
+  The user-facing goals---following lyrics during playback, selecting words in
+  context, and transferring useful vocabulary into an existing study
+  workflow---were inherited from requirements elicitation and the approved
+  learner workflows.  The MIS did not invent new user goals.  Lower-level
+  choices such as UTF-16 offsets, half-open timing intervals, a versioned JSON
+  Schema, persistent retry state, and language-neutral adapters are engineering
+  decisions.  They follow from implementation constraints, hazards, and the
+  need to keep modules cohesive and replaceable rather than from a direct user
+  preference.
+
+  \item \textbf{What other documents needed to change?}
+
+  Writing the MIS exposed consistency work for the team to complete.  The MG
+  must use the same eight leaf-module names, and requirement traceability must
+  make clear that mobile Anki adapters are the primary path while AnkiConnect
+  is optional.  The SRS already requires unconfirmed vocabulary to persist,
+  but the PoC documentation describes only immediate delivery; implementation
+  and VnV cases must therefore be extended to cover queue recovery, retry,
+  export, and duplicate handling.  Those related changes are outside the scope
+  of this MIS branch and should be made in their owning documents.
+
+  \item \textbf{What are the limitations of the solution?}
+
+  The initial language processor is Japanese-first and requires sizeable
+  dictionary assets.  Direct Anki handoff differs by platform and depends on
+  applications outside the team's control.  AnkiMobile's URL interface offers
+  less inspection capability than the AnkiDroid API, so confirmation and
+  duplicate behaviour require careful platform testing.  Song timing and
+  segmentation still require creator review.  With additional resources, the
+  team could add more language processors, automatic alignment assistance,
+  stronger cross-platform Anki conformance tests, richer offline queue
+  management, and broader device testing.
+
+  \item \textbf{What alternative designs were considered?}
+
+  One alternative was to expose AnkiConnect directly.  It was small enough for
+  the PoC, but it requires a desktop application, a reachable network endpoint,
+  and security-sensitive configuration.  A platform-neutral handoff with
+  AnkiDroid, AnkiMobile, and file-export adapters has more implementation work
+  but gives learners a normal mobile workflow and confines platform coupling.
+
+  Another alternative was to segment every lyric at runtime.  Runtime
+  processing allows algorithms to improve without regenerating content, but it
+  increases startup cost and may change token boundaries between releases.
+  Storing creator-approved word data makes lessons reproducible; the language
+  processor can still generate authoring suggestions.  Explicit creator-provided
+  timing was selected over automatic audio alignment because it is easier to
+  verify and avoids introducing a much larger language and signal-processing
+  risk into the initial product.
+
+  \item \textbf{What was learned from implementing another team's module?}
+
+  This activity occurs after the original MIS deadline and has not yet been
+  completed.  After the cross-team implementation, this answer will record the
+  assumptions or clarifications that were required, critique the specification
+  from an outside implementer's perspective, and link the implementation pull
+  request.
 
 \end{enumerate}
 

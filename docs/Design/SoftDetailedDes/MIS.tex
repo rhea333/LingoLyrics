@@ -629,85 +629,70 @@ graduate attribute of Problem Analysis and Design.
 \begin{enumerate}
   \item \textbf{What went well while writing this deliverable?}
 
-  The PoC implementation, JSON Schema, SRS, and Module Guide provided
-  independent views of the design that could be compared.  This made the
-  interfaces more concrete than a design written from the template alone.  The
-  information-hiding decomposition was particularly helpful: it separated the
-  durable song-map representation from validation, platform-dependent Anki
-  adapters from the vocabulary workflow, and the audio player from the pure
-  synchronization calculation.
+  A lot of the system had already been planned while working on the PoC, so the
+  main job was putting those ideas into writing and settling on the final
+  interfaces.  The MIS made those interfaces more concrete.  It also made us
+  think more carefully about information hiding and module decomposition for
+  the first time instead of only thinking about what was easiest to implement.
 
   \item \textbf{What pain points did you experience, and how did you resolve
   them?}
 
-  The main difficulty was separating intended product behaviour from a narrow
-  PoC implementation.  The PoC sends directly to AnkiConnect, performs runtime
-  Japanese tokenization, and includes timing-analysis utilities.  Treating
-  those details as the final interface would unnecessarily couple the product
-  to a desktop endpoint, one tokenizer, and test instrumentation.  The team
-  resolved this by using the requirements and Module Guide as the authority for
-  behaviour, then using the PoC only to validate feasibility and sharpen types
-  and failure cases.
+  The main difficulty was defining the intended product behaviour at this level
+  of detail without treating the PoC as the final design.  The PoC sends
+  directly to AnkiConnect, performs Japanese tokenization at runtime, and
+  includes timing-analysis utilities.  Keeping all of that in the final
+  interface would tie the product to a desktop endpoint and to PoC-specific
+  choices.  We used the requirements and Module Guide as the source of truth
+  for the final behaviour, while the PoC was used to show that the ideas were
+  valid.
 
   \item \textbf{Which decisions stemmed from clients or proxies?}
 
-  The user-facing goals---following lyrics during playback, selecting words in
-  context, and transferring useful vocabulary into an existing study
-  workflow---were inherited from requirements elicitation and the approved
-  learner workflows.  The MIS did not invent new user goals.  Lower-level
-  choices such as UTF-16 offsets, half-open timing intervals, a versioned JSON
-  Schema, persistent retry state, and language-neutral adapters are engineering
-  decisions.  They follow from implementation constraints, hazards, and the
-  need to keep modules cohesive and replaceable rather than from a direct user
-  preference.
+  We kept coming back to the user-facing goals: following lyrics during
+  playback, selecting words in context, and moving vocabulary into an existing
+  study workflow.  Those goals shaped the MIS more than the current code did.
+  Lower-level choices such as UTF-16 offsets, half-open timing intervals, a
+  versioned JSON Schema, persistent retry state, and language-neutral adapters
+  were engineering decisions.  They came from implementation limits, hazards,
+  and the need to keep modules separate and replaceable.
 
   \item \textbf{What other documents needed to change?}
 
-  Writing the MIS exposed consistency work for the team to complete.  The MG
-  must use the same eight leaf-module names, and requirement traceability must
-  make clear that mobile Anki adapters are the primary path while AnkiConnect
-  is optional.  The SRS already requires unconfirmed vocabulary to persist,
-  but the PoC documentation describes only immediate delivery; implementation
-  and VnV cases must therefore be extended to cover queue recovery, retry,
-  export, and duplicate handling.  Those related changes are outside the scope
-  of this MIS branch and should be made in their owning documents.
+  The MIS mostly showed that the team's work was consistent.  The SRS, Module
+  Guide, and PoC were all pointing in the same general direction, so no major
+  document needed to be redesigned.  The main gap was that the PoC documents
+  only describe immediate AnkiConnect delivery, while the requirements also
+  call for failed items to be saved, retried, or exported.  The implementation
+  and VnV cases will need to cover that final behaviour.
 
   \item \textbf{What are the limitations of the solution?}
 
-  The initial language processor is Japanese-first and requires sizeable
-  dictionary assets.  Direct Anki handoff differs by platform and depends on
-  applications outside the team's control.  AnkiMobile's URL interface offers
-  less inspection capability than the AnkiDroid API, so confirmation and
-  duplicate behaviour require careful platform testing.  Song timing and
-  segmentation still require creator review.  With additional resources, the
-  team could add more language processors, automatic alignment assistance,
-  stronger cross-platform Anki conformance tests, richer offline queue
-  management, and broader device testing.
+  The first version is Japanese-first and needs a fairly large dictionary.
+  Anki handoff also works differently on Android and iOS and depends on apps
+  outside our control.  Song timing and segmentation still need creator review.
+  With more time, we could support more languages, improve automatic timing and
+  segmentation, strengthen the offline queue, and test on more devices.
 
   \item \textbf{What alternative designs were considered?}
 
-  One alternative was to expose AnkiConnect directly.  It was small enough for
-  the PoC, but it requires a desktop application, a reachable network endpoint,
-  and security-sensitive configuration.  A platform-neutral handoff with
-  AnkiDroid, AnkiMobile, and file-export adapters has more implementation work
-  but gives learners a normal mobile workflow and confines platform coupling.
+  One option was to use AnkiConnect as the final interface.  It worked for the
+  PoC, but it requires Anki Desktop, a network endpoint, and extra setup.  The
+  chosen design uses AnkiDroid or AnkiMobile when possible and keeps file export
+  as a fallback.  This takes more work but gives users a normal mobile flow.
 
-  Another alternative was to segment every lyric at runtime.  Runtime
-  processing allows algorithms to improve without regenerating content, but it
-  increases startup cost and may change token boundaries between releases.
-  Storing creator-approved word data makes lessons reproducible; the language
-  processor can still generate authoring suggestions.  Explicit creator-provided
-  timing was selected over automatic audio alignment because it is easier to
-  verify and avoids introducing a much larger language and signal-processing
-  risk into the initial product.
+  We also considered segmenting every lyric at runtime.  That would make it
+  easier to update the algorithm, but it could change word boundaries between
+  releases.  We chose to store creator-approved segmentation in the song map
+  and use the language processor to make suggestions.  Creator-provided timing
+  was also kept instead of automatic audio alignment because it is easier to
+  check and is more realistic for the first version.
 
   \item \textbf{What was learned from implementing another team's module?}
 
-  This activity occurs after the original MIS deadline and has not yet been
-  completed.  After the cross-team implementation, this answer will record the
-  assumptions or clarifications that were required, critique the specification
-  from an outside implementer's perspective, and link the implementation pull
-  request.
+  This activity happens after the original MIS deadline and has not been
+  completed yet.  We will update this answer after the cross-team implementation
+  and include the pull request.
 
 \end{enumerate}
 

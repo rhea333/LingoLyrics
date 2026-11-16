@@ -88,7 +88,8 @@ jobs:
         uses: awalsh128/cache-apt-pkgs-action@553a35bb8ebd9fcabcb1c9451aa4c98e1b4ca8a9 # v1.6.3
         with:
           packages: texlive-latex-extra texlive-science texlive-fonts-extra texlive-fonts-recommended texlive-latex-recommended lmodern pandoc
-          version: 1.1
+          # Refresh stale apt cache; the previous restore lacked mktexlsr.
+          version: 1.2
       - name: Verify the TeX toolchain is usable
         run: |
           # A restored cache that skipped texlive's postinst would leave
@@ -98,6 +99,21 @@ jobs:
           # texlive's is what builds the ls-R filename database. Without this
           # kpsewhich cannot see the restored packages, which surfaced as
           # "lmodern.sty not found" on the first cache hit.
+          # The apt cache sometimes restores TeX files without the binaries'
+          # post-install wrappers (mktexlsr, pdflatex, fmtutil-sys).
+          # Reinstall only the base packages when that happens.
+          if ! command -v mktexlsr >/dev/null 2>&1 ||
+             ! command -v pdflatex >/dev/null 2>&1 ||
+             ! command -v fmtutil-sys >/dev/null 2>&1 ||
+             ! command -v pandoc >/dev/null 2>&1 ||
+             ! kpsewhich xcolor.sty >/dev/null 2>&1 ||
+             ! kpsewhich tikz.sty >/dev/null 2>&1; then
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y --reinstall \
+              texlive-binaries texlive-base texlive-latex-base \
+              texlive-latex-recommended texlive-latex-extra texlive-pictures \
+              texlive-science texlive-fonts-recommended lmodern pandoc
+          fi
           sudo mktexlsr
           # ...and updmap-sys is what builds the font map files. Without it
           # pdflatex finds lmodern.sty but not the fonts it maps to, failing
@@ -123,6 +139,16 @@ jobs:
             --pdf-engine=pdflatex --toc -V geometry:margin=1in
           test -s "$smoke/smoke.pdf" && echo "pandoc -> PDF smoke test OK"
           rm -rf "$smoke"
+      - name: Compile changed design documents first
+        run: |
+          # Verify the MG and MIS even if a different document in a full
+          # rebuild needs additional third-party TeX packages.
+          for src in docs/Design/SoftArchitecture/MG.tex \
+                     docs/Design/SoftDetailedDes/MIS.tex; do
+            if [[ " $BUILD_DOCS " == *" $src "* ]]; then
+              make -B "${src%.tex}.pdf"
+            fi
+          done
       - name: Compile LaTeX
         run: |
           PDF_CACHE_DIR="$GITHUB_WORKSPACE/build-pdf"

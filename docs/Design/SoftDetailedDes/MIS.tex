@@ -140,6 +140,8 @@ $\mathrm{Edit}$ (one undoable change),
 $\mathrm{PlatformNote}$ (an opaque note-creation request),
 $\mathrm{DeliveryEvidence}$ (confirmed or unconfirmed response from
 an external note destination),
+$\mathrm{AudioFacts}$ (whether the referenced audio can be decoded
+and its measured duration in seconds, supplied by M1's caller),
 $\mathrm{RuleID}$ (a validation rule identifier), and
 $\mathrm{ValidationResult}$ (a Boolean verdict with failed rule IDs).
 
@@ -314,7 +316,8 @@ None. UI thresholds and lesson limits are taken from the SRS.
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions}\\
 \midrule
 \texttt{importLesson} & $\mathrm{FileRef}$ &
-$\mathrm{LessonID}$ & InvalidMap, ResourceMissing\\
+$\mathrm{LessonID}$ & InvalidMap, ResourceMissing,
+UnsupportedAudio\\
 \texttt{openLesson} & $\mathrm{LessonID}$ & -- & UnknownLesson\\
 \texttt{play}, \texttt{pause} & -- & -- & NoLesson\\
 \texttt{seek} & $t:\mathbb{R}_{\geq0}$ & -- & NoLesson, OutOfRange\\
@@ -358,7 +361,9 @@ persistent queue or confirmed note keys.
 \subsubsection{Access Routine Semantics}
 \begin{description}
 \item[\texttt{importLesson}(f):] Read the candidate from M1 and
-validate it using M4. On success, append its identifier to
+confirm its audio is readable through M1, and validate the
+candidate with M4 using measured $\mathrm{AudioFacts}$.
+On success, append its identifier to
 $library$ if not already present and persist the updated index;
 $out:=\mathrm{LessonID}$. An invalid candidate raises InvalidMap
 and leaves $library$ unchanged.
@@ -499,10 +504,12 @@ and the audio reference to M1. Convert time units explicitly
 at a processing-module boundary when needed, without changing
 the SRS song-map unit of seconds. Only presentation and audio
 device state are affected; draft data is not modified.
-\item[\texttt{validateDraft}():] $out$ is the complete
-result of M4 validation; the draft is not modified.
+\item[\texttt{validateDraft}():] Obtain audio facts through M1
+and return the complete M4 validation result for the current
+draft. The draft is not modified.
 \item[\texttt{exportDraft}(f):] Require valid and publishable
-content from M4. Serialize through the M6 contract and
+content from M4, including the measured audio facts.
+Serialize through the M6 contract and
 write via M1, otherwise raise InvalidMap and leave the
 output file unchanged.
 \item[\texttt{undo}(), \texttt{redo}():] Apply one existing
@@ -538,11 +545,14 @@ inside the validator.
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions}\\
 \midrule
-\texttt{validatePackage} & $\mathrm{Bytes}$ &
+\texttt{validatePackage} & $\mathrm{Bytes},
+\mathrm{AudioFacts}$ &
 $\mathrm{ValidationResult}$ & --\\
-\texttt{validateMap} & $\mathrm{CandidateMap}$ &
+\texttt{validateMap} & $\mathrm{CandidateMap},
+\mathrm{AudioFacts}$ &
 $\mathrm{ValidationResult}$ & --\\
-\texttt{isPublishable} & $\mathrm{CandidateMap}$ &
+\texttt{isPublishable} & $\mathrm{CandidateMap},
+\mathrm{AudioFacts}$ &
 $\mathbb{B}$ & --\\
 \bottomrule
 \end{tabularx}
@@ -555,8 +565,9 @@ None; validation never mutates the candidate or caches
 a second authoritative copy of the format.
 
 \subsubsection{Environment Variables}
-None. Files are read and decoded outside this module's
-public contract; a package is supplied as opaque bytes.
+None. Files are read and audio is decoded by the caller through
+M1. The caller supplies opaque package bytes and the measured
+$\mathrm{AudioFacts}$ so M4 remains a stateless service.
 
 \subsubsection{Assumptions and Invariants}
 $\mathrm{ValidationResult}$ contains a Boolean verdict and
@@ -569,21 +580,23 @@ interface (FR16).
 
 \subsubsection{Access Routine Semantics}
 \begin{description}
-\item[\texttt{validatePackage}(b):] Check package-size and
+\item[\texttt{validatePackage}(b,a):] Check package-size and
 nesting limits before fully parsing untrusted content
 (IM1), reject unsafe resource paths (IM2), and evaluate
 the supported format version, schema rules, and SRS
-validity predicates V1--V8. Set
+validity predicates V1--V8, including the decoded audio
+duration and availability supplied in $a$ (IN11). Set
 $out:=(\mathit{valid},\mathit{failedRules})$, where
 $\mathit{valid}$ holds exactly when the failure set is
 empty; report every applicable failed rule.
-\item[\texttt{validateMap}(m):] Evaluate the already parsed
-candidate using the same field and semantic validity
-predicates as \texttt{validatePackage}, including
-timing order and verified segmentation. The input is
-unchanged.
-\item[\texttt{isPublishable}(m):] $out:=\mathit{true}$
-only when M4 accepts the candidate and every annotation
+\item[\texttt{validateMap}(m,a):] Evaluate the already parsed
+candidate with the same validity predicates as
+\texttt{validatePackage}, including timing order, verified
+segmentation, and the externally observed audio facts $a$.
+Neither input is changed.
+\item[\texttt{isPublishable}(m,a):] $out:=\mathit{true}$
+only when M4 accepts the candidate with audio facts $a$
+and every annotation
 has a distinct named author and reviewer (IN5);
 otherwise $out:=\mathit{false}$. Publication also
 requires the SRS content rights fields (LG1).

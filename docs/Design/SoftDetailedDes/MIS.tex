@@ -138,10 +138,12 @@ $\mathrm{Bytes}$ (an opaque file payload),
 $\mathrm{Annotation}$ (lesson context and translation),
 $\mathrm{Edit}$ (one undoable change),
 $\mathrm{PlatformNote}$ (an opaque note-creation request),
-$\mathrm{DeliveryEvidence}$ (confirmed or unconfirmed response from
-an external note destination),
-$\mathrm{AudioFacts}$ (whether the referenced audio can be decoded
-and its measured duration in seconds, supplied by M1's caller),
+$\mathrm{DeliveryEvidence}$ (a result with a confirmation flag
+and, when available, the destination note identifier),
+$\mathrm{AudioFacts}$ (a record containing
+$\mathit{decodable}:\mathbb{B}$ and
+$\mathit{durationSec}:\mathbb{R}_{\geq 0}$, measured by the
+calling application through M1),
 $\mathrm{RuleID}$ (a validation rule identifier), and
 $\mathrm{ValidationResult}$ (a Boolean verdict with failed rule IDs).
 

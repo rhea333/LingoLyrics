@@ -300,8 +300,9 @@ $\mathrm{LessonID}$ & InvalidMap, ResourceMissing\\
 \texttt{selectTarget} & $\mathrm{TargetRef}$ &
 $\operatorname{Option}(\mathrm{Annotation})$ & UnknownTarget\\
 \texttt{setLayers} & $\mathbb{B}\times\mathbb{B}$ & -- & --\\
-\texttt{sendSelected} & -- & $\mathrm{SendStatus}$ &
-NoSelection\\
+\texttt{sendSelected} & -- &
+$\operatorname{Promise}(\mathrm{HandoffResult})$ &
+NoSelection, InvalidItem, StorageFailure\\
 \bottomrule
 \end{tabularx}
 \normalsize
@@ -330,7 +331,8 @@ Every $opened$ lesson has passed M4 validation and its major
 version is supported (FR1, IN3). Displayed segmentation is read
 from the validated map and is never recomputed by M2 (IN4).
 M2 must not display a successful Anki transfer before the M5
-service confirms it (IN8).
+service confirms it (IN8). It never owns a second copy of M5's
+persistent queue or confirmed note keys.
 
 \subsubsection{Access Routine Semantics}
 \begin{description}
@@ -344,18 +346,28 @@ the validated map and set $opened'$ to it and $selected':=\bot$;
 otherwise raise UnknownLesson. The screen presents that lesson.
 \item[\texttt{play}(), \texttt{pause}(), \texttt{seek}(t):]
 When $opened=\bot$, raise NoLesson. Otherwise delegate to M1
-and use the current M1 position with M7 to identify the active
-lyric. Playback starts only on a learner action (HS1).
+and use its reported audio position with M7 to identify the active
+lyric. Where M7's processing interface uses milliseconds, convert
+the M1 position from seconds by multiplying by 1000; do not
+reinterpret the SRS song-map timestamps. Playback starts only
+on a learner action (HS1).
 \item[\texttt{selectTarget}(r):] If $r$ is not in the active
 lesson, raise UnknownTarget. Otherwise $selected':=r$ and
 $out$ is the stored optional annotation; playback continues.
 \item[\texttt{setLayers}($b_1,b_2$):]
 $showTransliteration':=b_1$ and $showTranslation':=b_2$;
 persist these preferences on the device.
-\item[\texttt{sendSelected}():] Require a selected word. Pass
-its term, correct word translation, and source-line context to
-M5; return its confirmed, queued, or failed result without
-claiming success on a mere attempted send.
+\item[\texttt{sendSelected}():] Require a selected word. Build
+an M5 $\mathrm{VocabularyItem}$ from the selected term, its word
+translation, the source-line context, and the identifying lesson
+and line references required by the SRS. Call M5's
+\texttt{handoff} operation and return its asynchronous
+$\mathrm{HandoffResult}$, preserving the status
+(\emph{sent}, \emph{queued}, or \emph{duplicate}).
+A platform request that opens another app without confirming note
+creation must not be reported as \emph{sent} (IN8).
+Raise NoSelection if no word is selected; propagate M5's
+InvalidItem or StorageFailure rather than claiming success.
 \end{description}
 
 \clearpage

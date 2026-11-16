@@ -186,8 +186,9 @@ Software decision & M6 & Shared Song Map Format Module\\
 \subsection{Module}
 Platform and Media Adapter (hardware-hiding abstract object).
 A single adapter instance represents the active platform playback
-session and access to local files. The adapter hides OS-specific
-audio and storage operations from consumer modules.
+session, local files, and approved external-app actions. The
+adapter hides OS-specific audio, storage, and Anki launch/permission
+mechanisms. M5 still owns note contents, queueing, and confirmation.
 
 \subsection{Uses}
 None.
@@ -215,6 +216,12 @@ ResourceMissing, UnsupportedAudio\\
 ResourceMissing, AccessDenied\\
 \texttt{writeFile} & $\mathrm{FileRef},\mathrm{Bytes}$ & -- &
 AccessDenied, NoSpace\\
+\texttt{requestNote} & $\mathrm{PlatformNote}$ &
+$\operatorname{Promise}(\mathrm{DeliveryEvidence})$ &
+PermissionDenied\\
+\texttt{shareFile} & $\mathrm{FileRef}$ &
+$\operatorname{Promise}(\mathbb{B})$ &
+ResourceMissing, ShareUnavailable\\
 \bottomrule
 \end{tabularx}
 \normalsize
@@ -233,6 +240,8 @@ $deviceDuration:\mathbb{R}_{\geq0}$ are reported by the external
 audio device; $deviceMode\in\{\mathrm{Idle},\mathrm{Ready},
 \mathrm{Playing},\mathrm{Paused},\mathrm{Ended}\}$ describes its
 transport state. $fileStore$ denotes the external platform filesystem.
+$noteDestination$ and $shareService$ denote the external Anki
+application and operating-system sharing facility, respectively.
 These are observations or effects outside the module, not private
 software state variables.
 
@@ -265,6 +274,18 @@ raise ResourceMissing or AccessDenied otherwise.
 \item[\texttt{writeFile}(f,b):] On success, $fileStore'[f]:=b$.
 Raise AccessDenied or NoSpace on failure; do not report success
 before the requested write is complete.
+\item[\texttt{requestNote}(n):] Invoke the supported platform
+mechanism on $noteDestination$ with the opaque note request $n$.
+Return confirmed evidence only when the destination explicitly
+confirms note creation. Launching an external add-note screen
+without confirmation returns unconfirmed evidence. If the
+destination is unavailable, return unconfirmed evidence so M5
+can keep the note pending. An OS permission refusal raises
+PermissionDenied.
+\item[\texttt{shareFile}(f):] Present a file through the
+external $shareService$ and return whether sharing was
+initiated. This is not confirmation that Anki imported the
+file, so M5 must not treat it as a sent note.
 \end{description}
 
 \clearpage

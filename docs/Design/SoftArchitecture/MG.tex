@@ -109,7 +109,7 @@ and common validation rules. Modules hide these decisions so that changing a
 language-processing library or Anki transfer method does not require
 rewriting unrelated user workflows.  
 
-Our design follows the rules layed out by \citet{ParnasEtAl1984}, as follows:
+Our design follows the rules laid out by \citet{ParnasEtAl1984}, as follows:
 \begin{itemize}
 \item System details that are likely to change independently should be the
   secrets of separate modules.
@@ -685,12 +685,13 @@ and M5.
 \label{FigUH}
 \end{figure}
 
-The graph is acyclic. A valid topological layering is
-\{\mref{mLearner}, \mref{mEditor}\},
-\{\mref{mValidate}, \mref{mAnki}, \mref{mSync}, \mref{mLanguage}\},
-and \{\mref{mHH}, \mref{mMap}\}. Lower-level modules do not import
-application screens. Dependencies are architectural commitments to be
-checked against implementation imports during the Revision~0 review.
+The graph has no cycles and has three dependency levels.
+The learner and editor interfaces are at the top, validation, handoff,
+synchronization, and language processing are in the middle, and the
+platform adapter and shared song-map format are at the bottom.
+Lower-level modules do not import application screens. The team will
+check these dependencies against the implementation during the
+Revision~0 review.
 
 %\section*{References}
 

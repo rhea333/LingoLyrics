@@ -93,8 +93,9 @@ An MIS defines the behaviour, state and environmental interactions that
 a consumer may depend on; it does not prescribe UI widget structure,
 runtime library calls, or a particular serialization language.
 The interface specifications for M1--M4 are provided in this revision.
-M5--M8 require companion specifications before the team's Revision~$-1$
-submission can be considered complete.
+The companion M5--M8 specifications are being drafted separately.
+The combined MIS must use the same types, units, and module dependencies
+before it is submitted.
 
 \section{Notation}
 
@@ -105,25 +106,40 @@ of type $B$. $\mathbb{R}_{\geq 0}$ is the set of nonnegative real
 numbers, $\mathbb{B}=\{\mathit{true},\mathit{false}\}$, and
 $\operatorname{Seq}(T)$, $\operatorname{Set}(T)$, and
 $\operatorname{Option}(T)$ mean a sequence, set, and optional value of
-type $T$. $\bot$ denotes no available value. Time measurements
-are in seconds; $t$ is a timestamp and $d$ is audio duration.
+type $T$. $\bot$ denotes no available value, and
+$\operatorname{Promise}(T)$ denotes an asynchronous result of type $T$
+or an exception. Time measurements at the learner and editor boundary
+are in \emph{seconds}, as required by the SRS data dictionary.
+A platform or processing module that reports milliseconds must be
+converted explicitly: $t_{\mathrm{ms}}=1000\,t_{\mathrm{s}}$.
+A change of units in the serialized song map requires a corresponding
+SRS revision; the notation here does not authorize that change.
 
-Types from the shared format module M6 include
-$\mathrm{SongMap}$, $\mathrm{LineRef}$, $\mathrm{TargetRef}$,
-$\mathrm{VocabularyItem}$, and $\mathrm{LessonID}$.
+M6 defines the versioned $\mathrm{SongMap}$, $\mathrm{Line}$, and
+$\mathrm{Word}$ values. This document uses
+$\mathrm{LessonID}$ to identify a stored lesson,
+$\mathrm{LineRef}$ for a lesson and line identifier, and
+$\mathrm{TargetRef}$ for a line or selected word within a lesson.
+These references are abstract handles, not extra copies of the map.
 A $\mathrm{CandidateMap}$ is an untrusted, potentially invalid input
-to the validator; a $\mathrm{ValidatedMap}$ is a candidate accepted
-by all relevant song-map validity rules (SRS V1--V8).
-Additional abstract types include $\mathrm{LineText}$ (a lyric line),
-$\mathrm{Metadata}$ (lesson-level fields and credits),
-$\mathrm{Segmentation}$ (a sequence of proposed word spans), and
-$\mathrm{SendStatus}$ (confirmed, queued, or failed).
+to the validator; a $\mathrm{ValidatedMap}$ is a candidate satisfying
+the SRS validity conditions V1--V8. M5 owns the
+$\mathrm{VocabularyItem}$ and $\mathrm{HandoffResult}$ interfaces;
+M8 owns $\mathrm{Token}$ and $\mathrm{Processor}$.
+$\operatorname{Seq}(\mathrm{Token})$ is a proposed segmentation that
+M3 presents for creator approval and converts into verified map words.
+Other abstract types used below include
+$\mathrm{LineText}$ (a lyric line) and
+$\mathrm{Metadata}$ (lesson fields, rights, and credits).
 Other interface-level types used below are
 $\mathrm{AudioRef}$ (a reference to an audio resource),
 $\mathrm{FileRef}$ (an opaque file location),
 $\mathrm{Bytes}$ (an opaque file payload),
 $\mathrm{Annotation}$ (lesson context and translation),
 $\mathrm{Edit}$ (one undoable change),
+$\mathrm{PlatformNote}$ (an opaque note-creation request),
+$\mathrm{DeliveryEvidence}$ (confirmed or unconfirmed response from
+an external note destination),
 $\mathrm{RuleID}$ (a validation rule identifier), and
 $\mathrm{ValidationResult}$ (a Boolean verdict with failed rule IDs).
 

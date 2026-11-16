@@ -405,9 +405,10 @@ specified by the SRS and shared configuration.
 \mathrm{Annotation}$ & -- & UnknownTarget\\
 \texttt{setMetadata} & $\mathrm{Metadata}$ & -- & --\\
 \texttt{suggestWords} & $\mathrm{LineRef}$ &
-$\mathrm{Segmentation}$ & UnsupportedLanguage\\
+$\operatorname{Promise}(\operatorname{Seq}(\mathrm{Token}))$ &
+UnsupportedLanguage, LoadFailure, TokenizeFailure\\
 \texttt{acceptWords} & $\mathrm{LineRef},
-\mathrm{Segmentation}$ & -- & InvalidSegmentation\\
+\operatorname{Seq}(\mathrm{Token})$ & -- & InvalidSegmentation\\
 \texttt{preview} & -- & -- & NoDraft\\
 \texttt{validateDraft} & -- & $\mathrm{ValidationResult}$ & NoDraft\\
 \texttt{exportDraft} & $\mathrm{FileRef}$ & -- & InvalidMap, AccessDenied\\
@@ -461,14 +462,21 @@ latency calibration offset follows IN7.
 Update the indicated part of $draft$, recording each change
 as an undoable edit. Metadata includes audio/lyric sources
 and licence information (LG1).
-\item[\texttt{suggestWords}(r):] $out$ is M8's
-language-specific proposal for line $r$; the draft is
-unchanged until the creator accepts or corrects it.
-\item[\texttt{acceptWords}(r,g):] Replace line $r$'s
-segmentation with a creator-approved, verified $g$ and
-record the operation in history.
+\item[\texttt{suggestWords}(r):] Load M8's language
+processor if necessary and return its token sequence for line
+$r$, including source offsets and readings. The result may
+be asynchronous while language resources load. Errors from
+M8 are reported to the creator. The draft is unchanged until
+the creator accepts or corrects the proposal.
+\item[\texttt{acceptWords}(r,g):] Require a creator-reviewed
+token sequence with valid source offsets. Convert M8 tokens
+into M6 word entries for line $r$ and mark the accepted
+segmentation as creator-verified (IN4). Record the edit in
+history; tokenization alone never marks content as verified.
 \item[\texttt{preview}():] Supply the draft's timing to M7
-and the audio reference to M1. Only presentation and audio
+and the audio reference to M1. Convert time units explicitly
+at a processing-module boundary when needed, without changing
+the SRS song-map unit of seconds. Only presentation and audio
 device state are affected; draft data is not modified.
 \item[\texttt{validateDraft}():] $out$ is the complete
 result of M4 validation; the draft is not modified.

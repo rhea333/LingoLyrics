@@ -299,11 +299,12 @@ to be implemented.
 \subsection{Hardware Hiding Modules (\mref{mHH})}
 
 \begin{description}
-\item[Secrets:] The platform-specific interfaces for audio playback, playback
-  position, and access to lesson files.
-\item[Services:] Provides the learner and editor applications with audio
-  playback, playback position, and platform file access without exposing
-  platform-specific APIs to those applications.
+\item[Secrets:] The platform-specific interfaces for audio playback,
+  local file access, and permitted external app operations.
+\item[Services:] Provides the learner and editor with audio position,
+  playback controls, and local file access. It also gives the vocabulary
+  handoff module access to supported OS-level note creation and file
+  sharing without requiring that module to call platform APIs directly.
 \item[Implemented By:] Expo Audio and operating-system APIs in the learner app;
   browser audio and file APIs in the editor.
 \item[Type of Module:] Abstract Object (one active platform session)
@@ -413,8 +414,10 @@ to be implemented.
 \begin{description}
 \item[Secrets:] The language-specific text processing decisions, including
   segmentation and reading generation where required.
-\item[Services:] Supplies language-aware text processing needed to present
-  supported lyrics and word-level learning content.
+\item[Services:] Suggests segmentation and readings for lyric text
+  in the creator editor, using format types from M6 and language
+  resources loaded through M1. The learner displays stored,
+  creator-approved results instead of running the tokenizer.
 \item[Implemented By:] TypeScript language-processing libraries; the initial
   Japanese segmentation candidate is kuromoji.js.
 \item[Type of Module:] Library
@@ -626,7 +629,8 @@ dependency from a lower-level service back to either user interface.
 \mref{mAnki} Vocabulary Handoff & \mref{mHH}\\
 \mref{mMap} Shared Song Map Format & None\\
 \mref{mSync} Playback Synchronization & \mref{mMap}\\
-\mref{mLanguage} Language Text Processing & None\\
+\mref{mLanguage} Language Text Processing &
+\mref{mHH}, \mref{mMap}\\
 \bottomrule
 \end{tabularx}
 \caption{Direct use dependencies (caller to provider)}
@@ -634,13 +638,14 @@ dependency from a lower-level service back to either user interface.
 \end{table}
 
 Figure~\ref{FigUH} groups the same modules by architectural layer.
-The complete direct edge list in Table~\ref{TblUses} is normative.
-For example, the learner calls synchronization over already-verified
-map timings; it does not call the language tokenizer. Likewise, the
-editor uses language processing to suggest segmentation, but validation
-remains a shared service. Anki integration depends on the platform
-adapter for permitted external communication; it does not depend on UI
-widgets.
+Table~\ref{TblUses} lists the direct uses relationships.
+The learner uses stored lyric timing and does not call the tokenizer.
+The editor uses language processing to suggest segmentation, while
+validation remains a shared service. Language processing uses M1
+to load its bundled resources and M6 for common word data.
+Anki handoff uses the platform adapter, not the learner UI.
+Keeping that direction avoids a circular dependency between M2
+and M5.
 
 \begin{figure}[H]
 \centering
@@ -672,6 +677,8 @@ widgets.
 \draw[edge] (validator) -- (format);
 \draw[edge] (handoff) -- (platform);
 \draw[edge] (sync) -- (format);
+\draw[edge] (language) -- (platform);
+\draw[edge] (language) -- (format);
 \end{tikzpicture}%
 }
 \caption{Use hierarchy of LingoLyrics modules; arrows point to providers}
@@ -891,7 +898,7 @@ The following direct checks were performed while preparing these edits:
       stated explicitly in Table~\ref{TblLCT}, rather than falsely
       assigning one owner to unrelated thresholds.
 \item Direct dependencies in Table~\ref{TblUses} were checked as an
-      eight-node, 13-edge graph with no cycles. The diagram was
+      eight-node, 15-edge graph with no cycles. The diagram was
       derived from that list and must still be checked for legibility
       in the generated PDF.
 \item Initial module ownership and submission milestones were checked

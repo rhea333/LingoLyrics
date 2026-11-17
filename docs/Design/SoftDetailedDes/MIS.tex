@@ -75,8 +75,8 @@ Module Guide; MIS means Module Interface Specification, and ADT means
 abstract data type. Terms such as \emph{song map}, \emph{line},
 \emph{annotation}, and \emph{target} follow the definitions in the SRS.
 
-The SRS defines the product vocabulary.  Table~\ref{TblMISSymbols} gives the
-additional terms used by this interface specification.
+Table~\ref{TblMISSymbols} gives the additional terms used by this interface
+specification.
 
 \begin{table}[h!]
 \centering
@@ -119,13 +119,12 @@ system that presents synchronized song lyrics, translations,
 transliterations, and contextual vocabulary support.  It also provides a
 companion authoring workflow for preparing lesson content.
 
-This Module Interface Specification describes the externally observable
-contracts of LingoLyrics's software modules. The mobile learner
+The mobile learner
 application opens and plays locally stored lessons; the browser editor
 creates validated song-map packages. Both depend on shared map and
 validation services. The architecture and each module's hidden design
 decisions are documented in the
-\href{https://github.com/rhea333/LingoLyrics/blob/docs/mg/docs/Design/SoftArchitecture/MG.tex}
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/Design/SoftArchitecture/MG.tex}
 {Module Guide}. Source code and project documents are in the
 \href{https://github.com/rhea333/LingoLyrics}{LingoLyrics repository}.
 
@@ -237,7 +236,7 @@ have been satisfied.
 \section{Module Decomposition} \label{SecMISModules}
 
 The modules and numbers are taken from the
-\href{https://github.com/rhea333/LingoLyrics/blob/docs/mg/docs/Design/SoftArchitecture/MG.tex}
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/Design/SoftArchitecture/MG.tex}
 {Module Guide}. The table is a classification by hidden decision,
 not a call graph. The MIS refines that decomposition without reorganizing it
 around package or directory boundaries.
@@ -542,7 +541,7 @@ snapshot of the draft. The audio output and its reported position
 are accessed through M1.
 
 \subsubsection{Assumptions and Invariants}
-All nonempty history entries are inverseable edits of the active
+All nonempty history entries are invertible edits of the active
 draft. An edit clears the redo stack, marks the draft dirty,
 and leaves its current state available for validation. A draft
 may temporarily be invalid, but \texttt{exportDraft} never
@@ -565,7 +564,8 @@ and set $dirty':=\mathit{true}$. Application of the
 latency calibration offset follows IN7.
 \item[\texttt{setAnnotation}(r,v), \texttt{setMetadata}(m):]
 Update the indicated part of $draft$, recording each change
-as an undoable edit. Metadata includes audio/lyric sources
+as an undoable edit. An annotation's $lineId$ and $range$ are
+taken from the target $r$. Metadata includes audio/lyric sources
 and licence information (LG1).
 \item[\texttt{suggestWords}(r):] Load M8's language
 processor if necessary and return its token sequence for line
@@ -662,8 +662,8 @@ interface (FR16).
 nesting limits before fully parsing untrusted content
 (IM1), decode the package with M6's \texttt{parse} (a
 MalformedPackage exception becomes a failed rule, not a
-crash), reject unsafe resource paths (IM2), and evaluate
-M6's \texttt{canRead} for the format version, and the SRS
+crash), reject unsafe resource paths (IM2), check the
+format version with M6's \texttt{canRead}, and evaluate the SRS
 validity predicates V1--V8, including the decoded audio
 duration and availability supplied in $a$ (IN11). Set
 $out:=(\mathit{valid},\mathit{failedRules})$, where
@@ -734,7 +734,7 @@ None.
 \texttt{retry} & $\mathbb{N}$ &
   $\operatorname{Promise}(\textit{HandoffResult})$ &
   \textit{UnknownItem}, \textit{StorageFailure} \\
-\texttt{pending} & -- & $\operatorname{Seq}(\textit{VocabularyItem})$ &
+\texttt{pending} & -- & $\operatorname{Seq}(\mathbb{N} \times \textit{VocabularyItem})$ &
   \textit{StorageFailure} \\
 \texttt{exportPending} & $\operatorname{Seq}(\mathbb{N})$ &
   $\operatorname{Promise}(\textit{FileRef})$ &
@@ -791,8 +791,8 @@ delete existing Anki data.
   confirmation is obtained; and
   \item exception: \textit{InvalidItem} if a required field is empty, and
   \textit{StorageFailure} if the item cannot first be stored safely.  A
-  destination failure is represented by \textit{queued}, so it cannot cause
-  the item to be lost.
+  destination failure, including a \textit{PermissionDenied} raised by M1, is
+  represented by \textit{queued}, so it cannot cause the item to be lost.
 \end{itemize}
 
 \noindent \texttt{retry}($id$):
@@ -806,7 +806,9 @@ delete existing Anki data.
 
 \noindent \texttt{pending}():
 \begin{itemize}
-  \item output: the queued items in identifier order; and
+  \item output: the queued items paired with their identifiers, in
+  identifier order, so the caller can pass identifiers to \texttt{retry}
+  and \texttt{exportPending}; and
   \item exception: \textit{StorageFailure} if the queue cannot be read.
 \end{itemize}
 
@@ -876,7 +878,7 @@ field.
   audioDurationMs: \mathbb{N}_0,\ loudness_?: \mathbb{R},\
   audioSource: Source,\ lyricsSource: Source,\ published: \mathbb{B},\
   exports: \operatorname{Seq}(ExportRecord)\}$.
-  \item[$SongMap$:] $\{formatVersion: String,\ id: String,\
+  \item[$SongMap$:] $\{schemaVersion: String,\ id: String,\
   metadata: Metadata,\ lines: \operatorname{Seq}(Line),\
   annotations: \operatorname{Seq}(Annotation)\}$.
 \end{description}
@@ -924,7 +926,8 @@ than silently reinterpreting existing lesson content.
 \noindent \texttt{serialize}($m$):
 \begin{itemize}
   \item output: an encoding of $m$ tagged with \texttt{FORMAT\_VERSION}, such
-  that $\texttt{parse}(\texttt{serialize}(m)) = m$; and
+  that $\texttt{parse}(\texttt{serialize}(m)) = m$, where a valid
+  \textit{SongMap} is regarded as a $\mathrm{CandidateMap}$; and
   \item exception: none.
 \end{itemize}
 
@@ -1112,11 +1115,10 @@ re-segmenting the line at runtime.
 \label{SecMISDisclosure}
 
 \subsection{AI Tools Used}
-OpenAI ChatGPT (GPT-6, November 13, 2026) assisted Raymond Ma with
-the M1--M4 interface specifications and replacement of sample content.
-OpenAI Codex, using a GPT-5 model through the Codex desktop application,
-assisted Omar Bakr with the M5--M8 interface specifications, front matter,
-and reflection.
+\begin{itemize}
+  \item OpenAI ChatGPT (GPT-6, November 13, 2026)
+  \item OpenAI Codex, using a GPT-5 model
+\end{itemize}
 
 \subsection{How and Where Used}
 ChatGPT reviewed the Volere SRS, the MG, the MIS checklist, and

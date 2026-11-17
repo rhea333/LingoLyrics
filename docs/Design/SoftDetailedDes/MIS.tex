@@ -180,18 +180,19 @@ produces a value of type $T$ or raises an exception.
 
 All time values in this document, including serialized song-map
 timestamps, audio durations, and player positions, are in
-\emph{milliseconds} from the start of the audio, matching the
-song-map schema and the proof of concept.  Stored timestamps and
-durations are whole milliseconds ($\mathbb{N}_0$); positions reported
-by the audio player may be fractional ($\mathbb{R}_{\geq 0}$).  No
-module converts between time units.  Timed intervals are half-open: a lyric line is active from its start time
-inclusive to its end time exclusive.  Word offsets are zero-based UTF-16
+\emph{milliseconds} from the start of the audio, as defined by the
+song-map format (M6).  Stored timestamps and durations are whole
+milliseconds ($\mathbb{N}_0$); positions reported by the audio player
+may be fractional ($\mathbb{R}_{\geq 0}$).  No module converts between
+time units.  Timed intervals are half-open: a lyric line is active from
+its start time inclusive to its end time exclusive.  Word offsets are zero-based UTF-16
 offsets; $start$ is inclusive and $end$ is exclusive.  The integer $-1$
 denotes that no lyric line is active where an access program must return an
 index.
 
-M6 defines the versioned $\mathrm{SongMap}$, $\mathrm{Line}$, and
-$\mathrm{Word}$ values. This document uses
+M6 defines the versioned $\mathrm{SongMap}$, $\mathrm{Metadata}$,
+$\mathrm{Line}$, $\mathrm{Word}$, and $\mathrm{Annotation}$ values.
+This document uses
 $\mathrm{LessonID}$ to identify a stored lesson,
 $\mathrm{LineRef}$ for a lesson and line identifier, and
 $\mathrm{TargetRef}$ for a line or selected word within a lesson.
@@ -203,14 +204,11 @@ $\mathrm{VocabularyItem}$ and $\mathrm{HandoffResult}$ interfaces;
 M8 owns $\mathrm{Token}$ and $\mathrm{Processor}$.
 $\operatorname{Seq}(\mathrm{Token})$ is a proposed segmentation that
 M3 presents for creator approval and converts into verified map words.
-Other abstract types used below include
-$\mathrm{LineText}$ (a lyric line) and
-$\mathrm{Metadata}$ (lesson fields, rights, and credits).
 Other interface-level types used below are
+$\mathrm{LineText}$ (a lyric line),
 $\mathrm{AudioRef}$ (a reference to an audio resource),
 $\mathrm{FileRef}$ (an opaque file location),
 $\mathrm{Bytes}$ (an opaque file payload),
-$\mathrm{Annotation}$ (lesson context and translation),
 $\mathrm{Edit}$ (one undoable change),
 $\mathrm{PlatformNote}$ (an opaque note-creation request),
 $\mathrm{DeliveryEvidence}$ (a result with a confirmation flag
@@ -506,7 +504,7 @@ specified by the SRS and shared configuration.
 \texttt{loadMaterial} & $\mathrm{AudioRef},
 \operatorname{Seq}(\mathrm{LineText})$ & -- & UnsupportedAudio\\
 \texttt{openDraft} & $\mathrm{FileRef}$ & -- & ResourceMissing\\
-\texttt{setTiming} & $\mathrm{LineRef},\mathbb{R}_{\geq0}^2$
+\texttt{setTiming} & $\mathrm{LineRef},\mathbb{N}_0^2$
 & -- & UnknownLine, InvalidRange\\
 \texttt{setAnnotation} & $\mathrm{TargetRef},
 \mathrm{Annotation}$ & -- & UnknownTarget\\
@@ -561,7 +559,7 @@ clear both histories, and set $dirty':=\mathit{true}$.
 $draft'$, and initialize an undo history for the restored state.
 A failed read leaves the current draft unchanged.
 \item[\texttt{setTiming}(r,s,e):] Require a known line and
-$0\leq s\leq e$. Replace only that line's timing, append
+$0\leq s<e$, both in whole milliseconds. Replace only that line's timing, append
 its previous value to $undoHistory$, clear $redoHistory$,
 and set $dirty':=\mathit{true}$. Application of the
 latency calibration offset follows IN7.
@@ -662,8 +660,10 @@ interface (FR16).
 \begin{description}
 \item[\texttt{validatePackage}(b,a):] Check package-size and
 nesting limits before fully parsing untrusted content
-(IM1), reject unsafe resource paths (IM2), and evaluate
-the supported format version, schema rules, and SRS
+(IM1), decode the package with M6's \texttt{parse} (a
+MalformedPackage exception becomes a failed rule, not a
+crash), reject unsafe resource paths (IM2), and evaluate
+M6's \texttt{canRead} for the format version, and the SRS
 validity predicates V1--V8, including the decoded audio
 duration and availability supplied in $a$ (IN11). Set
 $out:=(\mathit{valid},\mathit{failedRules})$, where
@@ -693,7 +693,7 @@ not mandatory implementation helpers.
 
 \subsection{Module}
 
-\texttt{VocabularyHandoff}; Library
+\texttt{VocabularyHandoff}; Abstract Object
 
 \subsection{Uses}
 
@@ -701,6 +701,10 @@ M1 Platform and Media Adapter, for note requests, file sharing, and
 persistent storage.  M5 does not use M2; M2 calls M5's \texttt{handoff}.
 
 \subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+None.
 
 \subsubsection{Exported Types}
 
@@ -711,7 +715,7 @@ persistent storage.  M5 does not use M2; M2 calls M5's \texttt{handoff}.
   &\textit{mapId}: \textit{String},
   \textit{lineId}: \textit{String}\} \\
 \textit{DeliveryStatus} = \{&\textit{sent}, \textit{queued},
-  \textit{duplicate}, \textit{exportReady}\} \\
+  \textit{duplicate}\} \\
 \textit{HandoffResult} = \{&\textit{id}: \mathbb{N},
   \textit{status}: \textit{DeliveryStatus}\}
 \end{align*}
@@ -755,18 +759,11 @@ persistent storage.  M5 does not use M2; M2 calls M5's \texttt{handoff}.
 
 \subsubsection{Environment Variables}
 
-\begin{itemize}
-  \item \textit{destination}: the supported Anki application selected by the
-  platform adapter.  The primary mobile adapters are the AnkiDroid application
-  API on Android and the AnkiMobile add-note URL scheme on iOS;
-  \item \textit{deviceStore}: persistent on-device storage used for $Q$ and
-  $K$; and
-  \item \textit{sharedFiles}: the operating-system file and share interface
-  used for the export fallback.
-\end{itemize}
-
-AnkiConnect may be supplied as an optional desktop adapter, but it is not the
-primary mobile interface and the learner is not required to enter a network
+None.  The Anki destination, persistent device storage for $Q$ and $K$, and
+the operating-system share facility are environment variables of M1 and are
+reached only through M1's \texttt{requestNote}, \texttt{readFile},
+\texttt{writeFile}, and \texttt{shareFile}.  M5 does not depend on which
+platform mechanism M1 uses, and the learner is never asked for a network
 endpoint.
 
 \subsubsection{Assumptions}
@@ -783,9 +780,10 @@ delete existing Anki data.
 \begin{itemize}
   \item transition: validates $v$, stores it in $Q$, and adds its identifier to
   $B$.  If the pair consisting of $v.term$ and $v.contextSentence$ is in $K$, no
-  destination write occurs.  Otherwise the platform adapter attempts to create
-  a note whose fields are Term,
-  Translation, and Context.  On confirmed creation, the item is removed from
+  destination write occurs.  Otherwise M5 builds a $\mathrm{PlatformNote}$
+  whose fields are Term, Translation, and Context and calls M1's
+  \texttt{requestNote}.  Only confirmed $\mathrm{DeliveryEvidence}$ counts as
+  creation.  On confirmed creation, the item is removed from
   $Q$ and its key is added to $K$.  The identifier is removed from $B$ before
   the routine completes;
   \item output: \textit{duplicate} if its key is already confirmed,
@@ -814,8 +812,10 @@ delete existing Anki data.
 
 \noindent \texttt{exportPending}($ids$):
 \begin{itemize}
-  \item transition: creates, but does not automatically mark as delivered, an
-  importable file containing the selected queued items;
+  \item transition: writes an importable file containing the selected queued
+  items through M1's \texttt{writeFile} and offers it through
+  \texttt{shareFile}.  The items stay in $Q$, because sharing a file is not
+  confirmation that Anki imported it;
   \item output: a reference to the created file; and
   \item exception: \textit{UnknownItem} if any selected identifier is absent,
   or \textit{ExportFailure} if the file cannot be created or shared.
@@ -827,7 +827,7 @@ delete existing Anki data.
 
 \subsection{Module}
 
-\texttt{SongMapFormat}; Abstract Data Type
+\texttt{SongMapFormat}; Library of exported data types
 
 \subsection{Uses}
 
@@ -838,45 +838,64 @@ None.
 \subsubsection{Exported Constants}
 
 \begin{center}
-\begin{tabularx}{\textwidth}{p{3cm} X}
+\begin{tabularx}{\textwidth}{p{3.4cm} X}
 \toprule
 \textbf{Name} & \textbf{Description} \\
 \midrule
-\texttt{schemaVersion} & The schema version written by the current
-implementation. \\
-\texttt{songMapSchema} & The versioned JSON Schema for the serialized song
-map representation. \\
+\texttt{FORMAT\_VERSION} & The format version, $major.minor.patch$, written by
+this release. \\
+\texttt{SUPPORTED\_MAJOR} & $\mathbb{N}_0$; the major format version this
+release can read (IN3). \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
 \subsubsection{Exported Types}
 
+The types follow the SRS data dictionary.  A subscript $?$ marks an optional
+field.
+
 \begin{description}
-  \item[$Word$:] a record containing $start: \mathbb{N}_0$,
-  $end: \mathbb{N}_0$, $surface: String$, and the optional fields
-  $reading: String$, $romaji: String$, and $gloss: String$.
-  \item[$Line$:] a record containing $id: String$, $startMs: \mathbb{N}_0$,
-  $endMs: \mathbb{N}_0$, $text: String$, and the optional fields
-  $translation: String$ and $words: \operatorname{Seq}(Word)$.
-  \item[$SongMap$:] a record containing $schemaVersion: String$, $id: String$,
-  $title: String$, $artist: String$, $language: String$, $audio: AudioRef$,
-  $rights: Rights$, and $lines: \operatorname{Seq}(Line)$.
+  \item[$Word$:] $\{start: \mathbb{N}_0,\ end: \mathbb{N}_0,\
+  surface: String,\ reading_?: String,\ romaji_?: String,\
+  translation_?: String,\ startMs_?: \mathbb{N}_0,\ endMs_?: \mathbb{N}_0,\
+  verified: \mathbb{B}\}$.  $verified$ is true only for creator-approved
+  segmentation (IN4).
+  \item[$Line$:] $\{id: String,\ startMs: \mathbb{N}_0,\ endMs: \mathbb{N}_0,\
+  text: String,\ translation_?: String,\ words_?: \operatorname{Seq}(Word)\}$.
+  \item[$Annotation$:] $\{lineId: String,\ range_?: \mathbb{N}_0 \times
+  \mathbb{N}_0,\ note: String,\ register_?: String,\ author: String,\
+  reviewedBy_?: String\}$.  Without $range$, the annotation targets the whole
+  line.
+  \item[$Source$:] $\{origin: String,\ licence: String,\
+  rightsHolder: String\}$ (LG1).
+  \item[$ExportRecord$:] $\{date: String,\ creator: String,\
+  mapVersion: String\}$ (AU2).
+  \item[$Metadata$:] $\{title: String,\ artist: String,\ language: String,\
+  difficulty: \mathbb{N},\ explicit: \mathbb{B},\ audio: \mathrm{AudioRef},\
+  audioDurationMs: \mathbb{N}_0,\ loudness_?: \mathbb{R},\
+  audioSource: Source,\ lyricsSource: Source,\ published: \mathbb{B},\
+  exports: \operatorname{Seq}(ExportRecord)\}$.
+  \item[$SongMap$:] $\{formatVersion: String,\ id: String,\
+  metadata: Metadata,\ lines: \operatorname{Seq}(Line),\
+  annotations: \operatorname{Seq}(Annotation)\}$.
 \end{description}
 
-The subscript $? $ denotes an optional field.  Word offsets are UTF-16 code-unit
-offsets into \textit{Line.text}; $start$ is inclusive and $end$ is exclusive.
-Times are measured in milliseconds, and a line is active on the half-open
-interval $[startMs,endMs)$.
+Word offsets and annotation ranges index into \textit{Line.text}; $start$ is
+inclusive and $end$ is exclusive.  A line is active on the half-open interval
+$[startMs,endMs)$.
 
 \subsubsection{Exported Access Programs}
 
 \begin{center}
-\begin{tabularx}{\textwidth}{p{2.5cm} X X p{2.5cm}}
+\begin{tabularx}{\textwidth}{p{2.8cm} X X p{2.8cm}}
 \toprule
 \textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
 \midrule
-\texttt{getSchema} & -- & \textit{JSONSchema} & -- \\
+\texttt{serialize} & $SongMap$ & $\mathrm{Bytes}$ & -- \\
+\texttt{parse} & $\mathrm{Bytes}$ & $\mathrm{CandidateMap}$ &
+MalformedPackage \\
+\texttt{canRead} & $version: String$ & $\mathbb{B}$ & -- \\
 \bottomrule
 \end{tabularx}
 \end{center}
@@ -889,21 +908,37 @@ None.  Song maps are immutable values at this interface.
 
 \subsubsection{Environment Variables}
 
-None.  An audio path is data stored in a song map; this module does not open
-the referenced file.
+None.  An audio reference is data stored in a song map; this module does not
+open the referenced file.
 
 \subsubsection{Assumptions}
 
-Untrusted serialized data is checked by the Song Map Validation Module before
-it is treated as a \textit{SongMap}.  A schema-version change that removes a
-field or changes its meaning is accompanied by an explicit migration rather
+Untrusted serialized data is checked by M4 before it is treated as a
+\textit{SongMap}.  The concrete encoding of a serialized song map is a secret
+of this module.  A format change that removes a field or changes its meaning
+increments the major version and is accompanied by an explicit migration rather
 than silently reinterpreting existing lesson content.
 
 \subsubsection{Access Routine Semantics}
 
-\noindent \texttt{getSchema}():
+\noindent \texttt{serialize}($m$):
 \begin{itemize}
-  \item output: \texttt{songMapSchema}; and
+  \item output: an encoding of $m$ tagged with \texttt{FORMAT\_VERSION}, such
+  that $\texttt{parse}(\texttt{serialize}(m)) = m$; and
+  \item exception: none.
+\end{itemize}
+
+\noindent \texttt{parse}($b$):
+\begin{itemize}
+  \item output: the candidate map decoded from $b$.  No validity condition is
+  checked beyond decoding; that is M4's responsibility; and
+  \item exception: \textit{MalformedPackage} if $b$ is not a well-formed song
+  map encoding.
+\end{itemize}
+
+\noindent \texttt{canRead}($version$):
+\begin{itemize}
+  \item output: $major(version) = \texttt{SUPPORTED\_MAJOR}$; and
   \item exception: none.
 \end{itemize}
 
@@ -920,6 +955,10 @@ than silently reinterpreting existing lesson content.
 Shared Song Map Format Module.
 
 \subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+None.
 
 \subsubsection{Exported Types}
 
@@ -989,11 +1028,17 @@ Shared Song Map Format Module and Platform and Media Adapter.
 
 \subsection{Syntax}
 
+\subsubsection{Exported Constants}
+
+None.
+
 \subsubsection{Exported Types}
 
 \textit{Token} is a record containing $surface:String$, $start:\mathbb{N}_0$,
 $end:\mathbb{N}_0$, $reading:String$, $romaji:String$, $pos:String$, and
-$baseForm:String$.
+$baseForm:String$.  \textit{Processor} is an opaque handle to a
+language-specific segmenter; callers obtain one only from
+\texttt{loadProcessor}.
 
 \subsubsection{Exported Access Programs}
 
@@ -1005,7 +1050,7 @@ $baseForm:String$.
 \midrule
 \texttt{loadProcessor} & $language:String$ &
 $\operatorname{Promise}(Processor)$ &
-\textit{Unsupported}, \textit{LoadFailure} \\
+\textit{UnsupportedLanguage}, \textit{LoadFailure} \\
 \texttt{segment} & $Processor, text:String$ &
 $\operatorname{Seq}(Token)$ & \textit{TokenizeFailure} \\
 \bottomrule
@@ -1023,9 +1068,9 @@ resources.  These resources are logically immutable after construction.
 \subsubsection{Environment Variables}
 
 \textit{languageResources}: bundled dictionaries or language models loaded
-through the Platform and Media Adapter.  The initial Japanese implementation
-may use Kuromoji, but the exported interface does not depend on a particular
-tokenizer.
+through the Platform and Media Adapter.  The tokenizer behind a
+\textit{Processor} is a secret of this module; the exported interface does not
+depend on a particular tokenizer.
 
 \subsubsection{Assumptions}
 
@@ -1040,7 +1085,7 @@ re-segmenting the line at runtime.
 \noindent \texttt{loadProcessor}($language$):
 \begin{itemize}
   \item output: a processor initialized for $language$;
-  \item exception: \textit{Unsupported} if no processor is registered,
+  \item exception: \textit{UnsupportedLanguage} if no processor is registered,
   or \textit{LoadFailure} if its required resources cannot be loaded.
 \end{itemize}
 

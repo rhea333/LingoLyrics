@@ -54,6 +54,12 @@ urlcolor=cyan          % color of external links
 \toprule {\bf Date} & {\bf Version} & {\bf Notes}\\
 \midrule
 November 13, 2026 & -1 & Initial module inventory and first-half interface syntax.\\
+November 15, 2026 & 0.1 & Initial MIS draft. Added the module hierarchy,
+front matter, and interface specifications for the Vocabulary Handoff, Shared
+Song Map Format, Playback Synchronization, and Language Text Processing
+modules.\\
+November 16, 2026 & 0.2 & Combined the M1--M4 and M5--M8 specifications,
+front matter, and appendices into a single MIS.\\
 \bottomrule
 \end{tabularx}
 
@@ -69,6 +75,34 @@ Module Guide; MIS means Module Interface Specification, and ADT means
 abstract data type. Terms such as \emph{song map}, \emph{line},
 \emph{annotation}, and \emph{target} follow the definitions in the SRS.
 
+Table~\ref{TblMISSymbols} gives the additional terms used by this interface
+specification.
+
+\begin{table}[h!]
+\centering
+\begin{tabularx}{\textwidth}{p{3cm}X}
+\toprule
+\textbf{Term} & \textbf{Meaning}\\
+\midrule
+ADT & Abstract Data Type\\
+API & Application Programming Interface\\
+HTTP & Hypertext Transfer Protocol\\
+JSON & JavaScript Object Notation\\
+MG & Module Guide\\
+MIS & Module Interface Specification\\
+PoC & Proof of Concept\\
+SRS & Software Requirements Specification\\
+UTF-16 & 16-bit Unicode Transformation Format\\
+ms & milliseconds\\
+AnkiConnect & Optional HTTP adapter for communicating with Anki Desktop\\
+song map & Versioned lesson data containing song metadata, timed lyric lines,
+translations, rights metadata, and optional word-level information\\
+\bottomrule
+\end{tabularx}
+\caption{MIS Symbols and Abbreviations}
+\label{TblMISSymbols}
+\end{table}
+
 \newpage
 
 \tableofcontents
@@ -79,44 +113,85 @@ abstract data type. Terms such as \emph{song map}, \emph{line},
 
 \section{Introduction}
 
-This Module Interface Specification describes the externally observable
-contracts of LingoLyrics's software modules. The mobile learner
+This document specifies the interfaces and externally observable behaviour of
+the modules that compose \progname{}.  \progname{} is a language-learning
+system that presents synchronized song lyrics, translations,
+transliterations, and contextual vocabulary support.  It also provides a
+companion authoring workflow for preparing lesson content.
+
+The mobile learner
 application opens and plays locally stored lessons; the browser editor
 creates validated song-map packages. Both depend on shared map and
 validation services. The architecture and each module's hidden design
 decisions are documented in the
-\href{https://github.com/rhea333/LingoLyrics/blob/docs/mg/docs/Design/SoftArchitecture/MG.tex}
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/Design/SoftArchitecture/MG.tex}
 {Module Guide}. Source code and project documents are in the
 \href{https://github.com/rhea333/LingoLyrics}{LingoLyrics repository}.
 
 An MIS defines the behaviour, state and environmental interactions that
 a consumer may depend on; it does not prescribe UI widget structure,
 runtime library calls, or a particular serialization language.
-The interface specifications for M1--M4 are provided in this revision.
-The companion M5--M8 specifications are being drafted separately.
-The combined MIS must use the same types, units, and module dependencies
-before it is submitted.
+It complements the Software Requirements Specification and Module Guide by
+describing what each module exposes, the state and environmental resources on
+which it depends, and the exceptional conditions callers must handle.
+Implementation details hidden by the modules are intentionally omitted.
+This revision specifies all eight modules, M1--M8.
 
 \section{Notation}
 
-This specification uses abstract types and simple mathematical contracts
-instead of application-specific programming syntax. A function
-$f : A \rightarrow B$ accepts a value of type $A$ and yields a value
-of type $B$. $\mathbb{R}_{\geq 0}$ is the set of nonnegative real
-numbers, $\mathbb{B}=\{\mathit{true},\mathit{false}\}$, and
-$\operatorname{Seq}(T)$, $\operatorname{Set}(T)$, and
-$\operatorname{Option}(T)$ mean a sequence, set, and optional value of
-type $T$. $\bot$ denotes no available value, and
-$\operatorname{Promise}(T)$ denotes an asynchronous result of type $T$
-or an exception. Time measurements at the learner and editor boundary
-are in \emph{seconds}, as required by the SRS data dictionary.
-A platform or processing module that reports milliseconds must be
-converted explicitly: $t_{\mathrm{ms}}=1000\,t_{\mathrm{s}}$.
-A change of units in the serialized song map requires a corresponding
-SRS revision; the notation here does not authorize that change.
+The structure of the MIS for modules comes from \citet{HoffmanAndStrooper1995},
+with the addition that template modules have been adapted from
+\citet{GhezziEtAl2003}.  The mathematical notation comes from Chapter 3 of
+\citet{HoffmanAndStrooper1995}.  A prime denotes post-state, so $x'$ is the
+value of state variable $x$ after an access program completes.  The symbol
+$:=$ denotes assignment.
 
-M6 defines the versioned $\mathrm{SongMap}$, $\mathrm{Line}$, and
-$\mathrm{Word}$ values. This document uses
+The following table summarizes the primitive data types used by \progname. 
+
+\begin{center}
+\renewcommand{\arraystretch}{1.2}
+\noindent 
+\begin{tabular}{l l p{7.5cm}}
+\toprule 
+\textbf{Data Type} & \textbf{Notation} & \textbf{Description}\\ 
+\midrule
+Boolean & $\mathbb{B}$ & either true or false\\
+integer & $\mathbb{Z}$ & a number without a fractional component\\
+natural number & $\mathbb{N}$ & a positive integer\\
+non-negative integer & $\mathbb{N}_0$ & an integer greater than or equal to zero\\
+non-negative real & $\mathbb{R}_{\geq 0}$ & a real number greater than or equal to zero\\
+string & \textit{String} & a finite sequence of UTF-16 code units\\
+\bottomrule
+\end{tabular}
+\end{center}
+
+\noindent
+A function $f : A \rightarrow B$ accepts a value of type $A$ and yields a
+value of type $B$.  The notation $\operatorname{Seq}(T)$ denotes a finite
+ordered sequence of values of type $T$, and $\operatorname{Set}(T)$ and
+$\operatorname{Option}(T)$ denote a set and an optional value of type $T$;
+$\bot$ denotes no available value.  $|s|$ is the length of sequence or string
+$s$, $s[i]$ is its zero-based element, and $s[a:b]$ is the half-open slice
+beginning at $a$ and ending before $b$.  A record is written as a set of named
+fields and types.  A subscript $? $ marks an optional field.
+$\operatorname{Promise}(T)$ denotes an asynchronous computation that either
+produces a value of type $T$ or raises an exception.
+
+All time values in this document, including serialized song-map
+timestamps, audio durations, and player positions, are in
+\emph{milliseconds} from the start of the audio, as defined by the
+song-map format (M6).  Stored timestamps and durations are whole
+milliseconds ($\mathbb{N}_0$); positions reported by the audio player
+may be fractional ($\mathbb{R}_{\geq 0}$).  No module converts between
+time units.  Timed intervals are half-open: a lyric line is active from
+its start time inclusive to its end time exclusive.  Word offsets are zero-based UTF-16
+offsets; $start$ is inclusive and $end$ is exclusive.  The integer $-1$
+denotes that no lyric line is active where an access program must return an
+index.
+
+M6 defines the versioned $\mathrm{SongMap}$, $\mathrm{Metadata}$,
+$\mathrm{Line}$, $\mathrm{Word}$, and $\mathrm{Annotation}$ values.
+This document uses
 $\mathrm{LessonID}$ to identify a stored lesson,
 $\mathrm{LineRef}$ for a lesson and line identifier, and
 $\mathrm{TargetRef}$ for a line or selected word within a lesson.
@@ -128,21 +203,18 @@ $\mathrm{VocabularyItem}$ and $\mathrm{HandoffResult}$ interfaces;
 M8 owns $\mathrm{Token}$ and $\mathrm{Processor}$.
 $\operatorname{Seq}(\mathrm{Token})$ is a proposed segmentation that
 M3 presents for creator approval and converts into verified map words.
-Other abstract types used below include
-$\mathrm{LineText}$ (a lyric line) and
-$\mathrm{Metadata}$ (lesson fields, rights, and credits).
 Other interface-level types used below are
+$\mathrm{LineText}$ (a lyric line),
 $\mathrm{AudioRef}$ (a reference to an audio resource),
 $\mathrm{FileRef}$ (an opaque file location),
 $\mathrm{Bytes}$ (an opaque file payload),
-$\mathrm{Annotation}$ (lesson context and translation),
 $\mathrm{Edit}$ (one undoable change),
 $\mathrm{PlatformNote}$ (an opaque note-creation request),
 $\mathrm{DeliveryEvidence}$ (a result with a confirmation flag
 and, when available, the destination note identifier),
 $\mathrm{AudioFacts}$ (a record containing
 $\mathit{decodable}:\mathbb{B}$ and
-$\mathit{durationSec}:\mathbb{R}_{\geq 0}$, measured by the
+$\mathit{durationMs}:\mathbb{N}_0$, measured by the
 calling application through M1),
 $\mathrm{RuleID}$ (a validation rule identifier), and
 $\mathrm{ValidationResult}$ (a Boolean verdict with failed rule IDs).
@@ -157,12 +229,17 @@ the operation, $out := v$ its returned result, and $exc := E$ an
 exception or failure. Unless specified otherwise, an operation does
 not mutate its input values.
 
+An exception listed in an access-program table is observable by the caller.
+An access program with no listed exception assumes its stated preconditions
+have been satisfied.
+
 \section{Module Decomposition} \label{SecMISModules}
 
 The modules and numbers are taken from the
-\href{https://github.com/rhea333/LingoLyrics/blob/docs/mg/docs/Design/SoftArchitecture/MG.tex}
+\href{https://github.com/rhea333/LingoLyrics/blob/main/docs/Design/SoftArchitecture/MG.tex}
 {Module Guide}. The table is a classification by hidden decision,
-not a call graph.
+not a call graph. The MIS refines that decomposition without reorganizing it
+around package or directory boundaries.
 
 \begin{table}[H]
 \centering
@@ -375,9 +452,8 @@ otherwise raise UnknownLesson. The screen presents that lesson.
 \item[\texttt{play}(), \texttt{pause}(), \texttt{seek}(t):]
 When $opened=\bot$, raise NoLesson. Otherwise delegate to M1
 and use its reported audio position with M7 to identify the active
-lyric. Where M7's processing interface uses milliseconds, convert
-the M1 position from seconds by multiplying by 1000; do not
-reinterpret the SRS song-map timestamps. Playback starts only
+lyric. The M1 position and the song-map timestamps are both in
+milliseconds, so the position is passed to M7 unchanged. Playback starts only
 on a learner action (HS1).
 \item[\texttt{selectTarget}(r):] If $r$ is not in the active
 lesson, raise UnknownTarget. Otherwise $selected':=r$ and
@@ -427,7 +503,7 @@ specified by the SRS and shared configuration.
 \texttt{loadMaterial} & $\mathrm{AudioRef},
 \operatorname{Seq}(\mathrm{LineText})$ & -- & UnsupportedAudio\\
 \texttt{openDraft} & $\mathrm{FileRef}$ & -- & ResourceMissing\\
-\texttt{setTiming} & $\mathrm{LineRef},\mathbb{R}_{\geq0}^2$
+\texttt{setTiming} & $\mathrm{LineRef},\mathbb{N}_0^2$
 & -- & UnknownLine, InvalidRange\\
 \texttt{setAnnotation} & $\mathrm{TargetRef},
 \mathrm{Annotation}$ & -- & UnknownTarget\\
@@ -465,7 +541,7 @@ snapshot of the draft. The audio output and its reported position
 are accessed through M1.
 
 \subsubsection{Assumptions and Invariants}
-All nonempty history entries are inverseable edits of the active
+All nonempty history entries are invertible edits of the active
 draft. An edit clears the redo stack, marks the draft dirty,
 and leaves its current state available for validation. A draft
 may temporarily be invalid, but \texttt{exportDraft} never
@@ -482,13 +558,14 @@ clear both histories, and set $dirty':=\mathit{true}$.
 $draft'$, and initialize an undo history for the restored state.
 A failed read leaves the current draft unchanged.
 \item[\texttt{setTiming}(r,s,e):] Require a known line and
-$0\leq s\leq e$. Replace only that line's timing, append
+$0\leq s<e$, both in whole milliseconds. Replace only that line's timing, append
 its previous value to $undoHistory$, clear $redoHistory$,
 and set $dirty':=\mathit{true}$. Application of the
 latency calibration offset follows IN7.
 \item[\texttt{setAnnotation}(r,v), \texttt{setMetadata}(m):]
 Update the indicated part of $draft$, recording each change
-as an undoable edit. Metadata includes audio/lyric sources
+as an undoable edit. An annotation's $lineId$ and $range$ are
+taken from the target $r$. Metadata includes audio/lyric sources
 and licence information (LG1).
 \item[\texttt{suggestWords}(r):] Load M8's language
 processor if necessary and return its token sequence for line
@@ -502,9 +579,8 @@ into M6 word entries for line $r$ and mark the accepted
 segmentation as creator-verified (IN4). Record the edit in
 history; tokenization alone never marks content as verified.
 \item[\texttt{preview}():] Supply the draft's timing to M7
-and the audio reference to M1. Convert time units explicitly
-at a processing-module boundary when needed, without changing
-the SRS song-map unit of seconds. Only presentation and audio
+and the audio reference to M1. Draft timing and M1 positions
+share the millisecond unit, so no conversion is applied. Only presentation and audio
 device state are affected; draft data is not modified.
 \item[\texttt{validateDraft}():] Obtain audio facts through M1
 and return the complete M4 validation result for the current
@@ -584,8 +660,10 @@ interface (FR16).
 \begin{description}
 \item[\texttt{validatePackage}(b,a):] Check package-size and
 nesting limits before fully parsing untrusted content
-(IM1), reject unsafe resource paths (IM2), and evaluate
-the supported format version, schema rules, and SRS
+(IM1), decode the package with M6's \texttt{parse} (a
+MalformedPackage exception becomes a failed rule, not a
+crash), reject unsafe resource paths (IM2), check the
+format version with M6's \texttt{canRead}, and evaluate the SRS
 validity predicates V1--V8, including the decoded audio
 duration and availability supplied in $a$ (IN11). Set
 $out:=(\mathit{valid},\mathit{failedRules})$, where
@@ -611,6 +689,420 @@ predicates in SRS V1--V8. They are specification abbreviations,
 not mandatory implementation helpers.
 
 \clearpage
+\section{MIS of M5: Vocabulary Handoff Module} \label{mVocabularyHandoff}
+
+\subsection{Module}
+
+\texttt{VocabularyHandoff}; Abstract Object
+
+\subsection{Uses}
+
+M1 Platform and Media Adapter, for note requests, file sharing, and
+persistent storage.  M5 does not use M2; M2 calls M5's \texttt{handoff}.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+None.
+
+\subsubsection{Exported Types}
+
+\begin{align*}
+\textit{VocabularyItem} = \{&\textit{term}: \textit{String},
+  \textit{translation}: \textit{String},
+  \textit{contextSentence}: \textit{String}, \\
+  &\textit{mapId}: \textit{String},
+  \textit{lineId}: \textit{String}\} \\
+\textit{DeliveryStatus} = \{&\textit{sent}, \textit{queued},
+  \textit{duplicate}\} \\
+\textit{HandoffResult} = \{&\textit{id}: \mathbb{N},
+  \textit{status}: \textit{DeliveryStatus}\}
+\end{align*}
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{p{2.6cm} X X p{2.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{handoff} & \textit{VocabularyItem} &
+  $\operatorname{Promise}(\textit{HandoffResult})$ &
+  \textit{InvalidItem}, \textit{StorageFailure} \\
+\texttt{retry} & $\mathbb{N}$ &
+  $\operatorname{Promise}(\textit{HandoffResult})$ &
+  \textit{UnknownItem}, \textit{StorageFailure} \\
+\texttt{pending} & -- & $\operatorname{Seq}(\mathbb{N} \times \textit{VocabularyItem})$ &
+  \textit{StorageFailure} \\
+\texttt{exportPending} & $\operatorname{Seq}(\mathbb{N})$ &
+  $\operatorname{Promise}(\textit{FileRef})$ &
+  \textit{UnknownItem}, \textit{ExportFailure} \\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+\begin{itemize}
+  \item $Q$: a persistent mapping from item identifiers to vocabulary items
+  whose creation has not been confirmed by a destination;
+  \item $K$: a persistent set of $(term, contextSentence)$ keys for notes whose
+  creation has been confirmed; and
+  \item $B$: the set of item identifiers currently being processed.  This set
+  prevents a second request for the same item while the first is in progress.
+\end{itemize}
+
+\subsubsection{Environment Variables}
+
+None.  The Anki destination, persistent device storage for $Q$ and $K$, and
+the operating-system share facility are environment variables of M1 and are
+reached only through M1's \texttt{requestNote}, \texttt{readFile},
+\texttt{writeFile}, and \texttt{shareFile}.  M5 does not depend on which
+platform mechanism M1 uses, and the learner is never asked for a network
+endpoint.
+
+\subsubsection{Assumptions}
+
+The learner owns the destination collection and explicitly initiates each
+handoff.  A supported Anki application may be absent or temporarily
+unavailable; in that case the item remains in $Q$ and is available for retry or
+export.  The module only adds notes to the \progname{} deck and does not edit or
+delete existing Anki data.
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{handoff}($v$):
+\begin{itemize}
+  \item transition: validates $v$, stores it in $Q$, and adds its identifier to
+  $B$.  If the pair consisting of $v.term$ and $v.contextSentence$ is in $K$, no
+  destination write occurs.  Otherwise M5 builds a $\mathrm{PlatformNote}$
+  whose fields are Term, Translation, and Context and calls M1's
+  \texttt{requestNote}.  Only confirmed $\mathrm{DeliveryEvidence}$ counts as
+  creation.  On confirmed creation, the item is removed from
+  $Q$ and its key is added to $K$.  The identifier is removed from $B$ before
+  the routine completes;
+  \item output: \textit{duplicate} if its key is already confirmed,
+  \textit{sent} if the destination confirms creation, or \textit{queued} if no
+  confirmation is obtained; and
+  \item exception: \textit{InvalidItem} if a required field is empty, and
+  \textit{StorageFailure} if the item cannot first be stored safely.  A
+  destination failure, including a \textit{PermissionDenied} raised by M1, is
+  represented by \textit{queued}, so it cannot cause the item to be lost.
+\end{itemize}
+
+\noindent \texttt{retry}($id$):
+\begin{itemize}
+  \item transition: repeats the destination portion of \texttt{handoff} for
+  $Q[id]$ without creating a second queue entry;
+  \item output: the resulting delivery status; and
+  \item exception: \textit{UnknownItem} if $id \notin \operatorname{dom}(Q)$,
+  or \textit{StorageFailure} if the persistent state cannot be read or updated.
+\end{itemize}
+
+\noindent \texttt{pending}():
+\begin{itemize}
+  \item output: the queued items paired with their identifiers, in
+  identifier order, so the caller can pass identifiers to \texttt{retry}
+  and \texttt{exportPending}; and
+  \item exception: \textit{StorageFailure} if the queue cannot be read.
+\end{itemize}
+
+\noindent \texttt{exportPending}($ids$):
+\begin{itemize}
+  \item transition: writes an importable file containing the selected queued
+  items through M1's \texttt{writeFile} and offers it through
+  \texttt{shareFile}.  The items stay in $Q$, because sharing a file is not
+  confirmation that Anki imported it;
+  \item output: a reference to the created file; and
+  \item exception: \textit{UnknownItem} if any selected identifier is absent,
+  or \textit{ExportFailure} if the file cannot be created or shared.
+\end{itemize}
+
+\newpage
+
+\section{MIS of M6: Shared Song Map Format Module} \label{mSongMapFormat}
+
+\subsection{Module}
+
+\texttt{SongMapFormat}; Library of exported data types
+
+\subsection{Uses}
+
+None.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{p{3.4cm} X}
+\toprule
+\textbf{Name} & \textbf{Description} \\
+\midrule
+\texttt{FORMAT\_VERSION} & The format version, $major.minor.patch$, written by
+this release. \\
+\texttt{SUPPORTED\_MAJOR} & $\mathbb{N}_0$; the major format version this
+release can read (IN3). \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsubsection{Exported Types}
+
+The types follow the SRS data dictionary.  A subscript $?$ marks an optional
+field.
+
+\begin{description}
+  \item[$Word$:] $\{start: \mathbb{N}_0,\ end: \mathbb{N}_0,\
+  surface: String,\ reading_?: String,\ romaji_?: String,\
+  translation_?: String,\ startMs_?: \mathbb{N}_0,\ endMs_?: \mathbb{N}_0,\
+  verified: \mathbb{B}\}$.  $verified$ is true only for creator-approved
+  segmentation (IN4).
+  \item[$Line$:] $\{id: String,\ startMs: \mathbb{N}_0,\ endMs: \mathbb{N}_0,\
+  text: String,\ translation_?: String,\ words_?: \operatorname{Seq}(Word)\}$.
+  \item[$Annotation$:] $\{lineId: String,\ range_?: \mathbb{N}_0 \times
+  \mathbb{N}_0,\ note: String,\ register_?: String,\ author: String,\
+  reviewedBy_?: String\}$.  Without $range$, the annotation targets the whole
+  line.
+  \item[$Source$:] $\{origin: String,\ licence: String,\
+  rightsHolder: String\}$ (LG1).
+  \item[$ExportRecord$:] $\{date: String,\ creator: String,\
+  mapVersion: String\}$ (AU2).
+  \item[$Metadata$:] $\{title: String,\ artist: String,\ language: String,\
+  difficulty: \mathbb{N},\ explicit: \mathbb{B},\ audio: \mathrm{AudioRef},\
+  audioDurationMs: \mathbb{N}_0,\ loudness_?: \mathbb{R},\
+  audioSource: Source,\ lyricsSource: Source,\ published: \mathbb{B},\
+  exports: \operatorname{Seq}(ExportRecord)\}$.
+  \item[$SongMap$:] $\{schemaVersion: String,\ id: String,\
+  metadata: Metadata,\ lines: \operatorname{Seq}(Line),\
+  annotations: \operatorname{Seq}(Annotation)\}$.
+\end{description}
+
+Word offsets and annotation ranges index into \textit{Line.text}; $start$ is
+inclusive and $end$ is exclusive.  A line is active on the half-open interval
+$[startMs,endMs)$.
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{p{2.8cm} X X p{2.8cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{serialize} & $SongMap$ & $\mathrm{Bytes}$ & -- \\
+\texttt{parse} & $\mathrm{Bytes}$ & $\mathrm{CandidateMap}$ &
+MalformedPackage \\
+\texttt{canRead} & $version: String$ & $\mathbb{B}$ & -- \\
+\bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+None.  Song maps are immutable values at this interface.
+
+\subsubsection{Environment Variables}
+
+None.  An audio reference is data stored in a song map; this module does not
+open the referenced file.
+
+\subsubsection{Assumptions}
+
+Untrusted serialized data is checked by M4 before it is treated as a
+\textit{SongMap}.  The concrete encoding of a serialized song map is a secret
+of this module.  A format change that removes a field or changes its meaning
+increments the major version and is accompanied by an explicit migration rather
+than silently reinterpreting existing lesson content.
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{serialize}($m$):
+\begin{itemize}
+  \item output: an encoding of $m$ tagged with \texttt{FORMAT\_VERSION}, such
+  that $\texttt{parse}(\texttt{serialize}(m)) = m$, where a valid
+  \textit{SongMap} is regarded as a $\mathrm{CandidateMap}$; and
+  \item exception: none.
+\end{itemize}
+
+\noindent \texttt{parse}($b$):
+\begin{itemize}
+  \item output: the candidate map decoded from $b$.  No validity condition is
+  checked beyond decoding; that is M4's responsibility; and
+  \item exception: \textit{MalformedPackage} if $b$ is not a well-formed song
+  map encoding.
+\end{itemize}
+
+\noindent \texttt{canRead}($version$):
+\begin{itemize}
+  \item output: $major(version) = \texttt{SUPPORTED\_MAJOR}$; and
+  \item exception: none.
+\end{itemize}
+
+\newpage
+
+\section{MIS of M7: Playback Synchronization Module} \label{mPlaybackSync}
+
+\subsection{Module}
+
+\texttt{PlaybackSynchronization}; Library
+
+\subsection{Uses}
+
+Shared Song Map Format Module.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+None.
+
+\subsubsection{Exported Types}
+
+\[
+\textit{TimedLine}=\{id:String,startMs:\mathbb{N}_0,endMs:\mathbb{N}_0\}.
+\]
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+\small
+\begin{tabularx}{\textwidth}{p{2.8cm} X X p{2.2cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{activeLineAt} & $\operatorname{Seq}(TimedLine)$,
+$positionMs: \mathbb{R}_{\geq 0}$ & $\mathbb{Z}$ & -- \\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+None.  Synchronization is a pure calculation from validated timing data and
+the audio player's reported position.
+
+\subsubsection{Environment Variables}
+
+None.  The Platform and Media Adapter supplies player positions to the caller;
+this module neither controls the player nor reads a separate system timer.
+
+\subsubsection{Assumptions}
+
+The input lines have passed song-map validation.  They are ordered by
+$startMs$, occur within the audio duration, satisfy $startMs < endMs$, and do
+not overlap.  The caller invokes this routine after every playback status
+update, seek, pause, resume, and return from the background.
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{activeLineAt}($lines,positionMs$):
+\begin{itemize}
+  \item output: the greatest index $i$ satisfying
+  \[
+    lines[i].startMs \leq positionMs < lines[i].endMs.
+  \]
+  The routine returns
+  $-1$ if there is no such line, including before the first line, after the last
+  line, and in a gap; and
+  \item exception: none under the stated assumptions.
+\end{itemize}
+
+\newpage
+
+\section{MIS of M8: Language Text Processing Module} \label{mLanguageText}
+
+\subsection{Module}
+
+\texttt{LanguageTextProcessing}; Library
+
+\subsection{Uses}
+
+Shared Song Map Format Module and Platform and Media Adapter.
+
+\subsection{Syntax}
+
+\subsubsection{Exported Constants}
+
+None.
+
+\subsubsection{Exported Types}
+
+\textit{Token} is a record containing $surface:String$, $start:\mathbb{N}_0$,
+$end:\mathbb{N}_0$, $reading:String$, $romaji:String$, $pos:String$, and
+$baseForm:String$.  \textit{Processor} is an opaque handle to a
+language-specific segmenter; callers obtain one only from
+\texttt{loadProcessor}.
+
+\subsubsection{Exported Access Programs}
+
+\begin{center}
+\footnotesize
+\begin{tabularx}{\textwidth}{p{2.4cm} X X p{2.5cm}}
+\toprule
+\textbf{Name} & \textbf{In} & \textbf{Out} & \textbf{Exceptions} \\
+\midrule
+\texttt{loadProcessor} & $language:String$ &
+$\operatorname{Promise}(Processor)$ &
+\textit{UnsupportedLanguage}, \textit{LoadFailure} \\
+\texttt{segment} & $Processor, text:String$ &
+$\operatorname{Seq}(Token)$ & \textit{TokenizeFailure} \\
+\bottomrule
+\end{tabularx}
+\normalsize
+\end{center}
+
+\subsection{Semantics}
+
+\subsubsection{State Variables}
+
+Each \textit{Processor} retains an initialized tokenizer and its language
+resources.  These resources are logically immutable after construction.
+
+\subsubsection{Environment Variables}
+
+\textit{languageResources}: bundled dictionaries or language models loaded
+through the Platform and Media Adapter.  The tokenizer behind a
+\textit{Processor} is a secret of this module; the exported interface does not
+depend on a particular tokenizer.
+
+\subsubsection{Assumptions}
+
+The supplied language tag identifies a supported processor.  The editor uses
+this module to suggest segmentation and readings; a creator reviews and stores
+the accepted result in the song map.  When stored word data is present, the
+learner uses it as the authoritative segmentation rather than silently
+re-segmenting the line at runtime.
+
+\subsubsection{Access Routine Semantics}
+
+\noindent \texttt{loadProcessor}($language$):
+\begin{itemize}
+  \item output: a processor initialized for $language$;
+  \item exception: \textit{UnsupportedLanguage} if no processor is registered,
+  or \textit{LoadFailure} if its required resources cannot be loaded.
+\end{itemize}
+
+\noindent \texttt{segment}($processor,text$):
+\begin{itemize}
+  \item output: selectable tokens in source-text order.  For each token $t$,
+  $0 \leq t.start < t.end \leq |text|$ and
+  $t.surface=text[t.start:t.end]$.  Unknown readings and romanizations are
+  empty strings.  If no dictionary form is available, $baseForm=surface$; and
+  \item exception: \textit{TokenizeFailure} if the underlying processor
+  cannot process the input.
+\end{itemize}
+
+\newpage
 
 \bibliographystyle {plainnat}
 \bibliography {../../../refs/References}
@@ -623,10 +1115,10 @@ not mandatory implementation helpers.
 \label{SecMISDisclosure}
 
 \subsection{AI Tools Used}
-OpenAI ChatGPT (GPT-6, November 13, 2026) assisted Raymond Ma with
-the M1--M4 interface specifications and replacement of sample content.
-Other team members must disclose their own material AI use before
-the final submission.
+\begin{itemize}
+  \item OpenAI ChatGPT (GPT-6, November 13, 2026)
+  \item OpenAI Codex, using a GPT-5 model
+\end{itemize}
 
 \subsection{How and Where Used}
 ChatGPT reviewed the Volere SRS, the MG, the MIS checklist, and
@@ -636,6 +1128,22 @@ including abstract operations, exceptions, state ownership,
 environment variables, and access routine semantics. These
 interfaces are design proposals, not claims of implementation.
 
+Codex was used as a drafting and review aid for the revision history, symbols,
+notation, module decomposition, the initial interfaces for the Vocabulary
+Handoff, Shared Song Map Format, Playback Synchronization, and Language Text
+Processing modules, and the reflection.  It compared the Module Guide, SRS,
+Hazard Analysis constraints, and TypeScript interfaces to propose
+access-program names, types, state variables, environmental dependencies,
+assumptions, and exceptions.
+
+Codex also helped identify design boundaries requiring explicit treatment.  In
+particular, the public vocabulary interface was kept independent of
+AnkiConnect, unsuccessful handoffs were made persistent and retryable, stored
+song-map segmentation was made authoritative for the learner, and the language
+processor interface was kept independent of Kuromoji.  Team members selected
+and edited the retained text; the tool did not determine project scope or
+approve design decisions.
+
 \subsection{Verification of AI-Generated Content}
 Module names, numbers, and direct use relations were checked
 against the revised Module Guide. Operations and conditions were
@@ -644,18 +1152,36 @@ and LG requirements. State ownership was reviewed to avoid
 duplicate authoritative data, and the stateless validator
 has no environment or state variables.
 
-The team must inspect the compiled PDF, check the companion
-M5--M8 specifications for type and dependency consistency,
-and have each owner confirm its interfaces. All claims of
-completeness and correctness remain the team's responsibility.
+The team verified AI-assisted material by:
+\begin{itemize}
+  \item comparing the module names, types, secrets, and services with the
+  Module Guide;
+  \item checking vocabulary queueing, duplicate prevention, permissions, and
+  failure behaviour against the SRS and Hazard Analysis requirements;
+  \item comparing song-map fields and timing rules with the versioned JSON
+  Schema and TypeScript types;
+  \item comparing synchronization and language-processing signatures with the
+  current implementation and tests;
+  \item checking external integration claims against the AnkiDroid API and
+  AnkiMobile URL-scheme documentation already cited by the SRS; and
+  \item compiling the document and reviewing the generated PDF for missing
+  references, overflow, and unreadable tables.
+\end{itemize}
+
+When the two halves were combined, the team reconciled them for type,
+unit, and dependency consistency: all times use milliseconds as in the
+song-map schema, M5 no longer lists M2 as a used module, and
+\textit{VocabularyItem} carries the SRS \texttt{VocabularyPayload}
+fields.  Each module owner must still confirm its interfaces before
+submission.
+
+The team remains responsible for the accuracy, completeness, consistency, and
+appropriateness of the submitted document, regardless of whether material was
+initially written by a team member or assisted by an AI tool.
 
 \newpage{}
 
 \section{Appendix: Reflection}
-
-This section is reserved for the team reflection submitted after the
-original design deadline. Responses will be added after module owners
-have reviewed each other's interfaces and implementation tradeoffs.
 
 The information in this section will be used to evaluate the team members on the
 graduate attribute of Problem Analysis and Design.
@@ -663,32 +1189,72 @@ graduate attribute of Problem Analysis and Design.
 \input{../../Reflection.text}
 
 \begin{enumerate}
-  \item What went well while writing this deliverable? 
-  \item What pain points did you experience during this deliverable, and how
-    did you resolve them?
-  \item Which of your design decisions stemmed from speaking to your client(s)
-  or a proxy (e.g. your peers, stakeholders, potential users)? For those that
-  were not, why, and where did they come from?
-  \item While creating the design doc, what parts of your other documents (e.g.
-  requirements, hazard analysis, etc), it any, needed to be changed, and why?
-  \item What are the limitations of your solution?  Put another way, given
-  unlimited resources, what could you do to make the project better? (LO\_ProbSolutions)
-  \item Give a brief overview of other design solutions you considered.  What
-  are the benefits and tradeoffs of those other designs compared with the chosen
-  design?  From all the potential options, why did you select the documented design?
-  (LO\_Explores)
-  \item (After you have implemented another team's module, which means this
-  isn't filled in until after the original deadline). What did you learn by
-  implementing another team's module? Were all the details you needed in the
-  documentation, or did you need to make assumptions, or ask the other team
-  questions?  If your team also had another team implement one of your modules,
-  what was this experience like?  Are there things in your documentation you
-  could have changed to make the process go more smoothly for when an
-  ``outsider'' completes some of the implementation?
+  \item \textbf{What went well while writing this deliverable?}
 
-  Your reflection should be about concepts learned in your SE education, such as modular decomposition, cohesion, coupling, information hiding, etc.  You should critique the quality and utility of the specification you received.
+  A lot of the system had already been planned while working on the PoC, so the
+  main job was putting those ideas into writing and settling on the final
+  interfaces.  The MIS made those interfaces more concrete.  It also made us
+  think more carefully about information hiding and module decomposition for
+  the first time instead of only thinking about what was easiest to implement.
 
-  You should create a PR for your implemented module.  A link to the PR should be part of your reflection.
+  \item \textbf{What pain points did you experience, and how did you resolve
+  them?}
+
+  The main difficulty was defining the intended product behaviour at this level
+  of detail without treating the PoC as the final design.  The PoC sends
+  directly to AnkiConnect, performs Japanese tokenization at runtime, and
+  includes timing-analysis utilities.  Keeping all of that in the final
+  interface would tie the product to a desktop endpoint and to PoC-specific
+  choices.  We used the requirements and Module Guide as the source of truth
+  for the final behaviour, while the PoC was used to show that the ideas were
+  valid.
+
+  \item \textbf{Which decisions stemmed from clients or proxies?}
+
+  We kept coming back to the user-facing goals: following lyrics during
+  playback, selecting words in context, and moving vocabulary into an existing
+  study workflow.  Those goals shaped the MIS more than the current code did.
+  Lower-level choices such as UTF-16 offsets, half-open timing intervals, a
+  versioned JSON Schema, persistent retry state, and language-neutral adapters
+  were engineering decisions.  They came from implementation limits, hazards,
+  and the need to keep modules separate and replaceable.
+
+  \item \textbf{What other documents needed to change?}
+
+  The MIS mostly showed that the team's work was consistent.  The SRS, Module
+  Guide, and PoC were all pointing in the same general direction, so no major
+  document needed to be redesigned.  The main gap was that the PoC documents
+  only describe immediate AnkiConnect delivery, while the requirements also
+  call for failed items to be saved, retried, or exported.  The implementation
+  and VnV cases will need to cover that final behaviour.
+
+  \item \textbf{What are the limitations of the solution?}
+
+  The first version is Japanese-first and needs a fairly large dictionary.
+  Anki handoff also works differently on Android and iOS and depends on apps
+  outside our control.  Song timing and segmentation still need creator review.
+  With more time, we could support more languages, improve automatic timing and
+  segmentation, strengthen the offline queue, and test on more devices.
+
+  \item \textbf{What alternative designs were considered?}
+
+  One option was to use AnkiConnect as the final interface.  It worked for the
+  PoC, but it requires Anki Desktop, a network endpoint, and extra setup.  The
+  chosen design uses AnkiDroid or AnkiMobile when possible and keeps file export
+  as a fallback.  This takes more work but gives users a normal mobile flow.
+
+  We also considered segmenting every lyric at runtime.  That would make it
+  easier to update the algorithm, but it could change word boundaries between
+  releases.  We chose to store creator-approved segmentation in the song map
+  and use the language processor to make suggestions.  Creator-provided timing
+  was also kept instead of automatic audio alignment because it is easier to
+  check and is more realistic for the first version.
+
+  \item \textbf{What was learned from implementing another team's module?}
+
+  This activity happens after the original MIS deadline and has not been
+  completed yet.  We will update this answer after the cross-team implementation
+  and include the pull request.
 
 \end{enumerate}
 

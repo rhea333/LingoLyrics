@@ -19,58 +19,79 @@
 \maketitle
 
 This document summarizes the contributions of each team member up to the POC
-Demo.  The time period of interest is the time between the beginning of the term
-and the POC demo.
+Demo.  The time period of interest is September 28, 2026 through November 20,
+2026.
 
-\wss{Please do not delete sections or modify the table formats.  Standardization
-helps the instructors and TAs to review these documents. You may add sections to
-the report.}
-
-\wss{Remove the instructor guidelines/comments in the final version.}
-
-\wss{Fill in the requested information, like project url, TA name, supervisor name, etc.}
+\noindent \textbf{Project URL: }
+\url{https://github.com/rhea333/LingoLyrics}
 
 \section{Demo Plans}
 
-\wss{What is your feasibility risk?}
+The primary feasibility risks are mobile audio-lyric synchronization,
+language-specific lyric segmentation, and delivering flashcards to Anki from
+a phone.  Mobile playback must maintain line highlighting within 0.5 seconds,
+Japanese and mixed-script lyric text must be segmented reliably despite song
+slang and fragments, and the team must determine whether AnkiConnect,
+AnkiDroid, or an export file is the practical integration method.
 
-\wss{What will you be demonstrating}
+The PoC will use one test phone and one short test track per demonstrated
+language.  We will demonstrate:
+\begin{itemize}
+    \item real-time, line-by-line lyric highlighting synchronized to audio,
+    with at least 95\% of line changes occurring within 0.5 seconds of the
+    mapped timestamp;
+    \item selectable, romanized Japanese words from 20 checked lyric lines,
+    with at least 90\% correct segmentation and text ready within three
+    seconds; and
+    \item creation of a flashcard containing the selected term, its translation,
+    and context sentence in a test Anki deck.
+\end{itemize}
+
+Each component owner will demonstrate their corresponding risk.  Omar Bakr will
+cover mobile playback and learner-app behavior, Rhea Gokhale will cover
+language segmentation, and Aansh Kotian will cover Anki/flashcard handoff.
+Raymond Ma will act as the QA reviewer and will verify the test songs and
+acceptance measurements.  The phone display will be mirrored to a laptop
+screen, and the team will use a laptop for the presentation of logs and
+diagnostics.  The demonstration will not include a slide deck or finished
+user-interface styling.
+
+If a live demonstration fails, the team will retain recorded logs and a
+working test fixture for fallback evidence.  If synchronization is unreliable,
+the team will use a coarser highlighting tolerance or a native audio module;
+if segmentation is unreliable on the phone, segmentation will move into the
+creator/editor stage for verification; and if direct Anki sending is blocked,
+the team will fall back to an importable Anki export file.
 
 \section{Team Meeting Attendance}
 
-\wss{For each team member how many team meetings have they attended over the
-time period of interest.  This number should be determined from the meeting
-issues in the team's repo.  The first entry in the table should be the total
-number of team meetings held by the team.}
-
 \begin{table}[H]
 \centering
 \begin{tabular}{ll}
 \toprule
 \textbf{Student} & \textbf{Meetings}\\
 \midrule
-Total & Num\\
-Name 1 & Num\\
-Name 2 & Num\\
-Name 3 & Num\\
-Name 4 & Num\\
-Name 5 & Num\\
+Total & 4\\
+Rhea Gokhale & 4\\
+Omar Bakr & 4\\
+Raymond Ma & 4\\
+Aansh Kotian & 4\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\wss{If needed, an explanation for the counts can be provided here.}
+The team met biweekly on Wednesdays at 2:00 p.m.  Four meetings fell within
+the reporting period, and all four members attended each meeting:
+\begin{itemize}
+    \item October 7: SRS and Hazard Analysis preparation;
+    \item October 21: V\&V Plan and PoC planning;
+    \item November 4: Module Guide and Module Interface Specification work; and
+    \item November 18: PoC demonstration and productivity-report preparation.
+\end{itemize}
 
 \section{Supervisor/Stakeholder Meeting Attendance}
 
-\wss{For each team member how many supervisor/stakeholder team meetings have
-they attended over the time period of interest.  This number should be determined
-from the supervisor meeting issues in the team's repo.  The first entry in the
-table should be the total number of supervisor and team meetings held by the
-team.  If there is no supervisor, there will usually be meetings with
-stakeholders (potential users) that can serve a similar purpose.}
-
-\noindent \textbf{Supervisor's Name: } [fill in this information]
+\noindent \textbf{Supervisor's Name: } Dr. Angela Zavaleta Bernuy
 
 \begin{table}[H]
 \centering
@@ -78,30 +99,22 @@ stakeholders (potential users) that can serve a similar purpose.}
 \toprule
 \textbf{Student} & \textbf{Meetings}\\
 \midrule
-Total & Num\\
-Name 1 & Num\\
-Name 2 & Num\\
-Name 3 & Num\\
-Name 4 & Num\\
-Name 5 & Num\\
+Total & 2\\
+Rhea Gokhale & 1\\
+Omar Bakr & 2\\
+Raymond Ma & 1\\
+Aansh Kotian & 2\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\wss{If needed, an explanation for the counts can be provided here.}
+The team met with Dr. Zavaleta Bernuy on September 3, 2026; Omar and Aansh
+attended.  The team held a second Capstone Sync on Friday, September 25, 2026,
+and all four members attended.  Both meetings occurred before the September 28
+reporting-window start, but the table includes them so that the report captures
+all supervisor meetings held during the fall term before the PoC milestone.
 
 \section{Lecture Attendance}
-
-\wss{For each team member how many lectures have they attended over the time
-period of interest.  This number should be determined from the lecture issues in
-the team's repo. You can find the number of lectures in the time period of
-interest by looking at the
-\href{https://calendar.google.com/calendar/u/0/embed?src=rnboqiaki1k2la7rpu3bn0um58@group.calendar.google.com&ctz=America/Toronto}
-{Google calendar} for the capstone course. The first entry in the
-table should be the total number of lectures held for the class during the period of interest.}
-
-\wss{NOTE: There will be approximately 13 lectures between the start of class
-and the POC demos}
 
 \begin{table}[H]
 \centering
@@ -109,25 +122,26 @@ and the POC demos}
 \toprule
 \textbf{Student} & \textbf{Lectures}\\
 \midrule
-Total & Num\\
-Name 1 & Num\\
-Name 2 & Num\\
-Name 3 & Num\\
-Name 4 & Num\\
-Name 5 & Num\\
+Total scheduled & 5\\
+Rhea Gokhale & 1 documented\\
+Omar Bakr & 1 documented\\
+Raymond Ma & 1 documented\\
+Aansh Kotian & 1 documented\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\wss{If needed, an explanation for the lecture attendance can be provided here.}
+The course calendar lists five Software Engineering lecture sessions during
+the reporting period: September 28, October 5, October 19, October 21, and
+November 2.  The repository contains one lecture-attendance issue, for
+September 28, and records all four team members as present.  Attendance for the
+other four sessions was not recorded, so the table reports only the attendance
+that can be verified rather than treating missing records as absences.
 
 \section{TA Document Discussion Attendance}
 
-\wss{For each team member how many of the informal document discussion meetings
-with the TA were attended over the time period of interest. The first row is the
-total number of discussion meetings scheduled by the TA with the team.}
-
-\noindent \textbf{TA's Name: } [fill in this information]
+\noindent \textbf{TA/Reviewers' Names: } Mohamad Mirhoseininejad and Melvin
+Mokhtari
 
 \begin{table}[H]
 \centering
@@ -135,35 +149,24 @@ total number of discussion meetings scheduled by the TA with the team.}
 \toprule
 \textbf{Student} & \textbf{Meetings}\\
 \midrule
-Total & Num\\
-Name 1 & Num\\
-Name 2 & Num\\
-Name 3 & Num\\
-Name 4 & Num\\
-Name 5 & Num\\
+Total & 2\\
+Rhea Gokhale & 2\\
+Omar Bakr & 0\\
+Raymond Ma & 2\\
+Aansh Kotian & 2\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\wss{If needed, an explanation for the attendance can be provided here.}
+The two discussions within the reporting period were the informal SRS/Hazard
+Analysis review on October 7 and the informal V\&V/PoC planning review on
+October 28.  Melvin Mokhtari reviewed these deliverables; Rhea, Raymond, and
+Aansh attended, while Omar was absent.  An earlier informal Problem Statement
+discussion with TA Mohamad Mirhoseininejad occurred on September 23; Rhea and
+Aansh attended, but it is outside the reporting window and is not included in
+the table count.
 
 \section{Commits, Lines Added and Lines Deleted, Pull Requests}
-
-\wss{For each team member how many commits to the main branch have been made
-over the time period of interest.  The total is the total number of commits for
-the entire team since the beginning of the term.  The percentage is the
-percentage of the total commits made by each team member.}
-
-\wss{There are also columns for lines added and lines deleted to give a sense of
-the magnitude of each team member's contributions.  Note that these numbers can
-be somewhat misleading, as a team member who does refactoring may have high
-numbers in both columns, while a team member who implements a large new feature
-may have a high number of lines added, but few lines deleted.  As for all commit
-information, these numbers will be interpreted with care.}
-
-\wss{The pull requests column counts the number of pull requests created by each
-team member.  This is a measure of how many contributions were made in branches,
-which may not be reflected in the commit counts for the main branch.}
 
 \begin{table}[H]
 \centering
@@ -172,26 +175,45 @@ which may not be reflected in the commit counts for the main branch.}
 \textbf{Student} & \textbf{Commits} & \textbf{Percent} & \textbf{Lines Added} &
 \textbf{Lines Deleted} & \textbf{Pull Requests}\\
 \midrule
-Total & Num & 100\% & total added & total deleted & total PRs\\
-Name 1 & Num & \% & num & num & num\\
-Name 2 & Num & \% & num & num & num\\
-Name 3 & Num & \% & num & num & num\\
-Name 4 & Num & \% & num & num & num\\
-Name 5 & Num & \% & num & num & num\\
+Total & 76 & 100\% & 8,600 & 2,715 & 11\\
+Rhea Gokhale & 11 & 14.5\% & 4,609 & 1,229 & 3\\
+Omar Bakr & 13 & 17.1\% & 881 & 420 & 2\\
+Raymond Ma & 43 & 56.6\% & 1,404 & 519 & 1\\
+Aansh Kotian & 9 & 11.8\% & 1,706 & 547 & 5\\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\wss{If needed, an explanation for the counts can be provided here.  For
-instance, if a team member has more commits to unmerged branches, these numbers
-can be provided here.  If multiple people contribute to a commit, git allows for
-multi-author commits.}
+The commit and line totals use non-merge commits reachable from
+\texttt{main}, authored during the reporting period; generated
+\texttt{github-actions[bot]} commits are excluded.  Pull requests are counted
+by creator and creation date.  The total includes this report's completion pull
+request.
+
+The Git history and pull requests show the following primary contributions:
+\begin{itemize}
+    \item Rhea led the SRS and Hazard Analysis revisions and implemented the
+    initial PoC workspace, song-map, language-segmentation, synchronization,
+    and learner-app foundation in
+    \href{https://github.com/rhea333/LingoLyrics/pull/14}{PR 14} and
+    \href{https://github.com/rhea333/LingoLyrics/pull/30}{PR 30}.
+    \item Omar contributed to the Problem Statement and Development Plan,
+    completed the SRS migration and solution sections, and completed the
+    second half and front matter of the MIS in
+    \href{https://github.com/rhea333/LingoLyrics/pull/40}{PR 40}.
+    \item Raymond completed V\&V test-record and requirement corrections,
+    repaired document CI, and developed Module Guide relationships,
+    traceability, and MIS interface details in
+    \href{https://github.com/rhea333/LingoLyrics/pull/39}{PR 39}.
+    \item Aansh drafted the SRS and V\&V Plan, resolved peer-review issues,
+    completed the Module Guide decomposition and change sections, and prepared
+    the initial productivity-report draft in
+    \href{https://github.com/rhea333/LingoLyrics/pull/29}{PR 29},
+    \href{https://github.com/rhea333/LingoLyrics/pull/38}{PR 38}, and
+    \href{https://github.com/rhea333/LingoLyrics/pull/41}{PR 41}.
+\end{itemize}
 
 \section{Issue Tracker}
-
-\wss{For each team member how many issues have they authored (including open and
-closed issues (O+C)) and how many have they been assigned (only counting closed
-issues (C only)) over the time period of interest.}
 
 \begin{table}[H]
 \centering
@@ -199,53 +221,92 @@ issues (C only)) over the time period of interest.}
 \toprule
 \textbf{Student} & \textbf{Authored (O+C)} & \textbf{Assigned (C only)}\\
 \midrule
-Name 1 & Num & Num \\
-Name 2 & Num & Num \\
-Name 3 & Num & Num \\
-Name 4 & Num & Num \\
-Name 5 & Num & Num \\
+Rhea Gokhale & 0 & 0 \\
+Omar Bakr & 2 & 0 \\
+Raymond Ma & 1 & 0 \\
+Aansh Kotian & 4 & 5 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\wss{If needed, an explanation for the counts can be provided here.}
+Authored issues include LingoLyrics tracking issues and the team's assigned
+peer-review issues filed against the Team 16 repository.  Assigned/closed
+issues count closed issues in the LingoLyrics repository.  Aansh closed all
+five peer-review issues assigned to him.  Raymond's authored issue records the
+September 28 lecture attendance; Omar and Aansh authored the Team 16 peer-review
+issues.
 
 \section{CICD via GitHub Actions}
 
-\wss{Say how CICD technology is used and will be used in your project.}
+GitHub Actions is used to validate pull requests and keep the published project
+documentation synchronized with the source.  The
+\href{https://github.com/rhea333/LingoLyrics/blob/main/.github/workflows/latex-pages.yml}
+{\texttt{latex-pages.yml}} workflow runs for pushes and pull requests that
+change documents or references, builds changed LaTeX and Markdown files, and
+deploys the compiled PDFs to GitHub Pages on the \texttt{main} branch.
+Pull requests receive the build checks but do not publish the generated site.
+Pushes to \texttt{main} also commit the generated PDFs back to the repository
+and publish the site.
 
-\wss{Provide links to your CICD yaml files}
+The Development Plan also specifies code CI for later implementation:
+\texttt{ESLint}, \texttt{Prettier}, \texttt{Jest} coverage, and JSON
+song-map schema validation.  Those checks will run on pull requests and pushes
+to \texttt{main}, with pull requests required to pass CI and receive an
+approved review before merging.
 
 \section{Custom Documents (CDs)}
 
-\wss{What is the plan (as documented in TeamComposition.csv) for the team's
-CDs?  Should the CDs be modified now that the team knows more about the
-project?}
+According to the team's
+\href{https://gitlab.cas.mcmaster.ca/courses/capstone/-/blob/main/Teams/TeamComposition.csv}
+{Team Composition entry}, LingoLyrics plans to produce a
+\textbf{User/Stakeholder/Client Interview Report} in the fall and a
+\textbf{Usability Report} in the winter.  These selections remain appropriate
+for the project.  The interview report should document the target learner and
+language-creator populations, interview methods, the questions asked, and
+how stakeholder feedback changes the requirements.  The usability report should
+use a systematic, quantified test plan with specific learner tasks, post-task
+questions, and a survey for objective comparison against usability targets.
+
+The team should not replace these CDs at this stage.  As implementation
+progresses, the fall report and winter report plans will be linked together:
+interview findings will inform the learner tasks and survey measures used in
+the usability report.
 
 \section{Team Charter Trigger Items}
 
-\wss{Provide a summary of the quantified triggers identified in the team's
-charter.}
+The team charter establishes the following quantified triggers:
+\begin{itemize}
+    \item term attendance below 90\%, or two unexcused absences;
+    \item an assigned task more than 48 hours past its due date without prior
+    notice;
+    \item no commits, code reviews, or closed issues for two consecutive weeks;
+    and
+    \item missing the internal 48-hour deadline for a deliverable section.
+\end{itemize}
 
-\wss{Provide a list of any violations of the triggers.  If the team wishes, the
-violations can be summarized on aggregate, instead of naming specific team
-members.}
+The team reports that no charter trigger items occurred during the September
+28 to November 20 reporting period.
 
-\wss{Provide a plan to address the violations.  This could include revising the
-triggers, if they are found to be too weak, strong or ambiguous.}
+If a trigger occurs, the charter's escalation process will be followed:
+\begin{enumerate}
+    \item hold a private check-in with the project lead;
+    \item discuss the issue at a team meeting, record the decision and due dates
+    in the meeting issue, and assign a specific recovery plan;
+    \item reassign the member's tasks if the plan is not effective and reflect
+    the situation honestly in the Team Contribution Survey; and
+    \item escalate unresolved issues first to the TA and then to the
+    instructor.
+\end{enumerate}
+
+The team will add meeting issues and attendance records, record internal
+deliverable deadlines, and review the trigger data at every major milestone.
+The 48-hour and two-week triggers will be retained unless the team finds them
+impractical after using them with complete data.
 
 \section{Additional Productivity Metrics}
 
-\wss{If your team has additional metrics of productivity, please feel free to
-add them to this report.  If not, please explicitly state that there are no additional
-metrics.}
-
-\wss{Additional metrics can include things like code reviews done, pull requests
-created, count of joining meetings late, count of number of times contributions
-had to be corrected, number of internal deadlines missed, test cases written, etc.}
-
-\wss{We are looking for data on these metrics, not just a list of additional
-metrics the team is planning on tracking.  However, if all you have is a plan,
-please share it here.}
+The team did not record additional quantitative productivity metrics beyond
+the attendance, commit, line-change, pull-request, and issue data reported
+above.
 
 \end{document}

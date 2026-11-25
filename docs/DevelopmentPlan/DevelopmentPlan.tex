@@ -26,6 +26,7 @@
 \midrule
 26/09/2026 & Aansh Kotian & Draft 0 creation \\
 28/09/2026 & Rhea Gokhale & Draft 0 completion and review aligning with problem statement \\
+25/11/2026 & Team LingoLyrics & Proposed PoC scope update: Android test build, Japanese test sample, AnkiConnect handoff, and verification evidence \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -270,40 +271,54 @@ Major deliverables and target deadlines for the term are outlined below:
 Link to GitHub project: \url{https://github.com/rhea333/LingoLyrics/tree/main}
 \section{Proof of Concept Demonstration Plan}
 
-The PoC demonstration will show that the three riskiest parts of \progname{}
-can be built with our chosen technology before we commit to full development.
-It is a narrow technical demonstration, not a prototype of the finished product:
-it uses one test phone, one short song per language, and no user interface
-styling.
+The PoC demonstration will evaluate whether the three riskiest parts of
+\progname{} are feasible with the chosen technology before full development.
+The demonstration uses one Android test phone running an installed React Native
+with Expo APK, one 20-line Japanese test sample, and a desktop computer running
+Anki with AnkiConnect. Results apply to this test configuration; support for
+other devices, languages, and Anki integration methods requires later testing.
 
 \subsection{Objective}
 
-The objective of our PoC is to demonstrate the technical feasibility of real-time audio-lyric synchronization, multi-language text segmentation, and direct flashcard export. The PoC does not need to deliver a fully styled end-to-end consumer application; rather, it should validate that the underlying timing, NLP tokenization, and export workflows operate reliably enough to justify full system implementation.
+The objective is to evaluate mobile audio-lyric synchronization, Japanese word
+segmentation with romanization, and vocabulary handoff from the phone to Anki.
+Each risk has a measurable pass criterion and a fallback if it remains
+unresolved. The PoC evaluates technical feasibility rather than the complete
+consumer application.
 
 \subsection{Scope of PoC}
 
 \begin{itemize}
-    \item \textbf{Core Deliverables:} A functional prototype that:
+    \item \textbf{Core Deliverables:}
     \begin{itemize}
-        \item Plays back an audio track while maintaining sub-second, real-time highlighting of corresponding lyric lines across desktop and mobile browsers.
-        \item Accurately parses non-Latin or unspaced text (e.g., Japanese Kanji/Kana or Vietnamese) into interactive words with corresponding transliteration/romanization.
-        \item Generates and transmits a serialized vocabulary package (including target word, definition, and context sentence) directly into a local or remote Anki instance.
+        \item Play a synthetic audio sample with audible cues at mapped line
+        boundaries and highlight the corresponding Japanese lyric lines on the
+        Android phone. The hand-authored song map is schema-validated.
+        \item Load the bundled kuromoji dictionary on the phone and display
+        20 Japanese lines as selectable words with romanization.
+        \item Carry a selected word and its lyric context into the Anki
+        handoff screen, accept a manually entered translation, and send the
+        term, translation, and context to desktop Anki through AnkiConnect.
     \end{itemize}
-
-    \item \textbf{Exploratory Nature:}
+    \item \textbf{Technical Questions:}
     \begin{enumerate}
-        \item Evaluating cross-platform web audio timing APIs to achieve reliable sub-second synchronization latency.
-        \item Comparing language-specific tokenization pipelines for accurate segmentation of non-spaced scripts.
-        \item Testing seamless integration methods with Anki (e.g., AnkiConnect API versus custom file payloads).
+        \item Does Expo Audio report playback position often and accurately
+        enough for the required lyric highlighting tolerance?
+        \item Does the Japanese segmentation pipeline meet the accuracy and
+        lesson-opening targets on the test phone?
+        \item Can the phone create a usable note in desktop Anki over the
+        same local network?
     \end{enumerate}
-
-    \item \textbf{Not Included:} Complete user account management, custom UI design/styling, broad catalog expansion, or cloud sync backends.
+    \item \textbf{Not Included:} The song-map editor interface, desktop or
+    mobile browser playback, additional languages or songs, user accounts,
+    custom visual design, cloud sync, automatic translation, and direct
+    insertion into AnkiDroid or AnkiMobile without desktop Anki. These remain
+    outside this PoC's demonstrated scope.
 \end{itemize}
 
 \subsection{Risks}
 
-Table~\ref{TblRisks} lists the implementation risks that most threaten the
-project.
+Table~\ref{TblRisks} lists the implementation risks evaluated by the PoC.
 
 \begin{table}[h!]
 \caption{PoC Risks} \label{TblRisks}
@@ -311,50 +326,81 @@ project.
 \toprule
 \textbf{Risk} & \textbf{Why it is a concern}\\
 \midrule
-R1: Lyric sync on a phone & Mobile audio playback may not report its position often or accurately enough to keep lyric highlighting within 0.5 seconds of the audio, which the synchronized playback goal requires.\\
-R2: Segmenting lyrics & Tokenizers are built for standard prose; lyrics contain slang, fragments, and mixed scripts. The Japanese dictionary is also large and may load too slowly on a phone.\\
-R3: Anki from a phone & AnkiConnect only works with desktop Anki. It is unclear whether the mobile app can add notes to a learner's Anki collection directly (for example, through the AnkiDroid API) or must use an export file.\\
+R1: Lyric sync on a phone & Mobile audio position updates and display delays may prevent highlighting from remaining within 0.5 seconds of the mapped audio cues.\\
+R2: Segmenting lyrics & Lyrics contain fragments, slang, and mixed scripts that may be segmented incorrectly. The Japanese dictionary may also load too slowly on a phone.\\
+R3: Anki from a phone & AnkiConnect requires desktop Anki and a reachable local-network endpoint. Connectivity, configuration, or note-format errors may prevent the phone from creating a usable note.\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
 \subsection{What We Will Demonstrate}
-Each item addresses one risk and has a pass criterion.
+
+Each demonstration addresses one risk. Implemented functionality and automated
+tests are supporting evidence; they do not replace measurements on the test
+phone or confirmation of the note in Anki.
+
 \begin{itemize}
-    \item \textbf{R1:} Play a test song on the test phone with line-by-line
-    highlighting driven by a song map. The app logs the playback position at
-    each line change. \emph{Pass:} at least 95\% of line changes occur within
-    0.5 seconds of their mapped timestamps.
-    \item \textbf{R2:} Open a Japanese test song and display each lyric line
-    as selectable words with romanization. \emph{Pass:} at least 90\% of words
-    in 20 test lines match a segmentation checked by the team, and the lesson is
-    ready within 3 seconds of opening.
-    \item \textbf{R3:} Select a word in the app and send it to Anki.
-    \emph{Pass:} a note with the term, translation, and context sentence
-    appears in a test deck, using at least one of the candidate methods.
+    \item \textbf{R1:} Play the full test sample on the phone without pausing
+    or seeking. Export the log of playback positions observed at line changes
+    and score it against the song map. \emph{Pass:} all 20 lines are observed
+    once, with at least 19 of 20 changes (95\%) within 0.5 seconds of their
+    mapped timestamps. Preserve the log and scoring output. Also record the
+    phone's audible cues and visible highlighting together to check for output
+    or display latency that playback-position logs alone cannot establish.
+    \item \textbf{R2:} Open the Japanese lesson and show selectable words
+    with romanization. Compare segmentation against the same 20 test lines'
+    expected word boundaries, independently checked and reviewed by the team
+    using the documented segmentation guideline. Record reviewers and dates.
+    \emph{Pass:} at least 90\% of expected words have exactly matching start
+    and end boundaries, and the lesson is ready within 3 seconds of opening
+    on the test phone. Measure the first opening after a fresh app launch and
+    subsequent warm openings separately; the first-opening result must meet
+    the target. Use total elapsed time until words appear in the installed
+    APK, without subtracting dictionary loading or asset access. Draft gold
+    data and desktop timings are provisional evidence only.
+    \item \textbf{R3:} Select a word in R2, retain its context, enter a
+    translation, and send it through AnkiConnect to desktop Anki on the same
+    trusted local network. \emph{Pass:} the app receives a note ID and the
+    team opens the corresponding note in the \emph{LingoLyrics PoC} deck to
+    confirm the term, translation, and context. Preserve the note ID and a
+    screenshot of its contents. A prepared payload or successful mock request
+    alone does not establish this result.
 \end{itemize}
 
-\textbf{Not included:} user accounts, visual design, the song-map editor
-interface (maps are written by hand for the PoC), cloud sync, and more than one
-song per language.
-
 \subsection{If the PoC Fails}
-If a risk is not resolved by the demonstration, we will discuss redefining the
-scope with our supervisor and the instructor. Likely directions are:
+
+If a target is not met, record the measured result and limitation, discuss the
+scope with the supervisor and instructor, and evaluate the relevant fallback.
+Do not report a changed target or untested fallback as a pass against the
+original criterion.
 \begin{itemize}
-    \item \textbf{R1:} highlight lyrics at a coarser tolerance, or use a native
-    audio module instead of the Expo audio library.
-    \item \textbf{R2:} compute segmentation in the editor and store it in the
-    song map, where the creator verifies it, rather than segmenting on the
-    phone.
-    \item \textbf{R3:} replace direct sending with an export file that the
-    learner imports into Anki, and revise the vocabulary handoff goal.
+    \item \textbf{R1:} investigate a native audio module or propose a revised
+    synchronization tolerance with supporting measurements.
+    \item \textbf{R2:} compute segmentation in the editor and store
+    creator-verified words in the song map instead of segmenting on the phone.
+    \item \textbf{R3:} implement an export file that the learner imports
+    into Anki and revise the handoff plan. Verify the imported note in the
+    intended deck before claiming that this alternative works.
 \end{itemize}
 
 \subsection{Demonstration Logistics}
-Each component owner in Table~\ref{TblRoles} demonstrates the risk for their
-component. The demonstration runs on one team member's phone, mirrored to a
-laptop screen.
+
+Before the meeting, the team will select the exact APK and source revision,
+install and rehearse it on the test phone, and verify phone mirroring and
+AnkiConnect connectivity. The phone and desktop must share a trusted network;
+any temporary AnkiConnect network configuration will be restored after testing.
+Record the phone model, Android version, app revision, and test conditions with
+the results.
+
+Each component owner in Table~\ref{TblRoles} leads the corresponding risk
+demonstration, with presenter handoffs agreed in advance. All members will
+review the shared code and practise explaining implementation decisions,
+alternatives, and randomly selected lines. The team will complete and submit
+the PoC productivity report by the required deadline, prepare a concise record
+of each risk's result and remaining limitations, and bring specific questions
+for feedback. Saved logs, screenshots, and a recorded run will support discussion
+if live equipment or network problems occur; any recorded evidence will be
+identified as such.
 
 \section{Expected Technology}
 
@@ -373,7 +419,7 @@ React Native with Expo (learner app) & One codebase for iOS and Android; Expo sp
 React (web editor) & Shares TypeScript types and song-map code with the app; creators need a large screen for timing work. & A second user interface to maintain.\\
 Expo Audio / Howler.js & Audio playback with position reporting in the app and the editor respectively. & Timing accuracy must be verified (R1).\\
 kuromoji.js & Japanese segmentation and readings that run in JavaScript, with no separate server. & Large dictionary (R2); Sudachi is more accurate but needs a Python or Java service.\\
-AnkiDroid API / AnkiConnect / export file & Candidate methods for sending vocabulary to Anki. & Each covers different platforms; the PoC decides (R3).\\
+AnkiConnect (PoC) & Sends vocabulary from the Android app to desktop Anki over the local network. & Requires desktop Anki and network setup; direct mobile integration and file export require separate evaluation (R3).\\
 JSON Schema & Defines and validates the shared song-map format in CI. & The schema must be versioned as it changes.\\
 Jest & Unit and integration tests with built-in coverage. & None significant for our stack.\\
 ESLint, Prettier, Husky & Enforce the coding standard before commit and in CI. & Initial configuration time.\\

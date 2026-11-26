@@ -5,34 +5,20 @@ import { Asset } from 'expo-asset';
 import { File } from 'expo-file-system';
 import DictionaryLoader from 'kuromoji/src/loader/DictionaryLoader';
 import KuromojiTokenizer from 'kuromoji/src/Tokenizer';
-// real file name, the package has no index
-// eslint-disable-next-line import/extensions
-import * as zlibExports from 'zlibjs/bin/gunzip.min.js';
-
-type ZlibApi = zlibExports.ZlibApi;
-
-// zlibjs sets Zlib on `this`. in node thats module.exports, under metro its
-// the global object, so the export comes back empty on the phone
-function getZlib(): ZlibApi {
-  const zlib = zlibExports.Zlib ?? (globalThis as { Zlib?: ZlibApi }).Zlib;
-  if (!zlib?.Gunzip) throw new Error('zlibjs loaded but Zlib.Gunzip is missing');
-  return zlib;
-}
-
 /* eslint-disable global-require */
 const DICT_FILES: Record<string, number> = {
-  'base.dat.gz': require('kuromoji/dict/base.dat.gz'),
-  'check.dat.gz': require('kuromoji/dict/check.dat.gz'),
-  'tid.dat.gz': require('kuromoji/dict/tid.dat.gz'),
-  'tid_pos.dat.gz': require('kuromoji/dict/tid_pos.dat.gz'),
-  'tid_map.dat.gz': require('kuromoji/dict/tid_map.dat.gz'),
-  'cc.dat.gz': require('kuromoji/dict/cc.dat.gz'),
-  'unk.dat.gz': require('kuromoji/dict/unk.dat.gz'),
-  'unk_pos.dat.gz': require('kuromoji/dict/unk_pos.dat.gz'),
-  'unk_map.dat.gz': require('kuromoji/dict/unk_map.dat.gz'),
-  'unk_char.dat.gz': require('kuromoji/dict/unk_char.dat.gz'),
-  'unk_compat.dat.gz': require('kuromoji/dict/unk_compat.dat.gz'),
-  'unk_invoke.dat.gz': require('kuromoji/dict/unk_invoke.dat.gz'),
+  'base.dat.gz': require('../assets/dict/base.dat'),
+  'check.dat.gz': require('../assets/dict/check.dat'),
+  'tid.dat.gz': require('../assets/dict/tid.dat'),
+  'tid_pos.dat.gz': require('../assets/dict/tid_pos.dat'),
+  'tid_map.dat.gz': require('../assets/dict/tid_map.dat'),
+  'cc.dat.gz': require('../assets/dict/cc.dat'),
+  'unk.dat.gz': require('../assets/dict/unk.dat'),
+  'unk_pos.dat.gz': require('../assets/dict/unk_pos.dat'),
+  'unk_map.dat.gz': require('../assets/dict/unk_map.dat'),
+  'unk_char.dat.gz': require('../assets/dict/unk_char.dat'),
+  'unk_compat.dat.gz': require('../assets/dict/unk_compat.dat'),
+  'unk_invoke.dat.gz': require('../assets/dict/unk_invoke.dat'),
 };
 /* eslint-enable global-require */
 
@@ -40,23 +26,20 @@ const DICT_FILES: Record<string, number> = {
 export interface DictTimings {
   /** getting asset files onto the phone. in expo go this is a download from metro */
   assetsMs: number;
-  /** read + gunzip + kuromoji build, wall time */
+  /** read + kuromoji build, wall time */
   buildMs: number;
-  /** gunzip time summed over files, part of buildMs */
+  /** zero: dictionary decompression happens at build time */
   gunzipMs: number;
 }
 
 /** loads kuromoji from bundled assets, returns a lang segmenter */
 export async function loadRnSegmenter(): Promise<{ segmenter: Segmenter; timings: DictTimings }> {
-  // inside the async fn so a failure shows on screen, not as a crash
-  const { Gunzip } = getZlib();
   const t0 = performance.now();
   const names = Object.keys(DICT_FILES);
   const assets = await Asset.loadAsync(Object.values(DICT_FILES));
   const uriByName = new Map(names.map((name, i) => [name, assets[i]?.localUri]));
   const t1 = performance.now();
 
-  let gunzipMs = 0;
   const loader = new DictionaryLoader('dict/');
   // kuromoji joins dicPath + name, we only need the name back
   loader.loadArrayBuffer = (path, callback) => {
@@ -66,13 +49,8 @@ export async function loadRnSegmenter(): Promise<{ segmenter: Segmenter; timings
       callback(new Error(`no bundled asset for ${name}`), null);
       return;
     }
-    new File(uri).bytes().then(
-      (bytes) => {
-        const g0 = performance.now();
-        const out = new Gunzip(bytes).decompress();
-        gunzipMs += performance.now() - g0;
-        callback(null, out.buffer as ArrayBuffer);
-      },
+    new File(uri).arrayBuffer().then(
+      (buffer) => callback(null, buffer),
       (err: unknown) => callback(err, null),
     );
   };
@@ -83,6 +61,6 @@ export async function loadRnSegmenter(): Promise<{ segmenter: Segmenter; timings
   const segmenter = createSegmenter(new KuromojiTokenizer(dic));
   return {
     segmenter,
-    timings: { assetsMs: t1 - t0, buildMs: performance.now() - t1, gunzipMs },
+    timings: { assetsMs: t1 - t0, buildMs: performance.now() - t1, gunzipMs: 0 },
   };
 }

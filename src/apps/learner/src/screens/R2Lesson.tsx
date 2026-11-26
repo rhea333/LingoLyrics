@@ -2,7 +2,7 @@
 import type { Segmenter, Token } from '@lingolyrics/lang';
 import type { SongMap } from '@lingolyrics/song-map';
 import { useEffect, useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Button, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { loadRnSegmenter, type DictTimings } from '../kuromoji-rn';
 
 const READY_LIMIT_MS = 3000;
@@ -26,7 +26,7 @@ export function R2Lesson({
   const openedAt = useRef(performance.now());
   const [lesson, setLesson] = useState<Lesson>({ phase: 'loading' });
   const [readyMs, setReadyMs] = useState<number | null>(null);
-  const [selected, setSelected] = useState<Token | null>(null);
+  const [selected, setSelected] = useState<{ token: Token; context: string } | null>(null);
 
   useEffect(() => {
     const warm = cached !== undefined;
@@ -59,17 +59,12 @@ export function R2Lesson({
     return <Text style={styles.bad}>Dictionary failed: {lesson.message}</Text>;
 
   const { timings } = lesson;
-  // asset download only happens in expo go dev, a real build ships them in the app
-  const excludingDownload =
-    readyMs === null ? null : readyMs - (lesson.warm ? 0 : timings.assetsMs);
-
   return (
     <View style={styles.root}>
       <Text style={styles.title}>R2 lesson</Text>
-      {readyMs !== null && excludingDownload !== null ? (
-        <Text style={excludingDownload <= READY_LIMIT_MS ? styles.good : styles.bad}>
-          ready in {(readyMs / 1000).toFixed(2)} s ({lesson.warm ? 'warm' : 'cold'}), without asset
-          download {(excludingDownload / 1000).toFixed(2)} s · limit 3 s
+      {readyMs !== null ? (
+        <Text style={readyMs <= READY_LIMIT_MS ? styles.good : styles.bad}>
+          ready in {(readyMs / 1000).toFixed(2)} s ({lesson.warm ? 'warm' : 'cold'}) · limit 3 s
         </Text>
       ) : null}
       {!lesson.warm ? (
@@ -79,10 +74,18 @@ export function R2Lesson({
         </Text>
       ) : null}
       {selected ? (
-        <Text style={styles.selected}>
-          {selected.surface} · {selected.reading || '?'} · {selected.romaji || '?'} ·{' '}
-          {selected.baseForm}
-        </Text>
+        <View style={styles.selected}>
+          <Text>
+            {selected.token.surface} · {selected.token.reading || '?'} ·{' '}
+            {selected.token.romaji || '?'} · {selected.token.baseForm}
+          </Text>
+          {onSelect ? (
+            <Button
+              title="Use this word in R3"
+              onPress={() => onSelect(selected.token, selected.context)}
+            />
+          ) : null}
+        </View>
       ) : null}
       <ScrollView>
         {lesson.lines.map((tokens, i) => (
@@ -90,11 +93,8 @@ export function R2Lesson({
             {tokens.map((t) => (
               <Pressable
                 key={t.start}
-                style={[styles.word, selected === t && styles.wordOn]}
-                onPress={() => {
-                  setSelected(t);
-                  onSelect?.(t, map.lines[i]!.text);
-                }}
+                style={[styles.word, selected?.token === t && styles.wordOn]}
+                onPress={() => setSelected({ token: t, context: map.lines[i]!.text })}
               >
                 <Text style={styles.surface}>{t.surface}</Text>
                 <Text style={styles.romaji}>{t.romaji}</Text>
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   good: { color: '#070' },
   bad: { color: '#a00' },
   small: { fontSize: 12, color: '#666' },
-  selected: { fontSize: 16, padding: 6, backgroundColor: '#eef' },
+  selected: { padding: 6, gap: 6, backgroundColor: '#eef' },
   line: { flexDirection: 'row', flexWrap: 'wrap', paddingVertical: 6 },
   word: { paddingHorizontal: 4, paddingVertical: 2, marginRight: 2, borderRadius: 4 },
   wordOn: { backgroundColor: '#ffe680' },

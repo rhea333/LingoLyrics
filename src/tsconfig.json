@@ -5,7 +5,8 @@
     "baseUrl": ".",
     "types": ["node", "jest"],
     "paths": {
-      "@lingolyrics/*": ["packages/*/src"]
+      "@lingolyrics/*": ["packages/*/src"],
+      "react-native": ["node_modules/react-native/types_generated/index.d.ts"]
     }
   },
   "include": ["packages/*/src/**/*", "scripts/**/*", "../test/**/*"],

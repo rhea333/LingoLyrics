@@ -6,24 +6,24 @@ can be overcome:
 
 - **R1** lyric sync on a phone
 - **R2** segmenting Japanese lyrics into words with romanization
-- **R3** sending a vocabulary note to Anki from a phone
+- **R3** saving a vocabulary note directly into AnkiDroid on the phone
 
-This is an npm workspace rooted in this folder. Logic lives in plain TypeScript
-packages, so it can be tested with Jest without a phone and reused by the
-future web editor. The Expo app only wires those packages to a screen.
+This is an npm workspace rooted in this folder. Shared logic lives in TypeScript packages, tested with Jest and reusable by
+the future web editor. The Expo app wires those packages to the screens and
+uses a small native Android bridge for AnkiDroid's content-provider API.
 
 ## Layout
 
-| Path                 | Purpose                                                                                     | Status              |
-| -------------------- | ------------------------------------------------------------------------------------------- | ------------------- |
-| `packages/song-map/` | JSON Schema, TS types and validator for song maps. Shared by the app and the future editor. | done                |
-| `packages/lang/`     | `segment(line)` returns tokens with surface, reading and romaji (R2).                       | done                |
-| `packages/sync/`     | Maps a playback position to the active line, and analyzes timing logs (R1).                 | done                |
-| `packages/anki/`     | One interface with AnkiMobile URL scheme, AnkiConnect and export-file adapters (R3).        | phase 5             |
-| `apps/learner/`      | Expo app with one demo screen per risk. PoC only, may be thrown out.                        | R1 done, R2 blocked |
-| `fixtures/songs/`    | The Japanese test song and its song map (lyrics are placeholders).                          | done                |
-| `fixtures/gold/`     | Gold segmentation for the 20 R2 test lines (placeholder).                                   | done                |
-| `scripts/`           | Command-line tools: map validation and the PoC measurement scripts.                         |                     |
+| Path                 | Purpose                                                                                     | Status               |
+| -------------------- | ------------------------------------------------------------------------------------------- | -------------------- |
+| `packages/song-map/` | JSON Schema, TS types and validator for song maps. Shared by the app and the future editor. | done                 |
+| `packages/lang/`     | `segment(line)` returns tokens with surface, reading and romaji (R2).                       | done                 |
+| `packages/sync/`     | Maps a playback position to the active line, and analyzes timing logs (R1).                 | done                 |
+| `packages/anki/`     | Minimal AnkiConnect client that creates a deck and sends one vocabulary note (R3).          | done                 |
+| `apps/learner/`      | Expo app with one bare-bones demo screen per risk.                                          | ready for phone test |
+| `fixtures/songs/`    | The 20-line Japanese test song map and generated timing audio.                              | done                 |
+| `fixtures/gold/`     | Draft gold segmentation for the 20 R2 test lines.                                           | needs team review    |
+| `scripts/`           | Command-line tools: map validation and the PoC measurement scripts.                         |                      |
 
 Tests live in [`../test`](../test/README.md), mirroring `packages/`.
 
@@ -81,3 +81,7 @@ FAIL, or `2` when the result can't be final yet (placeholder or unverified data)
   matched exactly, with the gold set `verified` (see
   `fixtures/gold/GUIDELINE.md`). It also prints dictionary load time on this
   computer; the 3 s phone check is in the learner app.
+- R3 is exercised directly in the learner app. Select a token in R2, enter
+  its translation, and save to AnkiDroid on the phone. The native bridge checks
+  permission and verifies the stored fields and deck. An optional desktop
+  AnkiConnect path is also retained. See `apps/learner/README.md` for setup.

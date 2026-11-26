@@ -3,3 +3,8 @@ coverage/
 docs-api/
 dist/
 .expo/
+
+# Generated Expo native projects and dictionary assets
+/apps/learner/android/
+/apps/learner/ios/
+/apps/learner/assets/dict/

@@ -4,3 +4,15 @@ docs-api/
 dist/
 .expo/
 *.tsbuildinfo
+
+# Expo-generated native projects and local APK builds
+/apps/learner/android/
+/apps/learner/ios/
+
+/apps/learner/assets/dict/
+
+# Compiled packages and signing material
+*.apk
+*.aab
+*.keystore
+*.jks

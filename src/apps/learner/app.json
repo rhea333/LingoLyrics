@@ -5,6 +5,10 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "platforms": ["ios", "android"]
+    "platforms": ["ios", "android"],
+    "android": {
+      "package": "ca.lingolyrics.poc"
+    },
+    "plugins": ["./plugins/with-poc-android.cjs"]
   }
 }

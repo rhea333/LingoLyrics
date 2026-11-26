@@ -3,8 +3,8 @@ const { getDefaultConfig } = require('expo/metro-config');
 
 const config = getDefaultConfig(__dirname);
 
-// kuromoji dictionary ships as *.dat.gz, bundle them as assets
-config.resolver.assetExts.push('gz');
+// Dictionary files are decompressed during the build to avoid slow JS gunzip.
+config.resolver.assetExts.push('dat');
 
 // kuromoji's loader does require('path'), no node core in react native
 config.resolver.extraNodeModules = {

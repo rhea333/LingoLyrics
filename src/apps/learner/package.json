@@ -6,8 +6,10 @@
   "license": "MIT",
   "main": "index.ts",
   "scripts": {
-    "start": "npm run gen:audio --prefix ../.. && expo start",
-    "typecheck": "tsc --noEmit"
+    "start": "npm run gen:dict && npm run gen:audio --prefix ../.. && expo start",
+    "typecheck": "tsc --noEmit",
+    "android:apk": "bash scripts/build-android.sh",
+    "gen:dict": "node scripts/prepare-dictionary.mjs"
   },
   "dependencies": {
     "expo": "~58.0.21",

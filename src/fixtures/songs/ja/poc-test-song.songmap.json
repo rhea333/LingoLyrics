@@ -1,0 +1,144 @@
+{
+  "$schema": "../../../packages/song-map/schema/song-map.schema.json",
+  "schemaVersion": "1.0.0",
+  "id": "poc-test-song",
+  "title": "PoC Japanese test song",
+  "artist": "LingoLyrics team",
+  "language": "ja",
+  "audio": {
+    "file": "poc-test-song.wav",
+    "durationMs": 84000
+  },
+  "rights": {
+    "lyrics": {
+      "license": "MIT",
+      "source": "original Japanese test lines written for the LingoLyrics PoC"
+    },
+    "audio": {
+      "license": "MIT",
+      "source": "generated from this song map by src/scripts/gen-audio.ts (npm run gen:audio)"
+    }
+  },
+  "lines": [
+    {
+      "id": "l01",
+      "startMs": 2000,
+      "endMs": 5800,
+      "text": "今日は雨が降っている"
+    },
+    {
+      "id": "l02",
+      "startMs": 6000,
+      "endMs": 9800,
+      "text": "君に会いたかった"
+    },
+    {
+      "id": "l03",
+      "startMs": 10000,
+      "endMs": 13800,
+      "text": "私たちは走り出した"
+    },
+    {
+      "id": "l04",
+      "startMs": 14000,
+      "endMs": 17800,
+      "text": "コーヒーを飲みませんか"
+    },
+    {
+      "id": "l05",
+      "startMs": 18000,
+      "endMs": 21800,
+      "text": "東京の夜は綺麗だね"
+    },
+    {
+      "id": "l06",
+      "startMs": 22000,
+      "endMs": 25800,
+      "text": "忘れられない"
+    },
+    {
+      "id": "l07",
+      "startMs": 26000,
+      "endMs": 29800,
+      "text": "もう一度、笑って"
+    },
+    {
+      "id": "l08",
+      "startMs": 30000,
+      "endMs": 33800,
+      "text": "お弁当を食べよう"
+    },
+    {
+      "id": "l09",
+      "startMs": 34000,
+      "endMs": 37800,
+      "text": "勉強しなければならない"
+    },
+    {
+      "id": "l10",
+      "startMs": 38000,
+      "endMs": 41800,
+      "text": "Babyずっと一緒にいようよ"
+    },
+    {
+      "id": "l11",
+      "startMs": 42000,
+      "endMs": 45800,
+      "text": "夢を見ていたんだ"
+    },
+    {
+      "id": "l12",
+      "startMs": 46000,
+      "endMs": 49800,
+      "text": "星へ向かって"
+    },
+    {
+      "id": "l13",
+      "startMs": 50000,
+      "endMs": 53800,
+      "text": "愛を叫べ"
+    },
+    {
+      "id": "l14",
+      "startMs": 54000,
+      "endMs": 57800,
+      "text": "朝の光を浴びて"
+    },
+    {
+      "id": "l15",
+      "startMs": 58000,
+      "endMs": 61800,
+      "text": "新しい道を歩こう"
+    },
+    {
+      "id": "l16",
+      "startMs": 62000,
+      "endMs": 65800,
+      "text": "風がそっと歌っている"
+    },
+    {
+      "id": "l17",
+      "startMs": 66000,
+      "endMs": 69800,
+      "text": "心の声を聞いて"
+    },
+    {
+      "id": "l18",
+      "startMs": 70000,
+      "endMs": 73800,
+      "text": "明日へ飛んでいこう"
+    },
+    {
+      "id": "l19",
+      "startMs": 74000,
+      "endMs": 77800,
+      "text": "小さな夢を守りたい"
+    },
+    {
+      "id": "l20",
+      "startMs": 78000,
+      "endMs": 81800,
+      "text": "またここで会おうね"
+    }
+  ]
+}

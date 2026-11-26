@@ -27,6 +27,7 @@
 26/09/2026 & Aansh Kotian & Draft 0 creation \\
 28/09/2026 & Rhea Gokhale & Draft 0 completion and review aligning with problem statement \\
 25/11/2026 & Team LingoLyrics & Proposed PoC scope update: Android test build, Japanese test sample, AnkiConnect handoff, and verification evidence \\
+26/11/2026 & Team LingoLyrics & Proposed direct on-phone AnkiDroid handoff and Android demo verification \\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -274,8 +275,10 @@ Link to GitHub project: \url{https://github.com/rhea333/LingoLyrics/tree/main}
 The PoC demonstration will evaluate whether the three riskiest parts of
 \progname{} are feasible with the chosen technology before full development.
 The demonstration uses one Android test phone running an installed React Native
-with Expo APK, one 20-line Japanese test sample, and a desktop computer running
-Anki with AnkiConnect. Results apply to this test configuration; support for
+with Expo APK, one 20-line Japanese test sample, and AnkiDroid on the same
+phone. The test Pixel uses the official full arm64 build of AnkiDroid 2.25.3
+to work around the storage initialization error encountered with its Play build.
+Results apply to this test configuration; support for
 other devices, languages, and Anki integration methods requires later testing.
 
 \subsection{Objective}
@@ -298,7 +301,9 @@ consumer application.
         20 Japanese lines as selectable words with romanization.
         \item Carry a selected word and its lyric context into the Anki
         handoff screen, accept a manually entered translation, and send the
-        term, translation, and context to desktop Anki through AnkiConnect.
+        term, translation, and context directly to AnkiDroid through its
+        Android content-provider API. A native React Native bridge handles the
+        API calls after Android grants the required permission.
     \end{itemize}
     \item \textbf{Technical Questions:}
     \begin{enumerate}
@@ -306,13 +311,13 @@ consumer application.
         enough for the required lyric highlighting tolerance?
         \item Does the Japanese segmentation pipeline meet the accuracy and
         lesson-opening targets on the test phone?
-        \item Can the phone create a usable note in desktop Anki over the
-        same local network?
+        \item Can the phone create a usable note in AnkiDroid on the
+        same phone, without a computer or network connection?
     \end{enumerate}
     \item \textbf{Not Included:} The song-map editor interface, desktop or
     mobile browser playback, additional languages or songs, user accounts,
     custom visual design, cloud sync, automatic translation, and direct
-    insertion into AnkiDroid or AnkiMobile without desktop Anki. These remain
+    insertion into the iOS AnkiMobile app. These remain
     outside this PoC's demonstrated scope.
 \end{itemize}
 
@@ -328,7 +333,7 @@ Table~\ref{TblRisks} lists the implementation risks evaluated by the PoC.
 \midrule
 R1: Lyric sync on a phone & Mobile audio position updates and display delays may prevent highlighting from remaining within 0.5 seconds of the mapped audio cues.\\
 R2: Segmenting lyrics & Lyrics contain fragments, slang, and mixed scripts that may be segmented incorrectly. The Japanese dictionary may also load too slowly on a phone.\\
-R3: Anki from a phone & AnkiConnect requires desktop Anki and a reachable local-network endpoint. Connectivity, configuration, or note-format errors may prevent the phone from creating a usable note.\\
+R3: Anki from a phone & AnkiDroid must be installed and configured, Android must grant API access, and the bridge must use the correct app authority and permission. Storage errors or note-format mismatches may prevent a usable note from being created.\\
 \bottomrule
 \end{tabularx}
 \end{table}
@@ -359,10 +364,13 @@ phone or confirmation of the note in Anki.
     APK, without subtracting dictionary loading or asset access. Draft gold
     data and desktop timings are provisional evidence only.
     \item \textbf{R3:} Select a word in R2, retain its context, enter a
-    translation, and send it through AnkiConnect to desktop Anki on the same
-    trusted local network. \emph{Pass:} the app receives a note ID and the
-    team opens the corresponding note in the \emph{LingoLyrics PoC} deck to
-    confirm the term, translation, and context. Preserve the note ID and a
+    translation, and save it directly to AnkiDroid on the phone.
+    \emph{Pass:} the app receives a note ID, reads back the saved fields and
+    card deck to verify the handoff, and the team opens the corresponding
+    card in AnkiDroid's \emph{LingoLyrics PoC} deck to confirm the term,
+    translation, and context. Test permission denial and retrying the same
+    card as well; denial must leave the note unsent, and an exact repeat
+    should reuse the existing note. Preserve the note ID and a
     screenshot of its contents. A prepared payload or successful mock request
     alone does not establish this result.
 \end{itemize}
@@ -378,7 +386,9 @@ original criterion.
     synchronization tolerance with supporting measurements.
     \item \textbf{R2:} compute segmentation in the editor and store
     creator-verified words in the song map instead of segmenting on the phone.
-    \item \textbf{R3:} implement an export file that the learner imports
+    \item \textbf{R3:} retain the implemented desktop AnkiConnect method
+    as an alternative integration path, or implement an export file that the
+    learner imports
     into Anki and revise the handoff plan. Verify the imported note in the
     intended deck before claiming that this alternative works.
 \end{itemize}
@@ -386,9 +396,11 @@ original criterion.
 \subsection{Demonstration Logistics}
 
 Before the meeting, the team will select the exact APK and source revision,
-install and rehearse it on the test phone, and verify phone mirroring and
-AnkiConnect connectivity. The phone and desktop must share a trusted network;
-any temporary AnkiConnect network configuration will be restored after testing.
+install and rehearse it on the test phone, verify phone mirroring, and finish
+AnkiDroid setup. The primary handoff runs entirely on the phone; USB is used
+for installation, logs, or mirroring rather than to transport the card. The
+optional desktop AnkiConnect path requires a trusted local network or USB
+forwarding and must be identified separately if demonstrated.
 Record the phone model, Android version, app revision, and test conditions with
 the results.
 
@@ -419,7 +431,7 @@ React Native with Expo (learner app) & One codebase for iOS and Android; Expo sp
 React (web editor) & Shares TypeScript types and song-map code with the app; creators need a large screen for timing work. & A second user interface to maintain.\\
 Expo Audio / Howler.js & Audio playback with position reporting in the app and the editor respectively. & Timing accuracy must be verified (R1).\\
 kuromoji.js & Japanese segmentation and readings that run in JavaScript, with no separate server. & Large dictionary (R2); Sudachi is more accurate but needs a Python or Java service.\\
-AnkiConnect (PoC) & Sends vocabulary from the Android app to desktop Anki over the local network. & Requires desktop Anki and network setup; direct mobile integration and file export require separate evaluation (R3).\\
+AnkiDroid API (PoC), optional AnkiConnect & Saves vocabulary directly into AnkiDroid on the Android phone through a native bridge. & Requires AnkiDroid setup and runtime permission; desktop AnkiConnect remains an optional alternative (R3).\\
 JSON Schema & Defines and validates the shared song-map format in CI. & The schema must be versioned as it changes.\\
 Jest & Unit and integration tests with built-in coverage. & None significant for our stack.\\
 ESLint, Prettier, Husky & Enforce the coding standard before commit and in CI. & Initial configuration time.\\

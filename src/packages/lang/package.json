@@ -1,0 +1,13 @@
+{
+  "name": "@lingolyrics/lang",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Japanese lyric segmentation with readings and romaji",
+  "license": "MIT",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "dependencies": {
+    "kuromoji": "^0.1.2",
+    "wanakana": "^5.3.1"
+  }
+}
